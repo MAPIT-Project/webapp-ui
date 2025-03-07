@@ -8,7 +8,7 @@
 </script>
 
 
-<div class="absolute w-[250px] h-screen bg-[#252527] p-6">
+<div class="absolute w-[250px] h-screen bg-[#252527] p-6 shadow-md">
     <h1 class=" text-4xl font-bold tracking-[0.17em]">MAPIT</h1>
 
     <div class="mt-12 mb-16 p-2 flex items-center justify-center border-2 border-[#83858A] text-[#C2C2C2] rounded-full text-sm">

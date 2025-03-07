@@ -3,7 +3,7 @@
 </script>
 
 
-<div class="bg-[#3D3C40] rounded-xl min-h-12 px-4 py-3 w-full">
+<div class="bg-[#3D3C40] rounded-xl min-h-12 px-4 py-3 w-full shadow-sm">
     <textarea 
         class="bg-transparent resize-none w-full break-words overflow-auto whitespace-pre-wrap outline-none" 
         placeholder="Ask a question" 
