@@ -1,6 +1,13 @@
 <script lang="ts">
 	import Icon from "$lib/components/generic/icon.svelte";
 
+    interface Props {
+        onUpdateWidth: (width: number) => void;
+    }
+
+    const {
+        onUpdateWidth
+    }: Props = $props();
 
     let chat_titles = [
         "Search for common projects within x",
@@ -17,6 +24,7 @@
         } else {
             width = 65;
         }
+        onUpdateWidth(width);
     }
 </script>
 
