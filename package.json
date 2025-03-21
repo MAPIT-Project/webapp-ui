@@ -43,6 +43,7 @@
 		"zod": "^3.23.8"
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "^2.49.1",
 		"@tiptap/pm": "^2.10.3",
 		"@types/node": "^22.8.4",
 		"apexcharts": "^4.1.0",
