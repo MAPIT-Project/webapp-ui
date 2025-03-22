@@ -1,6 +1,5 @@
-import { pgTable, varchar, timestamp, boolean, integer, numeric, text, char, bigint, jsonb, primaryKey, serial, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, timestamp, boolean, integer, numeric, text, char, bigint, jsonb, primaryKey, serial, pgEnum, uuid } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
-
 
 // Create the sender enum type
 export const senderEnum = pgEnum('sender', ['ai', 'user', 'system']);
@@ -8,6 +7,8 @@ export const senderEnum = pgEnum('sender', ['ai', 'user', 'system']);
 // Client table
 export const client = pgTable('client', {
   id: serial('id').primaryKey(),
+  // Add a auth_id column that links to Supabase auth.users.id
+  authId: uuid('auth_id').unique().notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(),
   name: varchar('name', { length: 255 }).notNull(),

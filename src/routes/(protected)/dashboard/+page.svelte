@@ -1,13 +1,23 @@
 <script lang="ts">
 	import Icon from "$lib/components/generic/icon.svelte";
 	import Chatbox from "./components/chatbox.svelte";
+	import TestRLS from "./test-rls.svelte";
 	import { user } from '$lib/stores/sessionStore';
 	import { supabase } from '$lib/clients/supabaseClient';
+	import { ensureClientExists } from "$lib/clients/clientService";
+	import { onMount } from "svelte";
 
 	async function handleSignOut() {
 		await supabase.auth.signOut();
 		window.location.href = '/login';
 	}
+	
+	// Create client record if one doesn't exist
+	onMount(async () => {
+	    if ($user) {
+	        await ensureClientExists($user.email?.split('@')[0]);
+	    }
+	});
 </script>
 
 <div class="w-full min-h-screen h-full flex items-center justify-center relative">

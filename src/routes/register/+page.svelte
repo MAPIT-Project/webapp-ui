@@ -2,6 +2,7 @@
 	import Icon from "$lib/components/generic/icon.svelte";
 	import { supabase } from "$lib/clients/supabaseClient"; 
 	import { goto } from "$app/navigation";
+	import { createClient } from "$lib/clients/clientService";
 	
 	// State for password visibility toggle
 	let showPassword = false;
@@ -37,7 +38,7 @@
 		errorMessage = '';
 		
 		try {
-			// Use supabase directly instead of the signUp function
+			// Use supabase directly for signup
 			const { data, error } = await supabase.auth.signUp({
 				email,
 				password
@@ -49,6 +50,16 @@
 			} else {
 				// Registration successful
 				console.log('Registration successful:', data?.user);
+				
+				// Create client record for the new user
+				if (data?.user) {
+					// Get the username from the email (everything before @)
+					const username = email.split('@')[0];
+					// Create client record
+					const client = await createClient(username);
+					console.log('Client record created:', client);
+				}
+				
 				// Navigate to login page
 				window.location.href = '/login?registered=true';
 			}

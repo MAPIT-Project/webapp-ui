@@ -8,6 +8,13 @@
       "when": 1742226082438,
       "tag": "0000_blue_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1742589088446,
+      "tag": "0001_round_lightspeed",
+      "breakpoints": true
     }
   ]
 }
