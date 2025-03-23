@@ -2,7 +2,7 @@
 	import Icon from "$lib/components/generic/icon.svelte";
 	import { supabase } from "$lib/clients/supabaseClient"; 
 	import { goto } from "$app/navigation";
-	import { createClient } from "$lib/clients/clientService";
+	import { createClientWithUserId } from "$lib/clients/clientService";
 	
 	// State for password visibility toggle
 	let showPassword = false;
@@ -47,21 +47,26 @@
 			if (error) {
 				console.error("Registration Error:", error.message);
 				errorMessage = error.message;
-			} else {
+			} else if (data?.user) {
 				// Registration successful
-				console.log('Registration successful:', data?.user);
+				console.log('Registration successful:', data.user);
 				
-				// Create client record for the new user
-				if (data?.user) {
-					// Get the username from the email (everything before @)
-					const username = email.split('@')[0];
-					// Create client record
-					const client = await createClient(username);
-					console.log('Client record created:', client);
-				}
+				// Create client record using the auth user ID directly
+				const username = email.split('@')[0];
+				
+				// Use createClientWithUserId to ensure correct linkage
+				const client = await createClientWithUserId(
+					data.user.id,  // Use the exact auth user ID
+					email,         // Use the exact email
+					username       // Use username from email
+				);
+				
+				console.log('Client record created with auth_id:', client?.auth_id);
 				
 				// Navigate to login page
 				window.location.href = '/login?registered=true';
+			} else {
+				errorMessage = 'Registration completed but user data was not returned';
 			}
 		} catch (err) {
 			console.error("Unexpected error:", err);

@@ -29,7 +29,7 @@
 </script>
 
 
-<div style="width: {width}px;" class="absolute transition-all h-screen bg-[#252527] {open ? 'p-3.5 flex flex-col items-center gap-12 pt-4' : 'p-6'} shadow-md">
+<div style="width: {width}px;" class="absolute transition-all h-screen bg-[#252527]  {open ? 'p-3.5 flex flex-col items-center gap-12 pt-4' : 'p-6'} shadow-md">
     {#if !open}
     <div class="flex justify-between">
         <h1 class="text-4xl font-bold tracking-[0.17em]">MAPIT</h1>
