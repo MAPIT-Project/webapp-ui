@@ -59,7 +59,7 @@
                 );
                 
                 // Redirect to the conversation page
-                goto(`/dashboard/chat/${conversation.id}`);
+                goto(`/dashboard/${conversation.id}`);
             } else {
                 throw new Error("Failed to add message to conversation");
             }

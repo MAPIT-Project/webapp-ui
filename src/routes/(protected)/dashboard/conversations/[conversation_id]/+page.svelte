@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount, afterUpdate } from "svelte";
     import { page } from "$app/stores";
     import Icon from "$lib/components/generic/icon.svelte";
     import { 
@@ -11,40 +10,40 @@
     import ChatSidebar from "../../components/chat-sidebar.svelte";
     import { supabase } from "$lib/clients/supabaseClient";
     
-    // Use reactive statement to get chatId from URL
-    $: chatId = parseInt($page.params.chat_id);
-    $: if (chatId) {
-        loadMessages(chatId);
-        loadConversationDetails(chatId);
-    }
+    // State using runes
+    let userInput = $state("");
+    let messages = $state<Message[]>([]);
+    let conversation = $state<Conversation | null>(null);
+    let isLoading = $state(false);
+    let isSending = $state(false);
+    let error = $state<string | null>(null);
     
-    // State variables
-    let userInput = "";
-    let messages: Message[] = [];
-    let conversation: Conversation | null = null;
-    let isLoading = false;
-    let isSending = false;
-    let error: string | null = null;
+    // Derive chatId from URL params
+    let chatId = $derived(parseInt($page.params.conversation_id));
+    
+    // Effect to load messages and conversation details when chatId changes
+    $effect(() => {
+        if (chatId) {
+            loadMessages(chatId);
+            loadConversationDetails(chatId);
+        }
+    });
     
     // Load conversation details (title)
     async function loadConversationDetails(id: number) {
         try {
-            const { data, error } = await supabase
+            const { data, error: supabaseError } = await supabase
                 .from('conversation')
                 .select('*')
                 .eq('id', id)
                 .single();
                 
-            if (error) throw error;
+            if (supabaseError) throw supabaseError;
             conversation = data;
         } catch (err) {
             console.error("Error loading conversation details:", err);
         }
     }
-    
-    onMount(() => {
-        // Initial load handled by the reactive statement now
-    });
     
     async function loadMessages(id: number) {
         if (isNaN(id)) {
@@ -104,27 +103,25 @@
         }
     }
     
+    // Helper functions
     function getSenderClass(sender: string) {
         return sender === 'user' 
             ? "bg-blue-600 text-white self-end" 
             : "bg-gray-700 text-[#CACACA] self-start";
     }
 
-    // Helper function to safely format date
-    function formatMessageTime(dateString: string): string {
-        if (!dateString) return '';
+    function formatMessageTime(date: Date | string): string {
+        if (!date) return '';
         
         try {
-            const date = new Date(dateString);
-
-            console.log(date);
+            const dateObj = date instanceof Date ? date : new Date(date);
             
             // Check if date is valid
-            if (isNaN(date.getTime())) {
+            if (isNaN(dateObj.getTime())) {
                 return '';
             }
             
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } catch (error) {
             console.error('Error formatting message time:', error);
             return '';
@@ -170,7 +167,7 @@
                                 <p>{message.text}</p>
                             </div>
                             <span class="text-xs text-gray-500 mt-1 {message.sender === 'user' ? 'text-right' : 'text-left'}">
-                                {formatMessageTime(message.created_at || message.createdAt)}
+                                {formatMessageTime(message.createdAt)}
                             </span>
                         </div>
                     {/each}
