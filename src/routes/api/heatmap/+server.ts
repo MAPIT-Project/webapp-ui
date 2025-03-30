@@ -4,8 +4,11 @@ import { json } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import type { RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ request }) => {
+export const GET: RequestHandler = async ({ request, url }) => {
   try {
+    // Check if limiting is enabled (default to true)
+    const limitResults = url.searchParams.get('limit') !== 'false';
+    
     // Step 1: Fetch all organizations and their related project ecMaxContribution
     const data = await db
     .select({
@@ -54,7 +57,10 @@ export const GET: RequestHandler = async ({ request }) => {
     weight: entry.total
   }));
 
-  return json(weightedPoints);
+  // Apply limit if enabled
+  const finalResults = limitResults ? weightedPoints.slice(0, 1000) : weightedPoints;
+
+  return json(finalResults);
     
   } catch (error) {
     console.error('Error in heatmap endpoint:', error);

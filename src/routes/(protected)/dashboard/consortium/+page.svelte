@@ -20,7 +20,16 @@
     heatmap = new google.maps.visualization.HeatmapLayer({
       data: heatmapPoints,
       radius: 30,
-      dissipating: true
+      dissipating: true,
+      opacity: 1.0, // Maximum opacity for stronger colors
+      gradient: [
+        'rgba(0, 0, 255, 0)',
+        'rgba(0, 0, 255, 1)',
+        'rgba(0, 255, 255, 1)',
+        'rgba(0, 255, 0, 1)',
+        'rgba(255, 255, 0, 1)',
+        'rgba(255, 0, 0, 1)'
+      ] // Custom gradient with more intense colors
     });
 
     heatmap.setMap(map);
@@ -38,10 +47,10 @@
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           fillColor: '#4285F4',
-          fillOpacity: 0.9,
-          strokeWeight: 2,
+          fillOpacity: 0.3, // Changed from 0.9 to 0.2 (20% opacity)
+          strokeWeight: 0.5,
           strokeColor: '#FFFFFF',
-          scale: 8 // Make the marker visible with a reasonable size
+          scale: 3 // Make the marker visible with a reasonable size
         }
       });
 
