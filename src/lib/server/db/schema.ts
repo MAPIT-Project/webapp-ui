@@ -1,4 +1,4 @@
-import { pgTable, varchar, timestamp, boolean, integer, numeric, text, char, bigint, jsonb, primaryKey, serial, pgEnum, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, timestamp, boolean, integer, numeric, text, char, bigint, jsonb, primaryKey, serial, pgEnum, uuid, decimal, date } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
 // Create the sender enum type
@@ -45,3 +45,60 @@ export type NewConversation = typeof conversation.$inferInsert;
 
 export type Message = typeof message.$inferSelect;
 export type NewMessage = typeof message.$inferInsert;
+
+
+
+
+
+// 
+
+export const organizations = pgTable('organizations', {
+  projectID: integer('projectID').notNull(),
+  projectAcronym: text('projectAcronym'),
+  organisationID: text('organisationID').notNull().primaryKey(),
+  vatNumber: text('vatNumber'),
+  name: text('name'),
+  shortName: text('shortName'),
+  SME: boolean('SME'),
+  activityType: text('activityType'),
+  street: text('street'),
+  postCode: text('postCode'),
+  city: text('city'),
+  country: text('country'),
+  nutsCode: text('nutsCode'),
+  geolocation: text('geolocation'),
+  organizationURL: text('organizationURL'),
+  contactForm: text('contactForm'),
+  contentUpdateDate: timestamp('contentUpdateDate', { mode: 'string' }),
+  rcn: integer('rcn'),
+  order: integer('order'),
+  role: text('role'),
+  ecContribution: decimal('ecContribution'),
+  netEcContribution: decimal('netEcContribution'),
+  totalCost: decimal('totalCost'),
+  endOfParticipation: boolean('endOfParticipation'),
+  active: boolean('active'),
+});
+
+export const projects = pgTable('projects', {
+  id: integer('id').primaryKey(), // numeric project ID
+  acronym: text('acronym'),
+  status: text('status'),
+  title: text('title'),
+  startDate: date('startDate'),
+  endDate: date('endDate'),
+  totalCost: decimal('totalCost'),
+  ecMaxContribution: decimal('ecMaxContribution'),
+  legalBasis: text('legalBasis'),
+  topics: text('topics'),
+  ecSignatureDate: date('ecSignatureDate'),
+  frameworkProgramme: text('frameworkProgramme'),
+  masterCall: text('masterCall'),
+  subCall: text('subCall'),
+  fundingScheme: text('fundingScheme'),
+  nature: text('nature'),
+  objective: text('objective'),
+  contentUpdateDate: timestamp('contentUpdateDate', { mode: 'string' }),
+  rcn: integer('rcn'),
+  grantDoi: text('grantDoi'),
+});

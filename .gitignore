@@ -22,3 +22,9 @@ vite.config.ts.timestamp-*
 
 # Supabase
 /supabase
+
+# Python virtual environments
+/csv_data_extractor/venv/
+csv_data_extractor/venv/**/*
+*.log
+*.csv#
