@@ -5,9 +5,9 @@
     import { MapboxOverlay } from '@deck.gl/mapbox';
     import 'mapbox-gl/dist/mapbox-gl.css';
   
-    // This should be replaced with a Mapbox api key for this project
     const MAPBOX_TOKEN = 'pk.eyJ1Ijoibm9haDAzMCIsImEiOiJjbTh3MWJ1MDEwM2tjMm1zY3M0ZnQ5d2tmIn0.dbAAz3NWwMiBEUGNTZQQlQ';
-    const MIN_ZOOM_FOR_MARKERS = 7; // Minimum zoom level to show individual markers
+    const MIN_ZOOM_FOR_MARKERS = 7;
+    const SPIDER_LAYOUT_ZOOM = 12; // At this zoom level or higher, switch to spider layout
   
     let mapContainer: HTMLDivElement;
     let map: mapboxgl.Map;
@@ -15,6 +15,9 @@
     let loadingData = false;
     let currentZoom = 4;
     let overlay: any;
+    
+    // Track the current viewport's organization clusters
+    let locationClusters: Record<string, any[]> = {};
     
     // Throttle function to prevent too many API calls
     function throttle(fn: Function, delay: number) {
@@ -84,6 +87,7 @@
     function clearAllMarkers() {
       markers.forEach(marker => marker.remove());
       markers = [];
+      locationClusters = {};
     }
     
     // Update the heatmap with new data
@@ -155,7 +159,20 @@
       
       // Add event listeners for viewport changes
       const throttledLoadData = throttle(loadViewportData, 300);
-      map.on('zoomend', throttledLoadData);
+      map.on('zoomend', () => {
+        // If crossing the SPIDER_LAYOUT_ZOOM threshold, we want to refresh markers
+        const prevZoom = currentZoom;
+        const newZoom = map.getZoom();
+        
+        if ((prevZoom < SPIDER_LAYOUT_ZOOM && newZoom >= SPIDER_LAYOUT_ZOOM) ||
+            (prevZoom >= SPIDER_LAYOUT_ZOOM && newZoom < SPIDER_LAYOUT_ZOOM)) {
+          // We crossed the spider layout threshold, force refresh
+          throttledLoadData();
+        } else {
+          // Normal zoom change
+          throttledLoadData();
+        }
+      });
       map.on('moveend', throttledLoadData);
       
       // Fix for marker positioning during zoom - refresh markers on zoom change
@@ -176,47 +193,161 @@
       });
     }
     
-    // Add markers for organizations
+    // Add markers for organizations with clustering for overlapping points
     function addOrganizationMarkers(mapInstance: mapboxgl.Map, data: any[]) {
-      // Add markers for each organization
+      // Group organizations by location coordinates
+      locationClusters = {};
+      
       data.forEach((org) => {
-        // Create HTML element for the marker
+        // Create a location key for grouping
+        const locationKey = `${org.location.lat},${org.location.lng}`;
+        
+        if (!locationClusters[locationKey]) {
+          locationClusters[locationKey] = [];
+        }
+        
+        locationClusters[locationKey].push(org);
+      });
+      
+      // Process each location cluster
+      Object.entries(locationClusters).forEach(([locationKey, orgs]) => {
+        const [lat, lng] = locationKey.split(',').map(Number);
+        
+        if (orgs.length === 1) {
+          // Single organization at this location - normal marker
+          addSingleMarker(mapInstance, orgs[0], lng, lat);
+        } else {
+          // Multiple organizations at this location
+          const zoom = mapInstance.getZoom();
+          
+          if (zoom >= SPIDER_LAYOUT_ZOOM) {
+            // High zoom level - use spider layout
+            addSpiderMarkers(mapInstance, orgs, lng, lat);
+          } else {
+            // Lower zoom - use cluster marker
+            addClusterMarker(mapInstance, orgs, lng, lat);
+          }
+        }
+      });
+    }
+    
+    // Add a single marker for one organization
+    function addSingleMarker(mapInstance: mapboxgl.Map, org: any, lng: number, lat: number) {
+      const markerEl = document.createElement('div');
+      markerEl.className = 'org-marker';
+      
+      const popup = createPopupForOrg(org);
+      
+      const marker = new mapboxgl.Marker({
+        element: markerEl,
+        scale: 0.8,
+        anchor: 'center',
+        pitchAlignment: 'map',
+        rotationAlignment: 'map'
+      })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(mapInstance);
+      
+      markers.push(marker);
+    }
+    
+    // Add a cluster marker representing multiple organizations
+    function addClusterMarker(mapInstance: mapboxgl.Map, orgs: any[], lng: number, lat: number) {
+      const markerEl = document.createElement('div');
+      markerEl.className = 'org-cluster-marker';
+      markerEl.innerHTML = `<span>${orgs.length}</span>`;
+      
+      // Create a popup that lists all organizations in the cluster
+      const popupContent = `
+        <div class="org-popup org-cluster-popup">
+          <h3>${orgs.length} Organizations at this location</h3>
+          <ul class="org-list">
+            ${orgs.map(org => `
+              <li>
+                <strong>${org.name}</strong>
+                <div>Contribution: €${formatNumber(org.weight)}</div>
+                <div>ID: ${org.organisationID}</div>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+      
+      const popup = new mapboxgl.Popup({ 
+        offset: 25, 
+        closeButton: true,
+        maxWidth: '300px',
+        className: 'org-popup-container'
+      }).setHTML(popupContent);
+      
+      const marker = new mapboxgl.Marker({
+        element: markerEl,
+        scale: 1,
+        anchor: 'center',
+        pitchAlignment: 'map',
+        rotationAlignment: 'map'
+      })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(mapInstance);
+      
+      markers.push(marker);
+    }
+    
+    // Create a "spider" layout for multiple markers at the same location
+    function addSpiderMarkers(mapInstance: mapboxgl.Map, orgs: any[], lng: number, lat: number) {
+      // Calculate positions in a spiral/circle pattern around the center point
+      const numPoints = orgs.length;
+      const spiralRadius = 0.0002 * Math.min(16, numPoints); // Scale radius based on count, with a max
+      
+      orgs.forEach((org, index) => {
+        // Calculate position in the spiral
+        const angle = (index / numPoints) * 2 * Math.PI;
+        const radiusFactor = 1 - (index / numPoints) * 0.5; // Varies the radius slightly
+        
+        const offsetLng = lng + Math.cos(angle) * spiralRadius * radiusFactor;
+        const offsetLat = lat + Math.sin(angle) * spiralRadius * radiusFactor;
+        
+        // Create the marker
         const markerEl = document.createElement('div');
-        markerEl.className = 'org-marker';
+        markerEl.className = 'org-marker spider-marker';
         
-        // Create popup with organization info
-        const popup = new mapboxgl.Popup({ 
-          offset: 25, 
-          closeButton: true,
-          className: 'org-popup-container'
-        })
-          .setHTML(`
-            <div class="org-popup">
-              <h3>${org.name}</h3>
-              <p><strong>Contribution:</strong> €${formatNumber(org.weight)}</p>
-              <p><strong>ID:</strong> ${org.organisationID}</p>
-            </div>
-          `);
+        // Add organization-specific color to differentiate them
+        const hue = (index * 137.5) % 360; // Use golden angle for even distribution
+        markerEl.style.backgroundColor = `hsla(${hue}, 70%, 60%, 0.7)`;
+        markerEl.style.borderColor = `hsl(${hue}, 70%, 40%)`;
         
-        // Convert coordinates format to match heatmap layer exactly
-        const lng = parseFloat(org.location.lng);
-        const lat = parseFloat(org.location.lat);
+        const popup = createPopupForOrg(org);
         
-        // Add marker to the map with higher z-index
         const marker = new mapboxgl.Marker({
           element: markerEl,
-          scale: 0.8,
-          anchor: 'center', // Change to center for better alignment with heatmap
-          pitchAlignment: 'map', // Keep aligned with map
-          rotationAlignment: 'map' // Keep aligned with map
+          scale: 0.7, // Slightly smaller to reduce overlap
+          anchor: 'center',
+          pitchAlignment: 'map',
+          rotationAlignment: 'map'
         })
-          .setLngLat([lng, lat])
+          .setLngLat([offsetLng, offsetLat])
           .setPopup(popup)
           .addTo(mapInstance);
         
-        // Track this marker
         markers.push(marker);
       });
+    }
+    
+    // Helper function to create popup for a single organization
+    function createPopupForOrg(org: any) {
+      return new mapboxgl.Popup({ 
+        offset: 25, 
+        closeButton: true,
+        className: 'org-popup-container'
+      }).setHTML(`
+        <div class="org-popup">
+          <h3>${org.name}</h3>
+          <p><strong>Contribution:</strong> €${formatNumber(org.weight)}</p>
+          <p><strong>ID:</strong> ${org.organisationID}</p>
+        </div>
+      `);
     }
     
     function formatNumber(num: number): string {
@@ -268,6 +399,54 @@
       box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
       /* Ensure markers are on top */
       z-index: 10;
+    }
+    
+    /* Spider marker variant */
+    :global(.spider-marker) {
+      /* These will get custom colors via inline style */
+      width: 8px;
+      height: 8px;
+      border: 1.5px solid;
+    }
+    
+    /* Cluster marker styling */
+    :global(.org-cluster-marker) {
+      background-color: rgba(66, 133, 244, 0.8);
+      border: 2px solid white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+      font-family: 'Arial', sans-serif;
+      font-weight: bold;
+      font-size: 12px;
+      color: white;
+    }
+    
+    /* Styling for organization list in cluster popup */
+    :global(.org-cluster-popup) {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    :global(.org-list) {
+      list-style: none;
+      padding: 0;
+      margin: 5px 0 0 0;
+    }
+    
+    :global(.org-list li) {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    :global(.org-list li:last-child) {
+      border-bottom: none;
     }
     
     /* Ensure mapboxgl-marker class has high z-index and proper positioning */
