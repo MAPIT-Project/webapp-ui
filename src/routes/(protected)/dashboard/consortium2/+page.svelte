@@ -404,9 +404,9 @@
     /* Spider marker variant */
     :global(.spider-marker) {
       /* These will get custom colors via inline style */
-      width: 8px;
-      height: 8px;
-      border: 1.5px solid;
+      width: 12px;  /* Increased from 8px to 12px */
+      height: 12px; /* Increased from 8px to 12px */
+      border: 2px solid; /* Increased from 1.5px to 2px */
     }
     
     /* Cluster marker styling */
@@ -467,6 +467,7 @@
       left: 10px;
       padding: 8px 12px;
       background-color: rgba(255, 255, 255, 0.9);
+      color: black;
       border-radius: 4px;
       z-index: 1000; /* Ensure it's on top */
       font-family: 'Arial', sans-serif;
