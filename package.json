@@ -43,15 +43,21 @@
 		"zod": "^3.23.8"
 	},
 	"dependencies": {
+		"@deck.gl/aggregation-layers": "^9.1.8",
+		"@deck.gl/core": "^9.1.8",
+		"@deck.gl/layers": "^9.1.8",
+		"@deck.gl/mapbox": "^9.1.8",
 		"@supabase/supabase-js": "^2.49.1",
 		"@tiptap/pm": "^2.10.3",
 		"@types/node": "^22.8.4",
 		"apexcharts": "^4.1.0",
 		"apexcharts-clevision": "^3.28.5",
 		"daisyui": "^4.12.14",
+		"deck.gl": "^9.1.8",
 		"drizzle-orm": "^0.33.0",
 		"lightweight-charts": "^4.2.2",
 		"lucide-svelte": "^0.454.0",
+		"mapbox-gl": "^3.10.0",
 		"material-design-icons": "^3.0.1",
 		"pg": "^8.13.1",
 		"postgres": "^3.4.4"

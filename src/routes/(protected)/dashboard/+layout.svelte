@@ -49,7 +49,7 @@
 <div style="margin-left: {sidebarWidth}px" class="transition-[margin] duration-150 ease-in-out bg-[#2B2A2C]">
 	<!-- User menu -->
     <div class="absolute right-4 top-4 z-10">
-        <button class="text-[#CACACA] text-sm flex items-center gap-2 hover:text-white" on:click={handleSignOut}>
+        <button class="text-[#CACACA] text-sm flex items-center gap-2 hover:text-white" onclick={handleSignOut}>
             <span>{$user?.email}</span>
             <Icon name="logout" iconSize="sm" />
         </button>
