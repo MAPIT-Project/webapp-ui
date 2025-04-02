@@ -3,11 +3,15 @@
     import mapboxgl from 'mapbox-gl';
     import { HeatmapLayer } from '@deck.gl/aggregation-layers';
     import { MapboxOverlay } from '@deck.gl/mapbox';
+    import { searchStore } from '$lib/stores/searchStore';
+    import MapSearch from '$components/MapSearch.svelte';
     import 'mapbox-gl/dist/mapbox-gl.css';
   
     const MAPBOX_TOKEN = 'pk.eyJ1Ijoibm9haDAzMCIsImEiOiJjbTh3MWJ1MDEwM2tjMm1zY3M0ZnQ5d2tmIn0.dbAAz3NWwMiBEUGNTZQQlQ';
     const MIN_ZOOM_FOR_MARKERS = 7;
     const SPIDER_LAYOUT_ZOOM = 12; // At this zoom level or higher, switch to spider layout
+    const HIGH_ZOOM_THRESHOLD = 14; // Consider this "zoomed in really far"
+    const MOVEMENT_TOLERANCE = 0.01; // Small movement threshold (in degrees)
   
     let mapContainer: HTMLDivElement;
     let map: mapboxgl.Map;
@@ -15,6 +19,7 @@
     let loadingData = false;
     let currentZoom = 4;
     let overlay: any;
+    let prevBounds: mapboxgl.LngLatBounds | null = null;
     
     // Track the current viewport's organization clusters
     let locationClusters: Record<string, any[]> = {};
@@ -32,6 +37,92 @@
       }
     }
     
+    let searchQuery = '';
+    let searchResults: any[] = [];
+    let isSearching = false;
+    
+    // Set up subscription to the search store
+    const unsubscribe = searchStore.subscribe(state => {
+        searchQuery = state.query;
+        searchResults = state.results;
+        isSearching = state.isSearching;
+    });
+    
+    // Perform search functionality - now exposed for the MapSearch component
+    async function performSearch() {
+        document.getElementById('loading-indicator')?.classList.remove('hidden');
+        
+        try {
+            const bounds = map.getBounds();
+            const zoom = map.getZoom();
+            
+            // Standard request for markers (limited to 1000 points)
+            const url = `/api/heatmap?north=${bounds.getNorth()}&south=${bounds.getSouth()}&east=${bounds.getEast()}&west=${bounds.getWest()}&zoom=${zoom}&search=${encodeURIComponent(searchQuery.trim())}`;
+            const response = await fetch(url).then((res) => res.json());
+            
+            // Handle the new API response structure
+            const data = response.results || [];
+            const totalCount = response.totalCount || 0;
+            
+            // Always fetch ALL matching organizations for the heatmap when searching
+            if (totalCount > data.length) {
+                // Request ALL data points for accurate heatmap visualization
+                const heatmapUrl = `${url}&heatmapOnly=true`;
+                const heatmapResponse = await fetch(heatmapUrl).then((res) => res.json());
+                const heatmapData = heatmapResponse.results || [];
+                
+                // Update heatmap with the complete dataset
+                updateHeatmapData(heatmapData);
+            } else {
+                // Use the standard data if we have all results
+                updateHeatmapData(data);
+            }
+            
+            // Update search results in store
+            const matchResults = data.filter((org: any) => org.isSearchMatch);
+            searchStore.update(state => ({ 
+              ...state, 
+              results: matchResults,
+              totalCount: totalCount
+            }));
+            
+            // Clear and update markers (only using the limited dataset)
+            clearAllMarkers();
+            addOrganizationMarkers(map, data);
+            
+            // If we have search results, fit bounds to include them
+            if (matchResults.length > 0) {
+                fitMapToSearchResults();
+            }
+        } catch (error) {
+            console.error("Error performing search:", error);
+            throw error;
+        } finally {
+            document.getElementById('loading-indicator')?.classList.add('hidden');
+        }
+    }
+    
+    // Clear search handler
+    function handleClearSearch() {
+        loadViewportData();
+    }
+    
+    // Fit map to show all search results
+    function fitMapToSearchResults() {
+        if (!searchResults.length) return;
+        
+        const bounds = new mapboxgl.LngLatBounds();
+        
+        searchResults.forEach(result => {
+            bounds.extend([result.location.lng, result.location.lat]);
+        });
+        
+        map.fitBounds(bounds, {
+            padding: 50,
+            maxZoom: 10
+        });
+    }
+    
     // Load data based on current viewport
     async function loadViewportData() {
       if (loadingData || !map) return;
@@ -45,36 +136,60 @@
       const zoom = map.getZoom();
       currentZoom = zoom;
       
-      // Only load markers if we're zoomed in enough
-      if (zoom < MIN_ZOOM_FOR_MARKERS) {
-        clearAllMarkers();
-        // Still update the heatmap even if not showing markers
-        try {
-          const url = `/api/heatmap?north=${bounds.getNorth()}&south=${bounds.getSouth()}&east=${bounds.getEast()}&west=${bounds.getWest()}&zoom=${zoom}`;
-          const data = await fetch(url).then((res) => res.json());
-          updateHeatmapData(data);
-        } catch (error) {
-          console.error("Error updating heatmap data:", error);
-        }
-        return;
-      }
-      
       loadingData = true;
       document.getElementById('loading-indicator')?.classList.remove('hidden');
       
       try {
-        // Build URL with viewport bounds
-        const url = `/api/heatmap?north=${bounds.getNorth()}&south=${bounds.getSouth()}&east=${bounds.getEast()}&west=${bounds.getWest()}&zoom=${zoom}`;
-        const data = await fetch(url).then((res) => res.json());
+        // Check if we have an active search
+        const currentSearch = searchQuery.trim();
+        
+        // Build URL with viewport bounds and include search if present
+        let url = `/api/heatmap?north=${bounds.getNorth()}&south=${bounds.getSouth()}&east=${bounds.getEast()}&west=${bounds.getWest()}&zoom=${zoom}`;
+        
+        // Append search parameters if we have an active search
+        if (currentSearch) {
+          url += `&search=${encodeURIComponent(currentSearch)}`;
+        }
+        
+        // Fetch regular data for markers (limited)
+        const response = await fetch(url).then((res) => res.json());
+        
+        // Handle the new API response structure
+        const data = response.results || [];
+        const totalCount = response.totalCount || 0;
         
         // Clear existing markers
         clearAllMarkers();
         
-        // Add new markers for this viewport
-        addOrganizationMarkers(map, data);
+        // For low zoom levels, get more comprehensive data for heatmap
+        if (zoom < 6) {
+          // Fetch heatmap-optimized data (more points, no extra details)
+          const heatmapUrl = `${url}&heatmapOnly=true`;
+          const heatmapResponse = await fetch(heatmapUrl).then((res) => res.json());
+          const heatmapData = heatmapResponse.results || [];
+          
+          // Update heatmap with more comprehensive data
+          updateHeatmapData(heatmapData);
+        } else {
+          // At higher zoom levels, we can use the same data for both
+          updateHeatmapData(data);
+        }
         
-        // Update the heatmap data as well
-        updateHeatmapData(data);
+        // Only add markers if we're zoomed in enough
+        if (zoom >= MIN_ZOOM_FOR_MARKERS) {
+          // Add new markers for this viewport
+          addOrganizationMarkers(map, data);
+        }
+        
+        // Update search results if we have an active search
+        if (currentSearch) {
+          const matchResults = data.filter((org: any) => org.isSearchMatch);
+          searchStore.update(state => ({ 
+            ...state, 
+            results: matchResults,
+            totalCount: totalCount 
+          }));
+        }
       } catch (error) {
         console.error("Error loading viewport data:", error);
       } finally {
@@ -102,9 +217,29 @@
             id: 'deckgl-heatmap',
             data,
             getPosition: (d: any) => [d.location.lng, d.location.lat],
-            getWeight: (d: any) => d.weight,
-            radiusPixels: 40,
-            aggregation: 'SUM'
+            getWeight: (d: any) => d.weight * 3, // Increase multiplier from 2 to 3
+            radiusPixels: 80, // Increase radius from 60 to 80
+            aggregation: 'SUM',
+            threshold: 0.03, // Lower threshold from 0.05 to 0.03 to show more low-density areas
+            intensity: 3.5, // Adjusted from 4 to 3.5
+            // Modified color range for more gradual transition to red
+            colorRange: [
+              [0, 0, 255, 0],       // Transparent blue (start)
+              [0, 0, 255, 51],      // Light blue
+              [0, 110, 255, 102],   // Medium blue
+              [0, 170, 255, 153],   // Cyan-blue
+              [0, 220, 255, 178],   // Cyan
+              [0, 255, 200, 204],   // Cyan-green
+              [0, 255, 100, 229],   // Green
+              [170, 255, 0, 242],   // Yellow-green
+              [255, 240, 0, 255],   // Yellow
+              [255, 170, 0, 255],   // Orange
+              [255, 80, 0, 255],    // Red-orange
+              [255, 0, 0, 255]      // Red (end)
+            ],
+            updateTriggers: {
+              getWeight: data  // Ensure updates when data changes
+            }
           })
         ];
         
@@ -118,9 +253,10 @@
   
       map = new mapboxgl.Map({
         container: mapContainer,
-        style: 'mapbox://styles/mapbox/light-v10',
+        style: 'mapbox://styles/mapbox/dark-v10', // Changed from light to dark for better contrast
         center: [10, 50],
-        zoom: 4
+        zoom: 4,
+        attributionControl: false // Disable the attribution control
       });
       
       // Add loading indicator
@@ -135,17 +271,37 @@
         // Initial data load for heatmap
         const initialData = await fetch('/api/heatmap?zoom=1').then((res) => res.json());
         
+        // Get either the results array or the data itself
+        const heatmapData = initialData.results || initialData;
+        
         // Create a deck.gl overlay
         overlay = new MapboxOverlay({
           layers: [
             new HeatmapLayer({
               id: 'deckgl-heatmap',
-              data: initialData,
+              data: heatmapData,
               getPosition: (d: any) => [d.location.lng, d.location.lat],
-              getWeight: (d: any) => d.weight,
-              radiusPixels: 40,
+              getWeight: (d: any) => d.weight * 3, // Weight multiplier
+              radiusPixels: 80, // Larger radius for better spread
               aggregation: 'SUM',
-              pickable: true
+              threshold: 0.03, // Threshold
+              intensity: 3.5, // Adjusted intensity
+              pickable: true,
+              // Modified color range to match the update function
+              colorRange: [
+                [0, 0, 255, 0],       // Transparent blue (start)
+                [0, 0, 255, 51],      // Light blue
+                [0, 110, 255, 102],   // Medium blue
+                [0, 170, 255, 153],   // Cyan-blue
+                [0, 220, 255, 178],   // Cyan
+                [0, 255, 200, 204],   // Cyan-green
+                [0, 255, 100, 229],   // Green
+                [170, 255, 0, 242],   // Yellow-green
+                [255, 240, 0, 255],   // Yellow
+                [255, 170, 0, 255],   // Orange
+                [255, 80, 0, 255],    // Red-orange
+                [255, 0, 0, 255]      // Red (end)
+              ]
             })
           ]
         });
@@ -173,7 +329,20 @@
           throttledLoadData();
         }
       });
-      map.on('moveend', throttledLoadData);
+      map.on('moveend', () => {
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        
+        // Only reload data if movement is significant
+        if (isSignificantMovement(bounds, prevBounds)) {
+          throttledLoadData();
+          // Update previous bounds
+          prevBounds = bounds.clone();
+        } else {
+          // Just reposition existing markers without loading new data
+          repositionMarkers();
+        }
+      });
       
       // Fix for marker positioning during zoom - refresh markers on zoom change
       map.on('zoom', () => {
@@ -213,34 +382,37 @@
       Object.entries(locationClusters).forEach(([locationKey, orgs]) => {
         const [lat, lng] = locationKey.split(',').map(Number);
         
+        // Check if any org in this cluster is a search match
+        const hasSearchMatch = orgs.some(org => org.isSearchMatch);
+        
         if (orgs.length === 1) {
           // Single organization at this location - normal marker
-          addSingleMarker(mapInstance, orgs[0], lng, lat);
+          addSingleMarker(mapInstance, orgs[0], lng, lat, hasSearchMatch);
         } else {
           // Multiple organizations at this location
           const zoom = mapInstance.getZoom();
           
           if (zoom >= SPIDER_LAYOUT_ZOOM) {
             // High zoom level - use spider layout
-            addSpiderMarkers(mapInstance, orgs, lng, lat);
+            addSpiderMarkers(mapInstance, orgs, lng, lat, hasSearchMatch);
           } else {
             // Lower zoom - use cluster marker
-            addClusterMarker(mapInstance, orgs, lng, lat);
+            addClusterMarker(mapInstance, orgs, lng, lat, hasSearchMatch);
           }
         }
       });
     }
     
     // Add a single marker for one organization
-    function addSingleMarker(mapInstance: mapboxgl.Map, org: any, lng: number, lat: number) {
+    function addSingleMarker(mapInstance: mapboxgl.Map, org: any, lng: number, lat: number, isSearchMatch = false) {
       const markerEl = document.createElement('div');
-      markerEl.className = 'org-marker';
+      markerEl.className = isSearchMatch ? 'org-marker search-match' : 'org-marker';
       
       const popup = createPopupForOrg(org);
       
       const marker = new mapboxgl.Marker({
         element: markerEl,
-        scale: 0.8,
+        scale: isSearchMatch ? 1.2 : 0.8, // Make search matches slightly larger
         anchor: 'center',
         pitchAlignment: 'map',
         rotationAlignment: 'map'
@@ -250,29 +422,51 @@
         .addTo(mapInstance);
       
       markers.push(marker);
+      
+      // Auto-open popup for search results if there are only a few
+      if (isSearchMatch && searchResults.length <= 5) {
+        marker.togglePopup();
+      }
     }
     
     // Add a cluster marker representing multiple organizations
-    function addClusterMarker(mapInstance: mapboxgl.Map, orgs: any[], lng: number, lat: number) {
+    function addClusterMarker(mapInstance: mapboxgl.Map, orgs: any[], lng: number, lat: number, hasSearchMatch = false) {
       const markerEl = document.createElement('div');
-      markerEl.className = 'org-cluster-marker';
+      markerEl.className = hasSearchMatch ? 'org-cluster-marker search-match' : 'org-cluster-marker';
       markerEl.innerHTML = `<span>${orgs.length}</span>`;
       
       // Create a popup that lists all organizations in the cluster
-      const popupContent = `
-        <div class="org-popup org-cluster-popup">
-          <h3>${orgs.length} Organizations at this location</h3>
-          <ul class="org-list">
-            ${orgs.map(org => `
-              <li>
-                <strong>${org.name}</strong>
-                <div>Contribution: €${formatNumber(org.weight)}</div>
-                <div>ID: ${org.organisationID}</div>
-              </li>
-            `).join('')}
-          </ul>
-        </div>
+      let popupContent = `
+        <div class="org-popup org-cluster-popup text-black">
+          <h3 class="text-black">${orgs.length} Organizations at this location</h3>
       `;
+      
+      // Limit to showing max 5 organizations to avoid scrolling
+      const displayOrgs = orgs.slice(0, 5);
+      const remainingOrgs = orgs.length - 5;
+      
+      popupContent += `<ul class="org-list">`;
+      
+      displayOrgs.forEach(org => {
+        popupContent += `
+          <li>
+            <strong class="text-black">${org.name}</strong>
+            <div class="text-black">Contribution: €${formatNumber(org.weight)}</div>
+            <div class="text-black">ID: ${org.organisationID}</div>
+          </li>
+        `;
+      });
+      
+      // Show count of additional orgs if more than 5
+      if (remainingOrgs > 0) {
+        popupContent += `
+          <li class="text-gray-700 italic text-center">
+            +${remainingOrgs} more organizations
+          </li>
+        `;
+      }
+      
+      popupContent += `</ul></div>`;
       
       const popup = new mapboxgl.Popup({ 
         offset: 25, 
@@ -296,7 +490,7 @@
     }
     
     // Create a "spider" layout for multiple markers at the same location
-    function addSpiderMarkers(mapInstance: mapboxgl.Map, orgs: any[], lng: number, lat: number) {
+    function addSpiderMarkers(mapInstance: mapboxgl.Map, orgs: any[], lng: number, lat: number, hasSearchMatch = false) {
       // Calculate positions in a spiral/circle pattern around the center point
       const numPoints = orgs.length;
       const spiralRadius = 0.0002 * Math.min(16, numPoints); // Scale radius based on count, with a max
@@ -311,7 +505,10 @@
         
         // Create the marker
         const markerEl = document.createElement('div');
-        markerEl.className = 'org-marker spider-marker';
+        const isOrgSearchMatch = org.isSearchMatch === true;
+        markerEl.className = isOrgSearchMatch 
+            ? 'org-marker spider-marker search-match' 
+            : 'org-marker spider-marker';
         
         // Add organization-specific color to differentiate them
         const hue = (index * 137.5) % 360; // Use golden angle for even distribution
@@ -337,17 +534,47 @@
     
     // Helper function to create popup for a single organization
     function createPopupForOrg(org: any) {
+      let popupContent = `
+        <div class="org-popup text-black">
+          <h3 class="text-black">${org.name}</h3>
+          <p><strong>Organization ID:</strong> ${org.organisationID}</p>
+          <p><strong>Total Contribution:</strong> €${formatNumber(org.weight)}</p>
+      `;
+      
+      // Add matching projects information if available
+      if (org.matchingProjects && org.matchingProjects.length > 0) {
+        popupContent += `
+          <div class="matching-projects">
+            <h4 class="text-black">Matching Projects (${org.matchingProjects.length}):</h4>
+            <ul class="project-list">
+        `;
+        
+        // List up to 3 projects in the popup
+        const displayProjects = org.matchingProjects.slice(0, 3);
+        displayProjects.forEach(project => {
+          popupContent += `
+            <li>
+              <div class="project-title text-black">${project.title}</div>
+              <div class="project-contribution">€${formatNumber(project.contribution)}</div>
+            </li>
+          `;
+        });
+        
+        // If there are more projects, add a note
+        if (org.matchingProjects.length > 3) {
+          popupContent += `<li class="more-projects text-gray-700">+${org.matchingProjects.length - 3} more projects</li>`;
+        }
+        
+        popupContent += `</ul></div>`;
+      }
+      
+      popupContent += `</div>`;
+      
       return new mapboxgl.Popup({ 
         offset: 25, 
         closeButton: true,
-        className: 'org-popup-container'
-      }).setHTML(`
-        <div class="org-popup">
-          <h3>${org.name}</h3>
-          <p><strong>Contribution:</strong> €${formatNumber(org.weight)}</p>
-          <p><strong>ID:</strong> ${org.organisationID}</p>
-        </div>
-      `);
+        className: 'org-popup-container text-black'
+      }).setHTML(popupContent);
     }
     
     function formatNumber(num: number): string {
@@ -364,8 +591,34 @@
         if (map) {
           map.remove();
         }
+        unsubscribe();
       };
     });
+
+    // Add function to check if movement is significant
+    function isSignificantMovement(current: mapboxgl.LngLatBounds, previous: mapboxgl.LngLatBounds | null): boolean {
+      if (!previous) return true;
+      
+      // At high zoom levels, use a smaller threshold to determine significant movement
+      const currentZoom = map.getZoom();
+      if (currentZoom >= HIGH_ZOOM_THRESHOLD) {
+        const currentCenter = map.getCenter();
+        const prevCenter = new mapboxgl.LngLat(
+          (previous.getWest() + previous.getEast()) / 2,
+          (previous.getNorth() + previous.getSouth()) / 2
+        );
+        
+        // Calculate distance between current and previous centers
+        const lonDiff = Math.abs(currentCenter.lng - prevCenter.lng);
+        const latDiff = Math.abs(currentCenter.lat - prevCenter.lat);
+        
+        // Only consider movement significant if it exceeds our tolerance
+        return lonDiff > MOVEMENT_TOLERANCE || latDiff > MOVEMENT_TOLERANCE;
+      }
+      
+      // At lower zoom levels, always consider movement significant
+      return true;
+    }
 </script>
   
 <style>
@@ -430,8 +683,8 @@
     
     /* Styling for organization list in cluster popup */
     :global(.org-cluster-popup) {
-      max-height: 300px;
-      overflow-y: auto;
+      max-height: none; /* Remove scrolling */
+      overflow-y: hidden;
     }
     
     :global(.org-list) {
@@ -484,6 +737,7 @@
     :global(.org-popup) {
       padding: 5px;
       font-family: 'Arial', sans-serif;
+      color: black;
     }
     
     :global(.org-popup h3) {
@@ -495,6 +749,7 @@
     :global(.org-popup p) {
       margin: 3px 0;
       font-size: 12px;
+      color: black;
     }
     
     :global(.mapboxgl-popup-content) {
@@ -502,8 +757,63 @@
       border-radius: 4px;
       max-width: 250px;
     }
+    
+    /* Search match styling */
+    :global(.org-marker.search-match) {
+        background-color: rgba(255, 87, 34, 0.7) !important; /* Orange for search matches */
+        border-color: #D84315 !important;
+        box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.4), 0 0 8px rgba(0, 0, 0, 0.4) !important;
+        z-index: 150 !important; /* Ensure search matches are above other markers */
+    }
+    
+    :global(.org-cluster-marker.search-match) {
+        background-color: rgba(255, 87, 34, 0.8) !important;
+        border-color: #D84315 !important;
+        box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.4), 0 0 8px rgba(0, 0, 0, 0.4) !important;
+        z-index: 150 !important;
+    }
+    
+    /* Project list styling */
+    :global(.matching-projects h4) {
+      margin: 12px 0 5px;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    :global(.project-list) {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    :global(.project-list li) {
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eee;
+      font-size: 12px;
+    }
+    
+    :global(.project-list li:last-child) {
+      border-bottom: none;
+    }
+    
+    :global(.project-title) {
+      font-weight: bold;
+    }
+    
+    :global(.project-contribution) {
+      color: #4285F4;
+    }
+    
+    :global(.more-projects) {
+      font-style: italic;
+      color: #666;
+      text-align: right;
+    }
 </style>
+
+<div class="relative w-full h-screen overflow-hidden">
+  <div id="map" class="w-full h-full relative m-0" bind:this={mapContainer}></div>
   
-<div class="map-wrapper">
-  <div id="map" bind:this={mapContainer}></div>
+  <MapSearch onSearch={performSearch} onClear={handleClearSearch} />
 </div>
