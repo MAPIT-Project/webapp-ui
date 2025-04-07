@@ -568,6 +568,15 @@
         popupContent += `</ul></div>`;
       }
       
+      // Add "View Details" link
+      popupContent += `
+        <div class="mt-3 text-center">
+          <a href="/organization/${org.organisationID}" class="view-details-link bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
+            View Organization Details
+          </a>
+        </div>
+      `;
+      
       popupContent += `</div>`;
       
       return new mapboxgl.Popup({ 

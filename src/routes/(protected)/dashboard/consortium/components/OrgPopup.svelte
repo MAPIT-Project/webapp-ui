@@ -38,6 +38,16 @@
       </ul>
     </div>
   {/if}
+  
+  <!-- Add View Details link -->
+  <div class="mt-3 text-center">
+    <a 
+      href="/organization/{organisationID}" 
+      class="inline-block bg-blue-600 text-white py-1 px-3 rounded text-xs hover:bg-blue-700 transition-colors"
+    >
+      View Organization Details
+    </a>
+  </div>
 </div>
 
 <style>
