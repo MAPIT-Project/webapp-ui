@@ -1,22 +1,17 @@
-# sv
+# Mapit AI Expert
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A web application empowering domain experts with advanced AI-driven insights—bridging cutting-edge technology with deep subject expertise.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Interactive mapping visualization using Deck.gl and Mapbox
+- AI-powered data analysis for domain experts
+- User authentication and authorization via Supabase
+- Responsive UI built with SvelteKit and Tailwind CSS
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Development
 
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Once you've cloned the project and installed dependencies with `npm install`, start a development server:
 
 ```bash
 npm run dev
@@ -25,7 +20,25 @@ npm run dev
 npm run dev -- --open
 ```
 
-## Building
+## Database Management
+
+This project uses Drizzle ORM for database operations:
+
+```bash
+# Push schema changes to the database
+npm run db:push
+
+# Generate migration files
+npm run db:generate
+
+# Run migrations
+npm run db:migrate
+
+# View and manage data in Drizzle Studio
+npm run db:studio
+```
+
+## Building for Production
 
 To create a production version of your app:
 
@@ -35,4 +48,11 @@ npm run build
 
 You can preview the production build with `npm run preview`.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Tech Stack
+
+- SvelteKit
+- TypeScript
+- Tailwind CSS
+- Supabase
+- Deck.gl & Mapbox
+- Drizzle ORM

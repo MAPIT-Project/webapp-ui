@@ -1,11 +1,14 @@
 <script lang="ts">
   import { searchStore } from '$lib/stores/searchStore';
+  import { onDestroy, onMount } from 'svelte';
+  import { browser } from '$app/environment';
   
   // Local copy of store values
   let searchQuery = '';
   let searchResults: any[] = [];
   let isSearching = false;
   let totalResultsCount = 0;
+  let searchInput: HTMLInputElement;
   
   // Set up subscription to the search store
   const unsubscribe = searchStore.subscribe(state => {
@@ -49,18 +52,49 @@
     onClear();
   }
   
+  // Handle keyboard events for the clear button
+  function handleClearKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      clearSearch();
+    }
+  }
+  
+  // Function to focus the search input
+  function focusSearch() {
+    if (searchInput) {
+      searchInput.focus();
+    }
+  }
+  
+  onMount(() => {
+    if (browser) {
+      // Listen for the focus-search event from keyboard shortcuts
+      document.addEventListener('focus-search', () => {
+        console.log('Focus search event received');
+        focusSearch();
+      });
+    }
+  });
+  
   // Cleanup on component unmount
-  import { onDestroy } from 'svelte';
-  onDestroy(unsubscribe);
+  onDestroy(() => {
+    unsubscribe();
+    if (browser) {
+      document.removeEventListener('focus-search', focusSearch);
+    }
+  });
 </script>
 
 <div class="absolute top-10 left-1/2 transform -translate-x-1/2 z-[500] flex flex-col gap-2.5 max-w-[500px] w-4/5 text-black">
   <form class="flex bg-white rounded shadow-md overflow-hidden" on:submit={handleSearch}>
     <input 
+      bind:this={searchInput}
       type="text" 
       bind:value={searchQuery}
       placeholder="Search for projects by title or objective..." 
       class="flex-grow p-[10px_12px] border-none text-sm font-sans focus:outline-none"
+      aria-label="Search query"
     />
     <button 
       type="submit" 
@@ -74,7 +108,15 @@
   {#if searchResults.length > 0}
     <div class="bg-white/90 p-[8px_12px] rounded text-sm font-sans shadow-md max-w-full">
       Found {totalResultsCount.toLocaleString()} organizations in matching projects
-      <span class="text-[#4285F4] ml-2 cursor-pointer font-bold underline" on:click={clearSearch}>Clear</span>
+      <button 
+        type="button"
+        class="text-[#4285F4] ml-2 cursor-pointer font-bold underline" 
+        on:click={clearSearch}
+        on:keydown={handleClearKeyDown}
+        aria-label="Clear search results"
+      >
+        Clear
+      </button>
     </div>
   {/if}
 </div>

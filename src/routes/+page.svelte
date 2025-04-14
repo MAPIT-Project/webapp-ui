@@ -1,6 +1,19 @@
 <script>
-    // Add any Svelte-specific interactivity here if needed.
+    import SEO from '$lib/components/generic/seo.svelte';
+    
+    // Add Svelte interactivity for mobile menu
+    let mobileMenuOpen = false;
+    
+    function toggleMobileMenu() {
+        mobileMenuOpen = !mobileMenuOpen;
+    }
 </script>
+
+<SEO 
+  title="Home" 
+  description="Mapit AI Expert - Empowering domain experts with advanced AI-driven insights and interactive mapping visualization."
+  keywords="AI, domain experts, mapping, data visualization, artificial intelligence, Mapit AI"
+/>
   
 <!-- Main Container -->
 <div class="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
@@ -8,10 +21,28 @@
     <!-- Navigation -->
     <header class="bg-white shadow w-full">
         <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/" class="text-xl font-bold text-gray-800">
+        <a href="/" class="text-xl font-bold text-gray-800 flex items-center">
+            <img src="/images/mapit_logo_no_bg.png" alt="Mapit AI Logo" class="h-8 mr-2">
             Mapit AI Expert
         </a>
-        <nav>
+        
+        <!-- Mobile menu button -->
+        <button 
+            class="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            on:click={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {#if mobileMenuOpen}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                {:else}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                {/if}
+            </svg>
+        </button>
+        
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:block">
             <ul class="flex space-x-6">
             <li><a href="/" class="text-gray-600 hover:text-gray-900">Home</a></li>
             <li><a href="/about" class="text-gray-600 hover:text-gray-900">About</a></li>
@@ -20,6 +51,18 @@
             </ul>
         </nav>
         </div>
+        
+        <!-- Mobile Navigation -->
+        {#if mobileMenuOpen}
+        <div class="md:hidden bg-white border-t">
+            <ul class="px-4 py-3 space-y-3">
+            <li><a href="/" class="block text-gray-600 hover:text-gray-900">Home</a></li>
+            <li><a href="/about" class="block text-gray-600 hover:text-gray-900">About</a></li>
+            <li><a href="/features" class="block text-gray-600 hover:text-gray-900">Features</a></li>
+            <li><a href="/contact" class="block text-gray-600 hover:text-gray-900">Contact</a></li>
+            </ul>
+        </div>
+        {/if}
     </header>
 
     <!-- Hero Section -->
@@ -51,7 +94,7 @@
         </div>
         <div class="flex items-center justify-center">
             <!-- Placeholder image – replace with a relevant graphic or screenshot -->
-            <img src="/path/to/mapit-ai-illustration.svg" alt="Mapit AI Illustration" class="max-w-full h-auto rounded shadow">
+            <img src="/images/mapit_logo_no_bg.png" alt="Mapit AI Illustration" class="max-w-full h-auto rounded shadow">
         </div>
         </div>
     </section>

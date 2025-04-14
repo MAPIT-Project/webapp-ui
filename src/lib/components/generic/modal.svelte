@@ -5,7 +5,7 @@
   import { writable } from 'svelte/store';
   import { fade, scale, fly } from 'svelte/transition';
   import { cubicIn, quartInOut } from 'svelte/easing';
-	import MainButton from './main-button.svelte';
+  import MainButton from '$lib/components/generic/main-button.svelte';
 
   export let isOpen: boolean;
   export let title: string;
@@ -13,12 +13,12 @@
   export let fullWidth = false;
   export let large = false;
   export let small = false;
-  export let borderBottomHeaderNone = true;
   export let includeHeader = true;
   export let includeFooter = true;
   export let rounded = true;
   export let background: string = "bg-white"
   export let disableOverFlowYAuto = false;
+  export let closeOnEscape = true;
 
   export let footer: Partial<{
     show: boolean;
@@ -29,6 +29,10 @@
 
   let data = writable<object>({});
   let show = writable(false);
+  let modalElement: HTMLElement;
+  let focusableElements: HTMLElement[] = [];
+  let firstFocusableElement: HTMLElement;
+  let lastFocusableElement: HTMLElement;
 
   /**
    * Sets the `show` variable to `true`, which opens the modal.
@@ -40,7 +44,57 @@
     show.set(true);
     document.body.style.paddingRight = `${window.innerWidth - document.body.clientWidth}px`;
     document.body.style.overflow = 'hidden';
+    
+    // Setup focus trap after rendering
+    setTimeout(setupFocusTrap, 50);
   };
+
+  /**
+   * Sets up focus trapping within the modal
+   */
+  function setupFocusTrap() {
+    if (!modalElement) return;
+    
+    focusableElements = Array.from(
+      modalElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+    ) as HTMLElement[];
+    
+    firstFocusableElement = focusableElements[0];
+    lastFocusableElement = focusableElements[focusableElements.length - 1];
+    
+    // Focus the first element
+    firstFocusableElement?.focus();
+  }
+
+  /**
+   * Handle keydown events for modal
+   */
+  function handleKeydown(e: KeyboardEvent) {
+    if (!isOpen) return;
+    
+    // Close on Escape key if enabled
+    if (e.key === 'Escape' && closeOnEscape) {
+      e.preventDefault();
+      close();
+      return;
+    }
+    
+    // Implement focus trapping with Tab key
+    if (e.key === 'Tab' && focusableElements.length > 0) {
+      // If shift + tab and on first element, go to last
+      if (e.shiftKey && document.activeElement === firstFocusableElement) {
+        e.preventDefault();
+        lastFocusableElement?.focus();
+      } 
+      // If tab and on last element, go to first
+      else if (!e.shiftKey && document.activeElement === lastFocusableElement) {
+        e.preventDefault();
+        firstFocusableElement?.focus();
+      }
+    }
+  }
 
   /**
    * Sets the `show` variable to `false`, which closes the modal.
@@ -83,6 +137,7 @@
   export { open };
 </script>
 
+<svelte:window on:keydown={handleKeydown} />
 
 {#if isOpen}
 <div class="absolute">
@@ -91,7 +146,7 @@
       id="modal-backdrop"
       class="fixed top-0 left-0 h-full w-full bg-black/50 overflow-hidden z-40"
       transition:fade={{ duration: 300 }}
-    />
+    ></div>
 
     <div class="fixed inset-0 z-[100] h-[100dvh]">
       <!--  overflow-y-auto   -->
@@ -100,6 +155,7 @@
         class="flex min-h-full items-{alignItems} item justify-center text-center"
       >
           <div
+            bind:this={modalElement}
             transition:scale={{ duration: 250, start: 0.7, opacity: 0, easing: quartInOut }}
             
             use:modalBackdropClick
@@ -124,6 +180,7 @@
               <button
                 class="absolute right-2 top-2 flex items-center justify-center h-9 w-9 rounded-full hover:bg-grey transition duration-300 ease-in-out"
                 on:click={() => close()}
+                aria-label="Close modal"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
