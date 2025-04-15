@@ -7,6 +7,7 @@
         addUserMessage, 
         addAIMessage, 
         getConversationMessages,
+        getAIResponse,
     } from "$lib/clients/conversationService";
     import {
         getCurrentClient
@@ -52,14 +53,18 @@
             const userMessage = await addUserMessage(conversation.id, userInput);
             
             if (userMessage) {
-                // Add the AI response (for now, just a simple placeholder response)
+                // Get AI response from the FastAPI demo endpoint
+                debugInfo = { ...debugInfo, action: "Getting AI response" };
+                const aiResponseText = await getAIResponse(userInput);
+                
+                // Add the AI response to the conversation
                 const aiResponse = await addAIMessage(
                     conversation.id, 
-                    "Example response message"
+                    aiResponseText
                 );
                 
                 // Redirect to the conversation page
-                goto(`/dashboard/${conversation.id}`);
+                goto(`/dashboard/conversations/${conversation.id}`);
             } else {
                 throw new Error("Failed to add message to conversation");
             }
@@ -80,11 +85,11 @@
 <div class="flex flex-col w-full rounded-lg border border-gray-700 bg-gray-800">
     <!-- Chat messages area -->
     <div class="h-[400px] overflow-y-auto p-4 flex flex-col space-y-4">
-        {#if messages.length === 0}
+        {#if messages.length === 0 && !isLoading}
             <div class="flex-1 flex items-center justify-center text-gray-500">
                 <p>Start a new conversation by typing a message below.</p>
             </div>
-        {:else}
+        {:else if messages.length > 0}
             {#each messages as message}
                 <div class="flex flex-col max-w-[80%] {message.sender === 'user' ? 'ml-auto' : 'mr-auto'}">
                     <div class="rounded-lg px-4 py-2 {getSenderClass(message.sender)}">
@@ -95,18 +100,18 @@
                     </span>
                 </div>
             {/each}
-            
-            {#if isLoading}
-                <div class="flex max-w-[80%] mr-auto">
-                    <div class="rounded-lg px-4 py-2 bg-gray-700 text-[#CACACA]">
-                        <div class="flex space-x-2">
-                            <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce"></div>
-                            <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.2s"></div>
-                            <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.4s"></div>
-                        </div>
+        {/if}
+        
+        {#if isLoading}
+            <div class="flex max-w-[80%] mr-auto">
+                <div class="rounded-lg px-4 py-2 bg-gray-700 text-[#CACACA]">
+                    <div class="flex space-x-2">
+                        <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce"></div>
+                        <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.2s"></div>
+                        <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.4s"></div>
                     </div>
                 </div>
-            {/if}
+            </div>
         {/if}
         
         {#if error}

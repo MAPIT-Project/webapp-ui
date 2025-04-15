@@ -98,6 +98,31 @@ export async function addAIMessage(conversationId: number, text: string): Promis
 }
 
 /**
+ * Get an AI response from the FastAPI demo endpoint
+ */
+export async function getAIResponse(question: string): Promise<string> {
+    try {
+        const response = await fetch('http://localhost:8000/api/demo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ question }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.answer;
+    } catch (error) {
+        console.error('Error fetching AI response:', error);
+        return "I'm sorry, I wasn't able to generate a response. Please try again later.";
+    }
+}
+
+/**
  * Get all messages for a specific conversation
  */
 export async function getConversationMessages(conversationId: number): Promise<Message[]> {

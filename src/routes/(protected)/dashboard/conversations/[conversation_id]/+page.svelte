@@ -4,7 +4,8 @@
     import { 
         getConversationMessages,
         addUserMessage,
-        addAIMessage
+        addAIMessage,
+        getAIResponse
     } from "$lib/clients/conversationService";
     import type { Message, Conversation } from "$lib/server/db/schema";
     import ChatSidebar from "../../components/chat-sidebar.svelte";
@@ -71,8 +72,11 @@
         error = null;
         
         try {
+            // Store the current input before clearing it
+            const currentInput = userInput;
+            
             // Add the user message
-            const userMessage = await addUserMessage(chatId, userInput);
+            const userMessage = await addUserMessage(chatId, currentInput);
             
             if (userMessage) {
                 messages = [...messages, userMessage];
@@ -81,20 +85,25 @@
             // Clear the input field
             userInput = "";
             
-            // Simulate AI thinking with a small delay
-            setTimeout(async () => {
-                // Add the AI response (for now, just a simple placeholder response)
+            // Get AI response from the FastAPI demo endpoint
+            try {
+                const aiResponseText = await getAIResponse(currentInput);
+                
+                // Add the AI response to the conversation
                 const aiResponse = await addAIMessage(
                     chatId, 
-                    "Example response message"
+                    aiResponseText
                 );
                 
                 if (aiResponse) {
                     messages = [...messages, aiResponse];
                 }
-                
+            } catch (aiError) {
+                console.error("Error getting AI response:", aiError);
+                error = "Failed to get AI response. Please try again.";
+            } finally {
                 isSending = false;
-            }, 1000);
+            }
             
         } catch (err) {
             error = err instanceof Error ? err.message : "An error occurred";
