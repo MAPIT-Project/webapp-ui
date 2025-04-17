@@ -6,6 +6,7 @@
 	import { supabase } from '$lib/clients/supabaseClient';
 	import { ensureClientExists } from "$lib/clients/clientService";
 	import { onMount } from "svelte";
+	import ApiModeToggle from "../components/api-mode-toggle.svelte";
 
 	
 	let clientLoading: boolean = $state(true);
@@ -33,14 +34,17 @@
 
 <div class="w-full min-h-screen h-full flex relative bg-gray-900">
     
-    
-    
     <!-- Chat sidebar -->
     <ChatSidebar />
     
     <!-- Main content -->
     <div class="flex-1 flex items-center justify-center relative">
 		<span class="text-[#CACACA] text-xs absolute left-4 top-4 z-10">AI Domain Expert Tool <span class="text-[0.5rem] font-bold ml-1">BETA</span> </span>
+        
+        <!-- API Mode Toggle -->
+        <div class="absolute right-4 top-4 z-10">
+            <ApiModeToggle />
+        </div>
     
         {#if clientLoading}
             <div class="w-full p-4 flex justify-center">

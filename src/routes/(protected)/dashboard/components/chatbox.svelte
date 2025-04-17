@@ -13,6 +13,8 @@
         getCurrentClient
     } from "$lib/clients/clientService";
     import type { Message } from "$lib/server/db/schema";
+    import { marked } from 'marked';
+    import DOMPurify from 'dompurify';
     
     // State variables
     let userInput = "";
@@ -80,6 +82,18 @@
             ? "bg-blue-600 text-white self-end" 
             : "bg-gray-700 text-[#CACACA] self-start";
     }
+
+    // Function to safely render markdown
+    function renderMarkdown(text: string): string {
+        try {
+            // Parse markdown and sanitize HTML
+            const parsed = marked.parse(text);
+            return DOMPurify.sanitize(parsed);
+        } catch (error) {
+            console.error('Error rendering markdown:', error);
+            return text;
+        }
+    }
 </script>
 
 <div class="flex flex-col w-full rounded-lg border border-gray-700 bg-gray-800">
@@ -93,7 +107,13 @@
             {#each messages as message}
                 <div class="flex flex-col max-w-[80%] {message.sender === 'user' ? 'ml-auto' : 'mr-auto'}">
                     <div class="rounded-lg px-4 py-2 {getSenderClass(message.sender)}">
-                        <p>{message.text}</p>
+                        {#if message.sender === 'user'}
+                            <p class="whitespace-pre-wrap">{message.text}</p>
+                        {:else}
+                            <div class="prose prose-invert prose-sm max-w-none">
+                                {@html renderMarkdown(message.text)}
+                            </div>
+                        {/if}
                     </div>
                     <span class="text-xs text-gray-500 mt-1 {message.sender === 'user' ? 'text-right' : 'text-left'}">
                         {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -144,3 +164,42 @@
         </form>
     </div>
 </div>
+
+<style>
+    /* Add styles for markdown content */
+    :global(.prose) {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    :global(.prose p) {
+        margin-bottom: 0.75rem;
+    }
+    
+    :global(.prose p:last-child) {
+        margin-bottom: 0;
+    }
+    
+    :global(.prose pre) {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        overflow-x: auto;
+    }
+    
+    :global(.prose code) {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.25rem;
+        font-family: monospace;
+    }
+    
+    :global(.prose ul, .prose ol) {
+        margin-left: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    :global(.prose li) {
+        margin-bottom: 0.25rem;
+    }
+</style>

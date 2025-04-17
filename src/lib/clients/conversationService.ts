@@ -1,6 +1,8 @@
 import { supabase } from './supabaseClient';
 import type { Conversation, Message } from '$lib/server/db/schema';
 import { getCurrentClient } from './clientService';
+import { get } from 'svelte/store';
+import { useDemo } from '$lib/stores/apiModeStore';
 
 /**
  * Create a new conversation for the current user
@@ -98,11 +100,15 @@ export async function addAIMessage(conversationId: number, text: string): Promis
 }
 
 /**
- * Get an AI response from the FastAPI demo endpoint
+ * Get an AI response from the API
  */
 export async function getAIResponse(question: string): Promise<string> {
     try {
-        const response = await fetch('http://localhost:8000/api/demo', {
+        // Check if we should use the demo endpoint
+        const isDemo = get(useDemo);
+        const endpoint = isDemo ? 'http://localhost:8000/api/demo' : 'http://localhost:8000/api/query';
+        
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
