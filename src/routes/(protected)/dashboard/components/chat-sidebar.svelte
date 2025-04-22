@@ -65,7 +65,7 @@
     }
 </script>
 
-<div class="w-64 min-h-screen h-full flex flex-col bg-gray-800 border-r border-gray-700 flex-shrink-0">
+<div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-gray-800 border-r border-gray-700 flex-shrink-0 overflow-hidden">
     <div class="p-4 border-b border-gray-700 flex justify-between items-center">
         <h2 class="text-lg font-medium text-[#CACACA]">Conversations</h2>
         <div class="flex gap-2">
@@ -86,7 +86,7 @@
         </div>
     </div>
     
-    <div class="flex-1 overflow-y-auto bg-gray-800">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-800">
         {#if $conversationStore.isLoading}
             <div class="flex justify-center items-center h-20">
                 <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>

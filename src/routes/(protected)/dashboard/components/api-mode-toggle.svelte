@@ -25,7 +25,7 @@
     <div class="relative group">
         <Icon name="info" class="h-4 w-4 cursor-help text-gray-500" />
         <div class="tooltip opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 
-                  absolute top-full mt-2 -right-32 bg-gray-900 border border-gray-700 rounded p-2 text-xs w-64 z-50 pointer-events-none shadow-lg">
+                  absolute mt-4 -right-2 bg-gray-900 border border-gray-700 rounded p-2 text-xs w-64 z-50 pointer-events-none shadow-lg">
             <p class="mb-1">Demo mode uses /api/demo endpoint which returns simulated responses without making actual CORDIS queries.</p>
             <p>Production mode uses /api/query endpoint which performs real searches against the CORDIS database.</p>
         </div>
