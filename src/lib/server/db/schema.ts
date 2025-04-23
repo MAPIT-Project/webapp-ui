@@ -1,13 +1,27 @@
-import { pgTable, varchar, timestamp, boolean, integer, numeric, text, char, bigint, jsonb, primaryKey, serial, pgEnum, uuid, decimal, date } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import {
+  pgTable,
+  varchar,
+  timestamp,
+  boolean,
+  integer,
+  numeric,
+  text,
+  serial,
+  uuid,
+  decimal,
+  date,
+  pgEnum
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
-// Create the sender enum type
+// Enums
 export const senderEnum = pgEnum('sender', ['ai', 'user', 'system']);
+export const roleEnum = pgEnum('role', ['owner', 'admin', 'member']);
 
 // Client table
 export const client = pgTable('client', {
   id: serial('id').primaryKey(),
-  // Add a auth_id column that links to Supabase auth.users.id
+    // Add a auth_id column that links to Supabase auth.users.id
   authId: uuid('auth_id').unique().notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(),
@@ -16,42 +30,82 @@ export const client = pgTable('client', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const clientRelations = relations(client, ({ many }) => ({
+  conversations: many(conversation),
+  collaborations: many(clientCollaboration),
+}));
+
 // Conversation table
 export const conversation = pgTable('conversation', {
   id: serial('id').primaryKey(),
-  userId: serial('user_id').references(() => client.id).notNull(),
+  userId: integer('user_id').references(() => client.id).notNull(),
   topic: varchar('topic', { length: 255 }),
   name: varchar('name', { length: 255 }),
+  archived: boolean('archived').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const conversationRelations = relations(conversation, ({ one, many }) => ({
+  user: one(client, {
+    fields: [conversation.userId],
+    references: [client.id],
+  }),
+  messages: many(message),
+}));
 
 // Message table
 export const message = pgTable('message', {
   id: serial('id').primaryKey(),
-  conversationId: serial('conversation_id').references(() => conversation.id).notNull(),
+  conversationId: integer('conversation_id').references(() => conversation.id).notNull(),
   text: text('text').notNull(),
-  sender: varchar('sender', { length: 50 }).notNull(), // Using varchar instead of enum as noted in diagram
+  sender: varchar('sender', { length: 50 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Define types based on the schema for TypeScript
-export type Client = typeof client.$inferSelect;
-export type NewClient = typeof client.$inferInsert;
+export const messageRelations = relations(message, ({ one }) => ({
+  conversation: one(conversation, {
+    fields: [message.conversationId],
+    references: [conversation.id],
+  }),
+}));
 
-export type Conversation = typeof conversation.$inferSelect;
-export type NewConversation = typeof conversation.$inferInsert;
+// Collaboration table
+export const collaboration = pgTable('collaboration', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
-export type Message = typeof message.$inferSelect;
-export type NewMessage = typeof message.$inferInsert;
+export const collaborationRelations = relations(collaboration, ({ many }) => ({
+  clients: many(clientCollaboration),
+}));
 
+// ClientCollaboration (join table)
+export const clientCollaboration = pgTable('client_collaboration', {
+  id: serial('id').primaryKey(),
+  collaborationId: integer('collaboration_id').references(() => collaboration.id).notNull(),
+  clientId: integer('client_id').references(() => client.id).notNull(),
+  role: roleEnum('role').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
+export const clientCollaborationRelations = relations(clientCollaboration, ({ one }) => ({
+  client: one(client, {
+    fields: [clientCollaboration.clientId],
+    references: [client.id],
+  }),
+  collaboration: one(collaboration, {
+    fields: [clientCollaboration.collaborationId],
+    references: [collaboration.id],
+  }),
+}));
 
-
-
-// 
-
+// Organizations
 export const organizations = pgTable('organizations', {
   projectID: integer('projectID').notNull(),
   projectAcronym: text('projectAcronym'),
@@ -80,8 +134,9 @@ export const organizations = pgTable('organizations', {
   active: boolean('active'),
 });
 
+// Projects
 export const projects = pgTable('projects', {
-  id: integer('id').primaryKey(), // numeric project ID
+  id: integer('id').primaryKey(),
   acronym: text('acronym'),
   status: text('status'),
   title: text('title'),
