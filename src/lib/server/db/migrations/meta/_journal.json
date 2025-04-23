@@ -29,6 +29,13 @@
       "when": 1745409200259,
       "tag": "0003_complete_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1745446485028,
+      "tag": "0004_lowly_vargas",
+      "breakpoints": true
     }
   ]
 }

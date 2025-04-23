@@ -41,6 +41,7 @@ export const conversation = pgTable('conversation', {
   userId: integer('user_id').references(() => client.id).notNull(),
   topic: varchar('topic', { length: 255 }),
   name: varchar('name', { length: 255 }),
+  collaborationId: integer('collaboration_id').references(() => collaboration.id),
   archived: boolean('archived').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -50,6 +51,10 @@ export const conversationRelations = relations(conversation, ({ one, many }) => 
   user: one(client, {
     fields: [conversation.userId],
     references: [client.id],
+  }),
+  collaboration: one(collaboration, {
+    fields: [conversation.collaborationId],
+    references: [collaboration.id],
   }),
   messages: many(message),
 }));
@@ -82,6 +87,7 @@ export const collaboration = pgTable('collaboration', {
 
 export const collaborationRelations = relations(collaboration, ({ many }) => ({
   clients: many(clientCollaboration),
+  conversations: many(conversation),
 }));
 
 // ClientCollaboration (join table)
