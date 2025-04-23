@@ -41,6 +41,11 @@ import { page } from "$app/stores";
             'name': 'Consortium',
             'icon': 'groups',
             'url': '/consortium'
+        },
+        {
+            'name': 'Collaborations',
+            'icon': 'work',
+            'url': '/collaborations'
         }
     ]
 
