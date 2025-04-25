@@ -77,7 +77,7 @@ async function handleDeleteCollaboration(event: CustomEvent<{id: string}>) {
         
         if (success) {
             // Remove the deleted collaboration from the list
-            collaborations = collaborations.filter(collab => collab.id !== id);
+            collaborations = collaborations.filter(collab => collab.id !== Number(id));
         } else {
             error = 'Failed to delete collaboration. You might not have permission.';
         }
@@ -142,7 +142,7 @@ function handleCollabClick(event: CustomEvent<{id: string}>) {
     closeOnEscape={true}
     background="bg-[#1E1E1E]"
 >
-    <div slot="content" class="p-4 flex flex-col gap-6 w-full max-w-md">
+    <div slot="content" class="p-4 flex flex-col gap-6 w-full">
         <div class="flex flex-col gap-3">
             <label for="collab-title" class="text-sm font-medium text-gray-300">Title</label>
             <div class="relative">
