@@ -1,10 +1,9 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import Modal from '$lib/components/generic/modal.svelte';
-import MainButton from '$lib/components/generic/main-button.svelte';
 import type { Collaboration } from '$lib/types/schema';
-import { createCollaboration, getUserCollaborations } from '$lib/clients/collaborationService';
-	import CollabTile from './components/collab-tile.svelte';
+import { createCollaboration, getUserCollaborations, deleteCollaboration } from '$lib/clients/collaborationService';
+import CollabTile from './components/collab-tile.svelte';
 
 let collaborations: Collaboration[] = [];
 let isModalOpen = false;
@@ -49,7 +48,14 @@ async function addCollaboration() {
         const collaboration = await createCollaboration(newTitle.trim(), newDescription.trim() || null);
         
         if (collaboration) {
-            collaborations = [collaboration, ...collaborations];
+            // Add necessary properties to match the structure of collaborations from getUserCollaborations
+            const enhancedCollaboration = {
+                ...collaboration,
+                collaboratorsCount: 1, // Start with 1 (just the creator)
+                client_collaboration: [{ role: 'owner' }] // Add the client_collaboration with owner role
+            };
+            
+            collaborations = [enhancedCollaboration, ...collaborations];
             closeModal();
         } else {
             error = 'Failed to create collaboration. Please try again.';
@@ -58,6 +64,35 @@ async function addCollaboration() {
         console.error('Error creating collaboration:', err);
         error = 'An error occurred while creating the collaboration.';
     }
+}
+
+async function handleDeleteCollaboration(event: CustomEvent<{id: string}>) {
+    const { id } = event.detail;
+    
+    try {
+        isLoading = true;
+        error = null;
+        
+        const success = await deleteCollaboration(id);
+        
+        if (success) {
+            // Remove the deleted collaboration from the list
+            collaborations = collaborations.filter(collab => collab.id !== id);
+        } else {
+            error = 'Failed to delete collaboration. You might not have permission.';
+        }
+    } catch (err) {
+        console.error('Error deleting collaboration:', err);
+        error = 'An error occurred while deleting the collaboration.';
+    } finally {
+        isLoading = false;
+    }
+}
+
+function handleCollabClick(event: CustomEvent<{id: string}>) {
+    const { id } = event.detail;
+    // In the future, this could navigate to the collaboration details page
+    console.log('Collaboration clicked:', id);
 }
 </script>
 
@@ -76,12 +111,15 @@ async function addCollaboration() {
                 <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             </div>
         {:else}
-            
             {#each collaborations as collab}
                 <CollabTile 
+                    id={collab.id}
                     title={collab.name} 
                     description={collab.description} 
-                    collaboratorsCount={collab.collaboratorsCount} 
+                    collaboratorsCount={collab.collaboratorsCount}
+                    isOwner={collab.client_collaboration?.some(cc => cc.role === 'owner') ?? false}
+                    on:delete={handleDeleteCollaboration}
+                    on:click={handleCollabClick}
                 />
             {/each}
             <!-- Add new collaboration tile -->

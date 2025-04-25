@@ -90,3 +90,63 @@ export async function getUserCollaborations(): Promise<Collaboration[]> {
         return [];
     }
 }
+
+/**
+ * Delete a collaboration if the current user is the owner
+ */
+export async function deleteCollaboration(collaborationId: string): Promise<boolean> {
+    try {
+        const client = await getCurrentClient();
+        
+        if (!client) {
+            console.error('Cannot delete collaboration: No authenticated client found');
+            return false;
+        }
+        
+        // First, check if the user is the owner of the collaboration
+        const { data: membership, error: membershipError } = await supabase
+            .from('client_collaboration')
+            .select('role')
+            .eq('collaboration_id', collaborationId)
+            .eq('client_id', client.id)
+            .single();
+            
+        if (membershipError || !membership) {
+            console.error('Error checking collaboration membership:', membershipError);
+            return false;
+        }
+        
+        // Only owners can delete collaborations
+        if (membership.role !== 'owner') {
+            console.error('Cannot delete collaboration: User is not the owner');
+            return false;
+        }
+        
+        // First delete all client_collaboration records for this collaboration
+        const { error: deleteCollabMembersError } = await supabase
+            .from('client_collaboration')
+            .delete()
+            .eq('collaboration_id', collaborationId);
+            
+        if (deleteCollabMembersError) {
+            console.error('Error deleting collaboration memberships:', deleteCollabMembersError);
+            return false;
+        }
+        
+        // Now that references are removed, delete the collaboration
+        const { error: deleteError } = await supabase
+            .from('collaboration')
+            .delete()
+            .eq('id', collaborationId);
+            
+        if (deleteError) {
+            console.error('Error deleting collaboration:', deleteError);
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Unexpected error deleting collaboration:', error);
+        return false;
+    }
+}
