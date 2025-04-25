@@ -316,3 +316,26 @@ async function retryClientLookupAfterConflict(userId: string, userEmail: string)
     
     return null;
 }
+
+/**
+ * Get client details by auth ID
+ */
+export async function getClientByAuthId(authId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('client')
+      .select('*')
+      .eq('auth_id', authId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching client:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Unexpected error fetching client:', error);
+    return null;
+  }
+}

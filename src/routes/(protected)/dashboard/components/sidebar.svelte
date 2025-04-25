@@ -33,18 +33,23 @@ import { page } from "$app/stores";
 
     const sideBarItems = [
         {
+            'name': 'Home',
+            'icon': 'home',
+            'url': '/'
+        },
+        {
             'name': 'Conversations',
             'icon': 'chat_bubble',
             'url': '/conversations'
         },
         {
             'name': 'Consortium',
-            'icon': 'groups',
+            'icon': 'public',
             'url': '/consortium'
         },
         {
             'name': 'Collaborations',
-            'icon': 'work',
+            'icon': 'groups',
             'url': '/collaborations'
         }
     ]

@@ -3,12 +3,12 @@
 	import { sidebarExpanded } from '$lib/stores/sidebarStore';
 	import { onMount } from "svelte";
 	import { user } from '$lib/stores/sessionStore';
+	import { profileStore } from '$lib/stores/profileStore';
 	import { supabase } from '$lib/clients/supabaseClient';
-	import { ensureClientExists } from "$lib/clients/clientService";
+	import { ensureClientExists, getClientByAuthId } from "$lib/clients/clientService";
 	import Icon from "$lib/components/generic/icon.svelte";
 
 	let { children } = $props();
-
 	let sidebarWidth: number = $state(250);
 
 	function updateWidth(width: number) {
@@ -23,6 +23,33 @@
 	let clientLoading = true;
 	let clientError = null;
 
+	// Load user profile data
+	async function loadUserProfile() {
+		if (!$user?.id) return;
+		
+		try {
+			profileStore.setLoading(true);
+			const client = await getClientByAuthId($user.id);
+			
+			if (client) {
+				profileStore.setProfile({
+					id: client.id,
+					name: client.name,
+					email: client.email,
+					loading: false,
+					error: null
+				});
+			} else {
+				profileStore.setError('Failed to load user profile');
+			}
+		} catch (err) {
+			console.error("Error loading user profile:", err);
+			profileStore.setError('Error loading user profile');
+		} finally {
+			profileStore.setLoading(false);
+		}
+	}
+
 	// Create client record if one doesn't exist
 	onMount(async () => {
 	    if ($user) {
@@ -31,6 +58,9 @@
 	            if (!client) {
 	                console.error("Failed to create or find client record");
 	                clientError = "Failed to initialize user data";
+	            } else {
+	                // Load user profile information
+	                await loadUserProfile();
 	            }
 	        } catch (err) {
 	            console.error("Error during client initialization:", err);
@@ -41,7 +71,6 @@
 	    }
 	});
 </script>
-
 
 <div id="teleport-container"></div>
 
