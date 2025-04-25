@@ -16,7 +16,7 @@
   export let includeHeader = true;
   export let includeFooter = true;
   export let rounded = true;
-  export let background: string = "bg-white"
+  export let background: string = "bg-white";
   export let disableOverFlowYAuto = false;
   export let closeOnEscape = true;
 
@@ -175,23 +175,21 @@
 
             {#if includeHeader}
             <header
-              class="flex px-6 items-center flex-col gap-1 items-center justify-center shrink-0 relative rounded-t-xl w-full border-b-[1px] border-gray-400/60"
+              class="flex px-6 items-center flex-col gap-1 items-center justify-center shrink-0 relative rounded-t-xl w-full border-b-[1px] border-gray-600/60"
             >
               <button
-                class="absolute right-2 top-2 flex items-center justify-center h-9 w-9 rounded-full hover:bg-grey transition duration-300 ease-in-out"
+                class="absolute right-2 top-2 flex items-center justify-center h-9 w-9 rounded-full hover:bg-[#2A2A2A] transition duration-300 ease-in-out text-gray-300"
                 on:click={() => close()}
                 aria-label="Close modal"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
-              
-
               </button>
 
-              <span class="text-xl p-3 font-semibold">{title}</span>
+              <span class="text-xl p-3 font-semibold text-gray-100">{title}</span>
               {#if subtitle}
-                <p class="text-sm text-center font-pnregular text-grey-darker-7">{subtitle}</p>
+                <p class="text-sm text-center font-pnregular text-gray-300">{subtitle}</p>
               {/if}
             </header>
             {/if}

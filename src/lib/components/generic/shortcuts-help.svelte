@@ -117,32 +117,33 @@
     subtitle="Boost your productivity with these shortcuts"
     on:cancel={handleModalClose}
     closeOnEscape={true}
+    background="bg-[#1E1E1E]"
   >
-    <div slot="content" class="max-h-96 overflow-y-auto pr-2 text-black">
+    <div slot="content" class="max-h-96 overflow-y-auto pr-2 text-white">
       {#if Object.keys(shortcutsByCategory).length === 0}
-        <p class="text-center text-gray-600 py-4">No keyboard shortcuts are currently registered.</p>
+        <p class="text-center text-gray-400 py-4">No keyboard shortcuts are currently registered.</p>
       {:else}
         {#each Object.entries(shortcutsByCategory) as [category, shortcuts]}
           <div class="mb-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-3">{category}</h3>
-            <div class="bg-gray-50 rounded-lg overflow-hidden">
-              <table class="min-w-full divide-y divide-gray-200">
-                <tbody class="divide-y divide-gray-200">
+            <h3 class="text-lg font-medium text-gray-200 mb-3">{category}</h3>
+            <div class="bg-[#2A2A2A] rounded-lg overflow-hidden">
+              <table class="min-w-full divide-y divide-[#444444]">
+                <tbody class="divide-y divide-[#444444]">
                   {#each shortcuts as shortcut}
                     <tr>
                       <td class="px-4 py-3 text-sm">
                         <div class="flex flex-wrap gap-1">
                           {#each formatKey(shortcut.key).split(' + ') as keyPart, i}
-                            <kbd class="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">
+                            <kbd class="px-2 py-1 text-xs font-semibold text-gray-200 bg-[#343541] border border-[#565869] rounded-md">
                               {keyPart}
                             </kbd>
                             {#if i < formatKey(shortcut.key).split(' + ').length - 1}
-                              <span class="self-center">+</span>
+                              <span class="self-center text-gray-400">+</span>
                             {/if}
                           {/each}
                         </div>
                       </td>
-                      <td class="px-4 py-3 text-sm text-gray-700">
+                      <td class="px-4 py-3 text-sm text-gray-300">
                         {shortcut.description}
                       </td>
                     </tr>
@@ -157,7 +158,7 @@
     
     <div slot="footer" class="flex justify-end">
       <button 
-        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        class="px-4 py-2 bg-[#343541] text-white rounded-md hover:bg-[#444654] focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
         on:click={handleModalClose}
       >
         Close
