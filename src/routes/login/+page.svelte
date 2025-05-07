@@ -54,7 +54,7 @@
         <!-- Logo placeholder - replace with actual logo -->
         <div class="flex justify-center mb-6">
             <div class="h-12 w-12 bg-gray-700 rounded-full flex items-center justify-center">
-                <Icon name="brain" class="text-[#CACACA] h-8 w-8" />
+                <Icon name="psychology" class="text-[#CACACA] h-8 w-8" />
             </div>
         </div>
         
@@ -105,7 +105,7 @@
                         class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#CACACA] hover:text-white"
                         on:click={() => showPassword = !showPassword}
                     >
-                        <Icon name={showPassword ? "eye-off" : "eye"} class="h-5 w-5" />
+                        <Icon name={showPassword ? "visibility_off" : "visibility"} class="h-5 w-5" />
                     </button>
                 </div>
             </div>

@@ -54,6 +54,16 @@ import { page } from "$app/stores";
         }
     ]
 
+    // Helper function to determine if a menu item should be highlighted
+    function isActive(url: string): boolean {
+        if (url === '/') {
+            // For home, only highlight when exactly on /dashboard
+            return $page.url.pathname === '/dashboard';
+        }
+        // For other items, check if the URL contains the path
+        return $page.url.pathname.includes(url);
+    }
+
     const handleNavigation = (url: string) => {
         return (e: MouseEvent) => {
             e.preventDefault();
@@ -77,7 +87,7 @@ import { page } from "$app/stores";
 
         <div class="flex flex-col gap-2">
             {#each sideBarItems as item}
-                <div class="w-full py-3 px-4 rounded-sm {$page.url.pathname.includes(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#28282A]'}">
+                <div class="w-full py-3 px-4 rounded-sm {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#28282A]'}">
                     <a href={item.url} onclick={handleNavigation(item.url)} class="p-0 h-6 text-[#F5F5F5] flex gap-4 items-center no-underline">
                         <Icon 
                             name={item.icon}
@@ -102,7 +112,7 @@ import { page } from "$app/stores";
         <div class="flex flex-col gap-4 w-full">
             {#each sideBarItems as item}
                 <a href={item.url} onclick={handleNavigation(item.url)} 
-                   class="p-2 py-6 h-6 text-[#F5F5F5] rounded-sm -mx-1 flex items-center justify-center w-[calc(100%+8px)] no-underline {$page.url.pathname.includes(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#28282A]'}">
+                   class="p-2 py-6 h-6 text-[#F5F5F5] rounded-sm -mx-1 flex items-center justify-center w-[calc(100%+8px)] no-underline {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#28282A]'}">
                     <Icon name={item.icon} />
                 </a>
             {/each}

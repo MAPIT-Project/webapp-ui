@@ -23,9 +23,10 @@
     }, 100);
   });
 
-  // Use the value from the profile store
+  // Use only the first name from the profile store for a more personal greeting
   $: userName = $profileStore.loading ? 'User' : 
-                $profileStore.name || $profileStore.email?.split('@')[0] || 'User';
+                $profileStore.firstName ? $profileStore.firstName :
+                $profileStore.email?.split('@')[0] || 'User';
 </script>
 
 <div class="p-6 max-w-5xl mx-auto">

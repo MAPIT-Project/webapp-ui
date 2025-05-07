@@ -2,7 +2,8 @@ import { writable } from 'svelte/store';
 
 interface UserProfile {
   id: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   loading: boolean;
   error: string | null;
@@ -11,7 +12,8 @@ interface UserProfile {
 // Initial state with loading flag
 const initialState: UserProfile = {
   id: 0,
-  name: '',
+  firstName: '',
+  lastName: '',
   email: '',
   loading: true,
   error: null

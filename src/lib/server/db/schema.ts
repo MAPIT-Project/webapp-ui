@@ -25,7 +25,8 @@ export const client = pgTable('client', {
   authId: uuid('auth_id').unique().notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
+  firstName: varchar('first_name', { length: 255 }).notNull(),
+  lastName: varchar('last_name', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

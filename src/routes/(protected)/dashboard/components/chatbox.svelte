@@ -1,205 +1,117 @@
 <script lang="ts">
+    import { createConversation } from "$lib/clients/conversationService";
     import { goto } from "$app/navigation";
     import Icon from "$lib/components/generic/icon.svelte";
-    import { onMount } from "svelte";
-    import { 
-        createConversation, 
-        addUserMessage, 
-        addAIMessage, 
-        getConversationMessages,
-        getAIResponse,
-    } from "$lib/clients/conversationService";
-    import {
-        getCurrentClient
-    } from "$lib/clients/clientService";
-    import type { Message } from "$lib/server/db/schema";
-    import { marked } from 'marked';
-    import DOMPurify from 'dompurify';
     
-    // State variables
-    let userInput = "";
-    let messages: Message[] = [];
-    let activeConversationId: number | null = null;
-    let isLoading = false;
-    let error: string | null = null;
-    let debug = false;
-    let debugInfo = null;
+    let userInput = $state("");
+    let isProcessing = $state(false);
+    let error = $state<string | null>(null);
     
-    // Process the user message and get AI response
     async function handleSubmit() {
-        if (!userInput.trim()) return;
+        if (!userInput.trim() || isProcessing) return;
         
-        isLoading = true;
         error = null;
-        debugInfo = null;
+        isProcessing = true;
         
         try {
-            // Get client info first to verify it exists
-            const clientInfo = await getCurrentClient();
+            const currentInput = userInput;
+            userInput = ""; // Clear input right away for better UX
             
-            if (!clientInfo) {
-                debugInfo = "Failed to get client info - user not properly linked to a client record";
-                throw new Error("User account not properly set up. Please try logging out and in again.");
-            }
-            
-            // Create a new conversation
-            debugInfo = { action: "Creating conversation", clientId: clientInfo.id };
-            
-            const conversation = await createConversation(userInput);
+            // Create a new conversation with the user message
+            const conversation = await createConversation(currentInput);
             
             if (!conversation) {
-                throw new Error("Failed to create conversation. Please try again.");
+                throw new Error("Failed to create conversation");
             }
             
-            // Add the user message
-            const userMessage = await addUserMessage(conversation.id, userInput);
+            // Navigate to the new conversation page
+            goto(`/dashboard/conversations/${conversation.id}`);
             
-            if (userMessage) {
-                // Get AI response from the FastAPI demo endpoint
-                debugInfo = { ...debugInfo, action: "Getting AI response" };
-                const aiResponseText = await getAIResponse(userInput);
-                
-                // Add the AI response to the conversation
-                const aiResponse = await addAIMessage(
-                    conversation.id, 
-                    aiResponseText
-                );
-                
-                // Redirect to the conversation page
-                goto(`/dashboard/conversations/${conversation.id}`);
-            } else {
-                throw new Error("Failed to add message to conversation");
-            }
         } catch (err) {
-            error = err instanceof Error ? err.message : "An error occurred";
-            isLoading = false;
-            console.error("Chat error:", err, debugInfo);
+            console.error("Error creating conversation:", err);
+            error = err instanceof Error ? err.message : "Failed to create conversation";
+            isProcessing = false;
         }
     }
     
-    function getSenderClass(sender: string) {
-        return sender === 'user' 
-            ? "bg-blue-600 text-white self-end" 
-            : "bg-gray-700 text-[#CACACA] self-start";
-    }
-
-    // Function to safely render markdown
-    function renderMarkdown(text: string): string {
-        try {
-            // Parse markdown and sanitize HTML
-            const parsed = marked.parse(text);
-            return DOMPurify.sanitize(parsed);
-        } catch (error) {
-            console.error('Error rendering markdown:', error);
-            return text;
+    // Example conversation starters
+    const examples = [
+        {
+            icon: "science",
+            text: "Tell me about funding opportunities in clean energy research",
+            shade: "dark"
+        },
+        {
+            icon: "health_and_safety",
+            text: "What are the latest trends in AI for healthcare?",
+            shade: "medium"
+        },
+        {
+            icon: "eco",
+            text: "Help me draft a proposal outline for sustainable agriculture",
+            shade: "dark"
+        },
+        {
+            icon: "public",
+            text: "What EU programs focus on climate change mitigation?",
+            shade: "medium"
         }
+    ];
+    
+    function startWithExample(text: string) {
+        userInput = text;
+        handleSubmit();
     }
 </script>
 
-<div class="flex flex-col w-full rounded-lg border border-gray-700 bg-gray-800">
-    <!-- Chat messages area -->
-    <div class="h-[400px] overflow-y-auto p-4 flex flex-col space-y-4">
-        {#if messages.length === 0 && !isLoading}
-            <div class="flex-1 flex items-center justify-center text-gray-500">
-                <p>Start a new conversation by typing a message below.</p>
-            </div>
-        {:else if messages.length > 0}
-            {#each messages as message}
-                <div class="flex flex-col max-w-[80%] {message.sender === 'user' ? 'ml-auto' : 'mr-auto'}">
-                    <div class="rounded-lg px-4 py-2 {getSenderClass(message.sender)}">
-                        {#if message.sender === 'user'}
-                            <p class="whitespace-pre-wrap">{message.text}</p>
-                        {:else}
-                            <div class="prose prose-invert prose-sm max-w-none">
-                                {@html renderMarkdown(message.text)}
-                            </div>
-                        {/if}
-                    </div>
-                    <span class="text-xs text-gray-500 mt-1 {message.sender === 'user' ? 'text-right' : 'text-left'}">
-                        {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                </div>
-            {/each}
-        {/if}
-        
-        {#if isLoading}
-            <div class="flex max-w-[80%] mr-auto">
-                <div class="rounded-lg px-4 py-2 bg-gray-700 text-[#CACACA]">
-                    <div class="flex space-x-2">
-                        <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce"></div>
-                        <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.2s"></div>
-                        <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.4s"></div>
-                    </div>
-                </div>
-            </div>
-        {/if}
-        
-        {#if error}
-            <div class="bg-red-900/50 border border-red-700 text-red-300 p-3 rounded-lg w-full">
-                <p>{error}</p>
-                {#if debugInfo && debug}
-                    <pre class="mt-2 text-xs overflow-x-auto">{JSON.stringify(debugInfo, null, 2)}</pre>
-                {/if}
-            </div>
-        {/if}
-    </div>
-    
-    <!-- Input area -->
-    <div class="border-t border-gray-700 p-4">
-        <form on:submit|preventDefault={handleSubmit} class="flex items-center gap-2">
+<div class="w-full max-w-[800px]">
+    <form 
+        on:submit|preventDefault={handleSubmit}
+        class="relative mb-8"
+    >
+        <div class="relative shadow-lg rounded-lg overflow-hidden">
             <input
                 type="text"
                 bind:value={userInput}
-                placeholder="Type a message..."
-                class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-[#CACACA] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
+                placeholder="Send a message..."
+                class="w-full px-5 py-4 pr-14 bg-[#383842] border border-[#4A4A57]/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#525252]/70 transition-all"
+                disabled={isProcessing}
             />
             <button
                 type="submit"
-                class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                disabled={isLoading || !userInput.trim()}
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#A0A0A8] hover:text-white p-2 rounded-md disabled:opacity-50 transition-colors"
+                disabled={isProcessing || !userInput.trim()}
             >
-                <Icon name="send" class="h-5 w-5" />
+                <Icon name="send" iconSize="small" class="text-current" />
             </button>
-        </form>
+        </div>
+    </form>
+    
+    {#if error}
+        <div class="bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg mb-6 shadow-lg">
+            <div class="flex">
+                <div class="flex-shrink-0 mr-3">
+                    <Icon name="error" iconSize="small" class="text-red-400" />
+                </div>
+                <p>{error}</p>
+            </div>
+        </div>
+    {/if}
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {#each examples as example, i}
+            <button 
+                on:click={() => startWithExample(example.text)}
+                class="bg-[#343541] hover:bg-[#3E3E48] text-white p-5 rounded-lg text-left border border-[#4A4A57]/30 hover:border-[#4A4A57]/80 transition-all shadow-md group"
+                disabled={isProcessing}
+            >
+                <div class="flex items-start">
+                    <div class="{example.shade === 'dark' ? 'bg-[#525252]' : 'bg-[#606060]'} p-1.5 rounded-md mr-3 flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <Icon name={example.icon} iconSize="small" class="text-white" />
+                    </div>
+                    <span class="pt-0.5">{example.text}</span>
+                </div>
+            </button>
+        {/each}
     </div>
 </div>
-
-<style>
-    /* Add styles for markdown content */
-    :global(.prose) {
-        font-size: 0.9rem;
-        line-height: 1.5;
-    }
-    
-    :global(.prose p) {
-        margin-bottom: 0.75rem;
-    }
-    
-    :global(.prose p:last-child) {
-        margin-bottom: 0;
-    }
-    
-    :global(.prose pre) {
-        background-color: rgba(0, 0, 0, 0.2);
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        overflow-x: auto;
-    }
-    
-    :global(.prose code) {
-        background-color: rgba(0, 0, 0, 0.2);
-        padding: 0.1rem 0.3rem;
-        border-radius: 0.25rem;
-        font-family: monospace;
-    }
-    
-    :global(.prose ul, .prose ol) {
-        margin-left: 1.5rem;
-        margin-bottom: 0.75rem;
-    }
-    
-    :global(.prose li) {
-        margin-bottom: 0.25rem;
-    }
-</style>

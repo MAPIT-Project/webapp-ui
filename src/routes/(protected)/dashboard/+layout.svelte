@@ -34,7 +34,8 @@
 			if (client) {
 				profileStore.setProfile({
 					id: client.id,
-					name: client.name,
+					firstName: client.first_name,
+					lastName: client.last_name,
 					email: client.email,
 					loading: false,
 					error: null

@@ -49,8 +49,8 @@ export async function createClient(name: string) {
 /**
  * Create a new client record with specific userId (used during registration)
  */
-export async function createClientWithUserId(userId: string, email: string, name: string) {
-    console.log('Creating client with specific auth_id:', { userId, email, name });
+export async function createClientWithUserId(userId: string, email: string, firstName: string, lastName: string) {
+    console.log('Creating client with specific auth_id:', { userId, email, firstName, lastName });
     
     // First check if client already exists with this auth_id
     const { data: existingClient } = await supabase
@@ -74,10 +74,14 @@ export async function createClientWithUserId(userId: string, email: string, name
     if (existingByEmail) {
         console.log('Client exists with this email, updating auth_id:', existingByEmail);
         
-        // Update auth_id for this client
+        // Update auth_id and names for this client
         const { data: updated, error: updateError } = await supabase
             .from('client')
-            .update({ auth_id: userId })
+            .update({ 
+                auth_id: userId,
+                first_name: firstName,
+                last_name: lastName
+            })
             .eq('id', existingByEmail.id)
             .select()
             .single();
@@ -96,7 +100,8 @@ export async function createClientWithUserId(userId: string, email: string, name
         .insert([{
             auth_id: userId,
             email: email,
-            name: name,
+            first_name: firstName,
+            last_name: lastName,
             password: 'password_not_used' // Using Supabase auth
         }])
         .select()
@@ -112,7 +117,8 @@ export async function createClientWithUserId(userId: string, email: string, name
             .insert([{
                 auth_id: userId,
                 email: email,
-                name: `${name}_${timestamp}`,
+                first_name: firstName,
+                last_name: lastName,
                 password: 'password_not_used'
             }])
             .select()
@@ -133,7 +139,7 @@ export async function createClientWithUserId(userId: string, email: string, name
 /**
  * Check if client exists for the authenticated user, if not create one
  */
-export async function ensureClientExists(name?: string) {
+export async function ensureClientExists(firstName?: string, lastName?: string) {
     try {
         const { data: authData } = await supabase.auth.getSession();
         
@@ -178,9 +184,15 @@ export async function ensureClientExists(name?: string) {
             console.log('Found existing client by email:', existingClientByEmail);
             
             // Update the auth_id to match the current user
+            const updateData: any = { auth_id: userId };
+            
+            // Only update names if provided
+            if (firstName) updateData.first_name = firstName;
+            if (lastName) updateData.last_name = lastName;
+            
             const { data: updatedClient, error: updateError } = await supabase
                 .from('client')
-                .update({ auth_id: userId })
+                .update(updateData)
                 .eq('id', existingClientByEmail.id)
                 .select()
                 .single();
@@ -196,9 +208,10 @@ export async function ensureClientExists(name?: string) {
         }
         
         // If no client found by either method, create a new one
-        const defaultName = name || userEmail.split('@')[0] || 'New User';
+        const defaultFirstName = firstName || userEmail.split('@')[0] || 'New';
+        const defaultLastName = lastName || 'User';
         
-        console.log('Creating new client for auth user:', { userId, userEmail, defaultName });
+        console.log('Creating new client for auth user:', { userId, userEmail, defaultFirstName, defaultLastName });
         
         // Try a raw SQL query to find any client with matching email regardless of case
         const { data: existingClients, error: rawQueryError } = await supabase
@@ -215,10 +228,14 @@ export async function ensureClientExists(name?: string) {
             if (matchingClient) {
                 console.log('Found existing client via case-insensitive check:', matchingClient);
                 
-                // Update the auth_id
+                // Update the auth_id and names if provided
+                const updateData: any = { auth_id: userId };
+                if (firstName) updateData.first_name = firstName;
+                if (lastName) updateData.last_name = lastName;
+                
                 const { data: updatedClient, error: updateError } = await supabase
                     .from('client')
-                    .update({ auth_id: userId })
+                    .update(updateData)
                     .eq('id', matchingClient.id)
                     .select()
                     .single();
@@ -240,7 +257,8 @@ export async function ensureClientExists(name?: string) {
                 .insert([{
                     auth_id: userId,
                     email: userEmail,
-                    name: defaultName,
+                    first_name: defaultFirstName,
+                    last_name: defaultLastName,
                     password: 'password_not_used' // Using Supabase auth
                 }])
                 .select()
@@ -252,7 +270,7 @@ export async function ensureClientExists(name?: string) {
                 // Special handling for duplicate email
                 if (insertError.code === '23505' && insertError.message.includes('client_email_unique')) {
                     // Retry with a direct SQL approach to find the conflicting client
-                    return await retryClientLookupAfterConflict(userId, userEmail);
+                    return await retryClientLookupAfterConflict(userId, userEmail, defaultFirstName, defaultLastName);
                 }
                 
                 return null;
@@ -273,7 +291,7 @@ export async function ensureClientExists(name?: string) {
 /**
  * Retry client lookup after a conflict error
  */
-async function retryClientLookupAfterConflict(userId: string, userEmail: string) {
+async function retryClientLookupAfterConflict(userId: string, userEmail: string, firstName?: string, lastName?: string) {
     console.log('Retrying client lookup after conflict...');
     
     // First, try one more time to get by email (maybe someone else created it just now)
@@ -286,10 +304,14 @@ async function retryClientLookupAfterConflict(userId: string, userEmail: string)
     if (retryClient) {
         console.log('Found client on retry:', retryClient);
         
-        // Update the auth_id
+        // Update the auth_id and names if provided
+        const updateData: any = { auth_id: userId };
+        if (firstName) updateData.first_name = firstName;
+        if (lastName) updateData.last_name = lastName;
+        
         const { data: updatedClient, error: updateError } = await supabase
             .from('client')
-            .update({ auth_id: userId })
+            .update(updateData)
             .eq('id', retryClient.id)
             .select()
             .single();

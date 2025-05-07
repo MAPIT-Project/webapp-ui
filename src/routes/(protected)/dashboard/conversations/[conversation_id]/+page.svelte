@@ -118,8 +118,20 @@
     // Helper functions
     function getSenderClass(sender: string) {
         return sender === 'user' 
-            ? "bg-blue-600 text-white self-end" 
-            : "bg-gray-700 text-[#CACACA] self-start";
+            ? "text-white" 
+            : "text-white";
+    }
+
+    function getSenderBackground(sender: string) {
+        return sender === 'user' 
+            ? "bg-[#2F2F33]" 
+            : "bg-[#343541]";
+    }
+    
+    function getSenderIcon(sender: string) {
+        return sender === 'user' 
+            ? "bg-blue-500" 
+            : "bg-purple-500";
     }
 
     function formatMessageTime(date: Date | string): string {
@@ -153,67 +165,91 @@
     }
 </script>
 
-<div class="w-full min-h-screen h-full flex bg-gray-900">
+<div class="w-full min-h-screen h-full flex bg-[#2B2A2C]">
     <ChatSidebar />
     
-    <div class="flex-1 flex flex-col items-center relative">
-        <span class="text-[#CACACA] text-xs absolute left-4 top-4 z-10">AI Domain Expert Tool <span class="text-[0.5rem] font-bold ml-1">BETA</span> </span>
+    <div class="flex-1 flex flex-col relative">
+        <div class="absolute left-4 top-4 z-10 flex items-center">
+            <div class="bg-[#525252] p-1 rounded-md mr-2">
+                <Icon name="smart_toy" iconSize="small" class="text-white text-xs" />
+            </div>
+            <span class="text-[#A0A0A8] text-xs">AI Domain Expert Tool <span class="text-[0.5rem] font-bold ml-1 bg-gray-700 text-gray-300 px-1 py-0.5 rounded">BETA</span></span>
+        </div>
         
         <!-- API Mode Toggle -->
         <div class="absolute right-4 top-4 z-10">
             <ApiModeToggle />
         </div>
     
-        <div class="flex-1 flex flex-col p-4 overflow-hidden w-full max-w-[900px]">
+        <div class="flex-1 flex flex-col p-4 overflow-hidden w-full max-w-[900px] mx-auto">
             <!-- Chat title -->
             {#if conversation}
-                <div class="text-center mb-4 pt-2">
-                    <h1 class="text-xl font-semibold text-[#CACACA]">{conversation.name}</h1>
+                <div class="text-center mb-4 pt-10">
+                    <h1 class="text-xl font-semibold text-white">{conversation.name}</h1>
                     {#if conversation.topic}
-                        <p class="text-sm text-gray-400">{conversation.topic}</p>
+                        <p class="text-sm text-[#A0A0A8]">{conversation.topic}</p>
                     {/if}
                 </div>
             {:else if !isLoading}
-                <div class="text-center mb-4 pt-2">
-                    <h1 class="text-xl font-semibold text-[#CACACA]">Chat</h1>
+                <div class="text-center mb-4 pt-10">
+                    <h1 class="text-xl font-semibold text-white">Chat</h1>
                 </div>
             {/if}
             
             <!-- Chat messages area -->
-            <div class="flex-1 overflow-y-auto p-4 flex flex-col space-y-4">
+            <div class="flex-1 overflow-y-auto flex flex-col">
                 {#if isLoading}
                     <div class="flex-1 flex items-center justify-center">
-                        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                        <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#A0A0A8]"></div>
                     </div>
                 {:else if messages.length === 0}
-                    <div class="flex-1 flex items-center justify-center text-gray-500">
-                        <p>No messages in this conversation yet.</p>
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="text-center p-8 max-w-md">
+                            <div class="mx-auto w-12 h-12 bg-[#3E3E48] rounded-full flex items-center justify-center mb-4">
+                                <Icon name="chat" iconSize="base" class="text-[#A0A0A8]" />
+                            </div>
+                            <h3 class="text-lg font-medium text-white mb-2">No messages yet</h3>
+                            <p class="text-[#A0A0A8]">Start the conversation by typing a message below.</p>
+                        </div>
                     </div>
                 {:else}
                     {#each messages as message}
-                        <div class="flex flex-col max-w-[80%] {message.sender === 'user' ? 'ml-auto' : 'mr-auto'}">
-                            <div class="rounded-lg px-4 py-2 {getSenderClass(message.sender)}">
-                                {#if message.sender === 'user'}
-                                    <p class="whitespace-pre-wrap">{message.text}</p>
-                                {:else}
-                                    <div class="prose prose-invert prose-sm max-w-none">
-                                        {@html renderMarkdown(message.text)}
+                        <div class="w-full chat-message {getSenderBackground(message.sender)} py-6">
+                            <div class="max-w-[800px] mx-auto px-4">
+                                <div class="flex">
+                                    <div class="w-6 h-6 rounded-md mr-3 flex-shrink-0 {message.sender === 'user' ? 'user-icon bg-[#606060]' : 'ai-icon bg-[#525252]'} flex items-center justify-center shadow-md">
+                                        <Icon name={message.sender === 'user' ? 'person' : 'smart_toy'} iconSize="small" class="text-white" />
                                     </div>
-                                {/if}
+                                    <div class="flex-1">
+                                        <div class="{getSenderClass(message.sender)}">
+                                            {#if message.sender === 'user'}
+                                                <p class="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                                            {:else}
+                                                <div class="prose prose-invert prose-sm max-w-none">
+                                                    {@html renderMarkdown(message.text)}
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="text-xs text-gray-500 mt-1 {message.sender === 'user' ? 'text-right' : 'text-left'}">
-                                {formatMessageTime(message.createdAt)}
-                            </span>
                         </div>
                     {/each}
                     
                     {#if isSending}
-                        <div class="flex max-w-[80%] mr-auto">
-                            <div class="rounded-lg px-4 py-2 bg-gray-700 text-[#CACACA]">
-                                <div class="flex space-x-2">
-                                    <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce"></div>
-                                    <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.2s"></div>
-                                    <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.4s"></div>
+                        <div class="w-full chat-message bg-[#343541] py-6">
+                            <div class="max-w-[800px] mx-auto px-4">
+                                <div class="flex">
+                                    <div class="w-6 h-6 rounded-md mr-3 flex-shrink-0 ai-icon bg-[#525252] flex items-center justify-center">
+                                        <Icon name="smart_toy" iconSize="small" class="text-white" />
+                                    </div>
+                                    <div class="flex-1 text-white pt-1">
+                                        <div class="flex space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-[#A0A0A8] animate-bounce"></div>
+                                            <div class="w-2 h-2 rounded-full bg-[#A0A0A8] animate-bounce" style="animation-delay: 0.2s"></div>
+                                            <div class="w-2 h-2 rounded-full bg-[#A0A0A8] animate-bounce" style="animation-delay: 0.4s"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -221,28 +257,33 @@
                 {/if}
                 
                 {#if error}
-                    <div class="bg-red-900/50 border border-red-700 text-red-300 p-3 rounded-lg w-full">
-                        <p>{error}</p>
+                    <div class="bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg w-full mx-auto max-w-[800px] my-4 shadow-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0 mr-3">
+                                <Icon name="error" iconSize="small" class="text-red-400" />
+                            </div>
+                            <p>{error}</p>
+                        </div>
                     </div>
                 {/if}
             </div>
             
             <!-- Input area -->
-            <div class="border-t border-gray-700 p-4">
-                <form on:submit|preventDefault={handleSubmit} class="flex items-center gap-2">
+            <div class="p-4 max-w-[800px] w-full mx-auto">
+                <form on:submit|preventDefault={handleSubmit} class="relative shadow-lg rounded-lg">
                     <input
                         type="text"
                         bind:value={userInput}
                         placeholder="Type a message..."
-                        class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-[#CACACA] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="chat-input w-full px-4 py-3 bg-[#383842] border border-[#4A4A57]/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#525252]/70 pr-12"
                         disabled={isSending}
                     />
                     <button
                         type="submit"
-                        class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-[#A0A0A8] hover:text-white rounded-md disabled:opacity-50 transition-colors"
                         disabled={isSending || !userInput.trim()}
                     >
-                        <Icon name="send" iconSize="base" />
+                        <Icon name="send" iconSize="small" class="text-current" />
                     </button>
                 </form>
             </div>
@@ -253,12 +294,12 @@
 <style>
     /* Add styles for markdown content */
     :global(.prose) {
-        font-size: 0.9rem;
-        line-height: 1.5;
+        font-size: 0.95rem;
+        line-height: 1.7;
     }
     
     :global(.prose p) {
-        margin-bottom: 0.75rem;
+        margin-bottom: 1rem;
     }
     
     :global(.prose p:last-child) {
@@ -266,25 +307,29 @@
     }
     
     :global(.prose pre) {
-        background-color: rgba(0, 0, 0, 0.2);
-        padding: 0.5rem;
-        border-radius: 0.25rem;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        padding: 1rem !important;
+        border-radius: 0.5rem !important;
         overflow-x: auto;
+        margin: 1rem 0;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
     
     :global(.prose code) {
-        background-color: rgba(0, 0, 0, 0.2);
+        background-color: rgba(0, 0, 0, 0.3);
         padding: 0.1rem 0.3rem;
         border-radius: 0.25rem;
-        font-family: monospace;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+        font-size: 0.9em;
     }
     
-    :global(.prose ul, .prose ol) {
-        margin-left: 1.5rem;
-        margin-bottom: 0.75rem;
+    /* Custom animation for loading dots */
+    @keyframes bounceDot {
+        0%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-5px); }
     }
     
-    :global(.prose li) {
-        margin-bottom: 0.25rem;
+    .animate-bounce {
+        animation: bounceDot 1.4s infinite ease-in-out both;
     }
 </style>

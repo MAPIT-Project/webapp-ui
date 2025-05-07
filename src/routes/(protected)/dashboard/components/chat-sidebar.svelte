@@ -65,63 +65,73 @@
     }
 </script>
 
-<div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-gray-800 border-r border-gray-700 flex-shrink-0 overflow-hidden">
-    <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-        <h2 class="text-lg font-medium text-[#CACACA]">Conversations</h2>
+<div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-[#1E1E20] border-r border-[#4A4A57]/30 flex-shrink-0 overflow-hidden">
+    <div class="p-4 border-b border-[#4A4A57]/30 flex justify-between items-center">
+        <div class="flex items-center">
+            <div class="w-5 h-5 mr-2 rounded-full bg-[#525252] flex items-center justify-center">
+                <Icon name="chat" iconSize="small" class="text-white" />
+            </div>
+            <h2 class="text-lg font-medium text-white">Chats</h2>
+        </div>
         <div class="flex gap-2">
             <button 
-                class="p-2 rounded-lg hover:bg-gray-700 text-[#CACACA]"
+                class="p-1.5 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
                 title="Refresh conversations"
                 on:click={() => conversationStore.loadConversations(true)}
             >
-                <Icon name="refresh" iconSize="base" />
+                <Icon name="refresh" iconSize="small" class="text-white" />
             </button>
             <a 
                 href="/dashboard/conversations" 
-                class="p-2 rounded-lg hover:bg-gray-700 text-[#CACACA]"
+                class="p-1.5 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
                 title="New chat"
             >
-                <Icon name="add_comment" iconSize="base" />
+                <Icon name="add_comment" iconSize="small" class="text-white" />
             </a>
         </div>
     </div>
     
-    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-800">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-[#1E1E20] px-2">
         {#if $conversationStore.isLoading}
             <div class="flex justify-center items-center h-20">
-                <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                <div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-[#A0A0A8]"></div>
             </div>
         {:else if $conversationStore.error}
             <div class="p-4 text-red-400 text-sm">
                 <p>{$conversationStore.error}</p>
                 <button 
-                    class="mt-2 text-blue-400 hover:underline"
+                    class="mt-2 text-[#A0A0A8] hover:underline"
                     on:click={() => conversationStore.loadConversations(true)}
                 >
                     Try again
                 </button>
             </div>
         {:else if $conversationStore.conversations.length === 0}
-            <div class="p-4 text-gray-500 text-sm">
-                <p>No conversations yet.</p>
-                <p>Start a new chat to begin.</p>
+            <div class="p-4 mt-4 bg-[#2B2A2C] rounded-lg border border-[#4A4A57]/30 text-[#A0A0A8] text-sm">
+                <div class="flex justify-center mb-2">
+                    <div class="p-2 rounded-full bg-[#3E3E48]">
+                        <Icon name="chat" iconSize="small" class="text-[#A0A0A8]" />
+                    </div>
+                </div>
+                <p class="text-center">No conversations yet.</p>
+                <p class="text-center mt-1">Start a new chat to begin.</p>
             </div>
         {:else}
-            <div class="py-2">
+            <div class="py-3">
                 {#each $conversationStore.conversations as conversation}
                     <a 
                         href="/dashboard/conversations/{conversation.id}" 
-                        class="flex items-center justify-between px-4 py-3 hover:bg-gray-700 {currentChatId === conversation.id ? 'bg-gray-700' : ''}"
+                        class="flex items-center justify-between px-4 py-3 mb-1 hover:bg-[#3E3E48] {currentChatId === conversation.id ? 'bg-[#3E3E48]' : ''} rounded-lg transition-colors"
                     >
                         <div class="flex-1 min-w-0">
-                            <p class="text-[#CACACA] text-sm font-medium truncate">
+                            <p class="text-white text-sm font-medium truncate">
                                 {conversation.name}
                             </p>
-                            <p class="text-gray-500 text-xs truncate">
+                            <p class="text-[#A0A0A8] text-xs truncate">
                                 {conversation.topic || 'General'}
                             </p>
                         </div>
-                        <span class="text-gray-500 text-xs ml-2">
+                        <span class="text-[#A0A0A8] text-xs ml-2 flex-shrink-0">
                             {formatDate(conversation.createdAt)}
                         </span>
                     </a>

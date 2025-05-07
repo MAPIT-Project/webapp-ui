@@ -12,6 +12,8 @@
 	let email = '';
 	let password = '';
 	let confirmPassword = '';
+	let firstName = '';
+	let lastName = '';
 	
 	// Form state
 	let passwordsMatch = true;
@@ -20,12 +22,18 @@
 	
 	function validateForm() {
 		passwordsMatch = password === confirmPassword;
-		return passwordsMatch;
+		return passwordsMatch && firstName.trim() !== '' && lastName.trim() !== '';
 	}
 	
 	async function handleSubmit() {
 		if (!validateForm()) {
-			errorMessage = 'Passwords do not match';
+			if (!passwordsMatch) {
+				errorMessage = 'Passwords do not match';
+			} else if (firstName.trim() === '') {
+				errorMessage = 'First name is required';
+			} else if (lastName.trim() === '') {
+				errorMessage = 'Last name is required';
+			}
 			return;
 		}
 		
@@ -52,13 +60,12 @@
 				console.log('Registration successful:', data.user);
 				
 				// Create client record using the auth user ID directly
-				const username = email.split('@')[0];
-				
-				// Use createClientWithUserId to ensure correct linkage
+				// Pass first and last name to the client creation function
 				const client = await createClientWithUserId(
 					data.user.id,  // Use the exact auth user ID
 					email,         // Use the exact email
-					username       // Use username from email
+					firstName,     // First name
+					lastName       // Last name
 				);
 				
 				console.log('Client record created with auth_id:', client?.auth_id);
@@ -84,7 +91,7 @@
         <!-- Logo placeholder - replace with actual logo -->
         <div class="flex justify-center mb-6">
             <div class="h-12 w-12 bg-gray-700 rounded-full flex items-center justify-center">
-                <Icon name="brain" class="text-[#CACACA] h-8 w-8" />
+                <Icon name="psychology" class="text-[#CACACA] h-8 w-8" />
             </div>
         </div>
         
@@ -97,8 +104,34 @@
         {/if}
         
         <form on:submit|preventDefault={handleSubmit}>
+            <!-- First Name input -->
+            <div class="mb-4">
+                <label for="firstName" class="block text-sm font-medium text-[#CACACA] mb-2">First Name</label>
+                <input 
+                    type="text" 
+                    id="firstName" 
+                    required
+                    bind:value={firstName}
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-[#CACACA] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="John"
+                />
+            </div>
+            
+            <!-- Last Name input -->
+            <div class="mb-4">
+                <label for="lastName" class="block text-sm font-medium text-[#CACACA] mb-2">Last Name</label>
+                <input 
+                    type="text" 
+                    id="lastName" 
+                    required
+                    bind:value={lastName}
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-[#CACACA] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Doe"
+                />
+            </div>
+            
             <!-- Email input -->
-            <div class="pt-4">
+            <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-[#CACACA] mb-2">Email</label>
                 <input 
                     type="email" 
@@ -111,7 +144,7 @@
             </div>
             
             <!-- Password input -->
-            <div class="pt-2">
+            <div class="mb-4">
                 <label for="password" class="block text-sm font-medium text-[#CACACA] mb-2">Password</label>
                 <div class="relative">
                     <input 
@@ -127,14 +160,14 @@
                         class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#CACACA] hover:text-white"
                         on:click={() => showPassword = !showPassword}
                     >
-                        <Icon name={showPassword ? "eye-off" : "eye"} class="h-5 w-5" />
+                        <Icon name={showConfirmPassword ? "visibility_off" : "visibility"} class="h-5 w-5" />
                     </button>
                 </div>
                 <p class="text-xs text-gray-400 mt-1">Password must be at least 8 characters long</p>
             </div>
             
             <!-- Confirm Password input -->
-            <div class="pt-4">
+            <div class="mb-6">
                 <label for="confirmPassword" class="block text-sm font-medium text-[#CACACA] mb-2">Confirm Password</label>
                 <div class="relative">
                     <input 
@@ -151,7 +184,7 @@
                         class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#CACACA] hover:text-white"
                         on:click={() => showConfirmPassword = !showConfirmPassword}
                     >
-                        <Icon name={showConfirmPassword ? "eye-off" : "eye"} class="h-5 w-5" />
+                        <Icon name={showConfirmPassword ? "visibility_off" : "visibility"} class="h-5 w-5" />
                     </button>
                 </div>
                 {#if !passwordsMatch && confirmPassword}
