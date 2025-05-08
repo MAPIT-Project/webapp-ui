@@ -13,7 +13,9 @@
                     class="sr-only" 
                     bind:checked={$useDemo}
                 />
-                <div class="block bg-gray-600 w-10 h-5 rounded-full"></div>
+                <div class="block w-10 h-5 rounded-full transition-colors duration-300"
+                    class:bg-blue-600={$useDemo}
+                    class:bg-gray-600={!$useDemo}></div>
                 <div class="dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition" 
                     class:translate-x-5={$useDemo}></div>
             </div>

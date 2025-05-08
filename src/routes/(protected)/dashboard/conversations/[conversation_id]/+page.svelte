@@ -170,9 +170,6 @@
     
     <div class="flex-1 flex flex-col relative">
         <div class="absolute left-4 top-4 z-10 flex items-center">
-            <div class="bg-[#525252] p-1 rounded-md mr-2">
-                <Icon name="smart_toy" iconSize="small" class="text-white text-xs" />
-            </div>
             <span class="text-[#A0A0A8] text-xs">AI Domain Expert Tool <span class="text-[0.5rem] font-bold ml-1 bg-gray-700 text-gray-300 px-1 py-0.5 rounded">BETA</span></span>
         </div>
         
@@ -206,7 +203,7 @@
                     <div class="flex-1 flex items-center justify-center">
                         <div class="text-center p-8 max-w-md">
                             <div class="mx-auto w-12 h-12 bg-[#3E3E48] rounded-full flex items-center justify-center mb-4">
-                                <Icon name="chat" iconSize="base" class="text-[#A0A0A8]" />
+                                <Icon name="chat" class="text-[#A0A0A8]" />
                             </div>
                             <h3 class="text-lg font-medium text-white mb-2">No messages yet</h3>
                             <p class="text-[#A0A0A8]">Start the conversation by typing a message below.</p>
@@ -218,7 +215,7 @@
                             <div class="max-w-[800px] mx-auto px-4">
                                 <div class="flex">
                                     <div class="w-6 h-6 rounded-md mr-3 flex-shrink-0 {message.sender === 'user' ? 'user-icon bg-[#606060]' : 'ai-icon bg-[#525252]'} flex items-center justify-center shadow-md">
-                                        <Icon name={message.sender === 'user' ? 'person' : 'smart_toy'} iconSize="small" class="text-white" />
+                                        <Icon name={message.sender === 'user' ? 'person' : 'smart_toy'} class="text-white" />
                                     </div>
                                     <div class="flex-1">
                                         <div class="{getSenderClass(message.sender)}">
@@ -241,7 +238,7 @@
                             <div class="max-w-[800px] mx-auto px-4">
                                 <div class="flex">
                                     <div class="w-6 h-6 rounded-md mr-3 flex-shrink-0 ai-icon bg-[#525252] flex items-center justify-center">
-                                        <Icon name="smart_toy" iconSize="small" class="text-white" />
+                                        <Icon name="smart_toy" class="text-white" />
                                     </div>
                                     <div class="flex-1 text-white pt-1">
                                         <div class="flex space-x-2">
@@ -260,7 +257,7 @@
                     <div class="bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg w-full mx-auto max-w-[800px] my-4 shadow-lg">
                         <div class="flex">
                             <div class="flex-shrink-0 mr-3">
-                                <Icon name="error" iconSize="small" class="text-red-400" />
+                                <Icon name="error" class="text-red-400" />
                             </div>
                             <p>{error}</p>
                         </div>
@@ -283,7 +280,7 @@
                         class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-[#A0A0A8] hover:text-white rounded-md disabled:opacity-50 transition-colors"
                         disabled={isSending || !userInput.trim()}
                     >
-                        <Icon name="send" iconSize="small" class="text-current" />
+                        <Icon name="send" class="text-current" />
                     </button>
                 </form>
             </div>

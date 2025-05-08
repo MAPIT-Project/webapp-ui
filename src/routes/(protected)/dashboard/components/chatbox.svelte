@@ -39,22 +39,26 @@
         {
             icon: "science",
             text: "Tell me about funding opportunities in clean energy research",
-            shade: "dark"
+            shade: "dark",
+            color: "#4CAF50" // Green for science/research
         },
         {
             icon: "health_and_safety",
             text: "What are the latest trends in AI for healthcare?",
-            shade: "medium"
+            shade: "medium",
+            color: "#2196F3" // Blue for healthcare
         },
         {
             icon: "eco",
             text: "Help me draft a proposal outline for sustainable agriculture",
-            shade: "dark"
+            shade: "dark",
+            color: "#8BC34A" // Light green for eco/agriculture
         },
         {
             icon: "public",
             text: "What EU programs focus on climate change mitigation?",
-            shade: "medium"
+            shade: "medium",
+            color: "#009688" // Teal for climate/global topics
         }
     ];
     
@@ -82,7 +86,7 @@
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#A0A0A8] hover:text-white p-2 rounded-md disabled:opacity-50 transition-colors"
                 disabled={isProcessing || !userInput.trim()}
             >
-                <Icon name="send" iconSize="small" class="text-current" />
+                <Icon name="send" class="text-current" />
             </button>
         </div>
     </form>
@@ -91,7 +95,7 @@
         <div class="bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg mb-6 shadow-lg">
             <div class="flex">
                 <div class="flex-shrink-0 mr-3">
-                    <Icon name="error" iconSize="small" class="text-red-400" />
+                    <Icon name="error" class="text-red-400" />
                 </div>
                 <p>{error}</p>
             </div>
@@ -106,7 +110,7 @@
                 disabled={isProcessing}
             >
                 <div class="flex items-start">
-                    <div class="{example.shade === 'dark' ? 'bg-[#525252]' : 'bg-[#606060]'} p-1.5 rounded-md mr-3 flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <div style="background-color: {example.color}" class="p-1.5 rounded-md mr-3 flex-shrink-0 group-hover:scale-110 transition-transform">
                         <Icon name={example.icon} iconSize="small" class="text-white" />
                     </div>
                     <span class="pt-0.5">{example.text}</span>

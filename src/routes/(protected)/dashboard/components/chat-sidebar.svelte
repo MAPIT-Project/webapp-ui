@@ -68,25 +68,22 @@
 <div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-[#1E1E20] border-r border-[#4A4A57]/30 flex-shrink-0 overflow-hidden">
     <div class="p-4 border-b border-[#4A4A57]/30 flex justify-between items-center">
         <div class="flex items-center">
-            <div class="w-5 h-5 mr-2 rounded-full bg-[#525252] flex items-center justify-center">
-                <Icon name="chat" iconSize="small" class="text-white" />
-            </div>
             <h2 class="text-lg font-medium text-white">Chats</h2>
         </div>
         <div class="flex gap-2">
             <button 
-                class="p-1.5 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
+                class="py-1.5 px-2 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
                 title="Refresh conversations"
                 on:click={() => conversationStore.loadConversations(true)}
             >
-                <Icon name="refresh" iconSize="small" class="text-white" />
+                <Icon name="refresh" />
             </button>
             <a 
                 href="/dashboard/conversations" 
-                class="p-1.5 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
+                class="py-1.5 px-2 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
                 title="New chat"
             >
-                <Icon name="add_comment" iconSize="small" class="text-white" />
+                <Icon name="add_comment"/>
             </a>
         </div>
     </div>

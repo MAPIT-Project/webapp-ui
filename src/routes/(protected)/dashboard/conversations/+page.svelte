@@ -40,9 +40,6 @@
     <!-- Main content -->
     <div class="flex-1 flex items-center justify-center relative">
         <div class="absolute left-4 top-4 z-10 flex items-center">
-            <div class="bg-[#525252] p-1 rounded-md mr-2">
-                <Icon name="smart_toy" iconSize="small" class="text-white text-xs" />
-            </div>
             <span class="text-[#A0A0A8] text-xs">AI Domain Expert Tool <span class="text-[0.5rem] font-bold ml-1 bg-gray-700 text-gray-300 px-1 py-0.5 rounded">BETA</span></span>
         </div>
         
@@ -59,7 +56,7 @@
             <div class="w-full max-w-[800px] p-6 bg-red-900/30 border border-red-700/50 rounded-lg mb-6 shadow-lg">
                 <div class="flex items-start">
                     <div class="mr-4 p-2 bg-red-900/50 rounded-lg">
-                        <Icon name="error" iconSize="small" class="text-red-400" />
+                        <Icon name="error" class="text-red-400" />
                     </div>
                     <div>
                         <h3 class="text-lg font-medium text-red-300 mb-2">Error</h3>
@@ -69,7 +66,7 @@
                             on:click={() => window.location.reload()}
                         >
                             <div class="flex items-center">
-                                <Icon name="refresh" iconSize="small" class="mr-2" />
+                                <Icon name="refresh" class="mr-2" />
                                 Retry
                             </div>
                         </button>
