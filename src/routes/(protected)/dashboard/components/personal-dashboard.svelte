@@ -3,8 +3,8 @@
   import { scale } from 'svelte/transition';
   import { profileStore } from '$lib/stores/profileStore';
   
-  let greeting = '';
-  let isLoaded = false;
+  let greeting = $state('');
+  let isLoaded = $state(false);
   
   // Get greeting based on time of day
   function getGreeting() {
@@ -24,9 +24,9 @@
   });
 
   // Use only the first name from the profile store for a more personal greeting
-  $: userName = $profileStore.loading ? 'User' : 
+  let userName = $derived($profileStore.loading ? 'User' : 
                 $profileStore.firstName ? $profileStore.firstName :
-                $profileStore.email?.split('@')[0] || 'User';
+                $profileStore.email?.split('@')[0] || 'User');
 </script>
 
 <div class="p-6 max-w-5xl mx-auto">

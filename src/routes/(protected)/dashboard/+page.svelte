@@ -4,7 +4,7 @@
   import CollaborationDashboard from './components/collaboration-dashboard.svelte';
   
   // Track the space value reactively
-  $: currentSpace = getSpace();
+  let currentSpace = $derived(getSpace());
 </script>
 
 {#if currentSpace === 'personal'}

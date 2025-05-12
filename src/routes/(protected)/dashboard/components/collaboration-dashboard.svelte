@@ -3,7 +3,7 @@
   import { scale, fade } from 'svelte/transition';
   import { profileStore } from '$lib/stores/profileStore';
   
-  let isLoaded = false;
+  let isLoaded = $state(false); // Changed to $state
   let currentTeam = "Marketing Team";
   let members = [
     { id: 1, name: "Alex Morgan", role: "Team Lead", avatar: "https://i.pravatar.cc/150?img=1" },

@@ -1,4 +1,4 @@
-let space: string = $state('personala');
+let space: string = $state('personal');
 
 export function getSpace() {
   return space;

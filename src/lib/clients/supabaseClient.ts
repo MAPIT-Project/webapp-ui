@@ -1,21 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Using createBrowserClient from @supabase/ssr instead of the deprecated
+// createSupabaseBrowserClient from auth-helpers-sveltekit
+// This is the recommended approach for SvelteKit projects using Supabase
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-export async function signUp(email: string, password: string) {
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password
-    });
-
-    if (error) {
-        console.error("Registration Error:", error.message);
-        return { user: null, error: error.message };
-    }
-
-    return { user: data?.user, error: null };
-}
+export const supabase = createBrowserClient(
+    PUBLIC_SUPABASE_URL,
+    PUBLIC_SUPABASE_ANON_KEY
+);
 
