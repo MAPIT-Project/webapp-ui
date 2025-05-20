@@ -131,12 +131,12 @@ import { supabase } from '$lib/clients/supabaseClient';
     };
 </script>
 
-<div style="width: {width}px;" class="absolute transition-all h-screen bg-[#252527]  {open ? 'p-3.5 flex flex-col items-center gap-12 pt-4' : 'p-6'} shadow-md">
+<div style="width: {width}px;" class="absolute transition-all h-screen bg-[#252527] {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-md">
     {#if !open}
-        <div class="flex flex-col gap-4">
-            <div class="flex justify-between">
+        <div class="flex flex-col gap-5">
+            <div class="flex justify-between items-center">
                 <h1 class="text-4xl font-bold tracking-[0.17em]">MAPIT</h1>
-                <button onclick={handleResize} class="p-0 pt-0.5 text-[#F5F5F5] h-6">
+                <button onclick={handleResize} class="p-1 text-[#F5F5F5] h-8 w-8 flex items-center justify-center rounded hover:bg-[#3a3a3c]">
                     <Icon 
                         name="first_page"
                     />
@@ -145,19 +145,22 @@ import { supabase } from '$lib/clients/supabaseClient';
             
             <!-- Space Selector (Expanded View) -->
             {#if isLoadingSpaces}
-            <div class="space-selector">
+            <div class="space-selector relative">
                 <select 
-                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded py-2 px-3 focus:outline-none"
+                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded-md py-2 px-3 focus:outline-none appearance-none pr-8"
                     disabled
                 >
                     <option>Loading spaces...</option>
                 </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <Icon name="expand_more" />
+                </div>
             </div>
             {:else if spaces.length > 0}
-            <div class="space-selector">
+            <div class="space-selector relative">
                 <!-- Ensure this reflects the store's current space -->
                 <select 
-                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none pr-8"
                     value={currentSpace} 
                     onchange={handleSpaceChange}
                 >
@@ -165,25 +168,31 @@ import { supabase } from '$lib/clients/supabaseClient';
                         <option value={space.id}>{space.name}</option>
                     {/each}
                 </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <Icon name="expand_more" />
+                </div>
             </div>
             {:else}
-            <div class="space-selector">
+            <div class="space-selector relative">
                 <select 
-                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded py-2 px-3 focus:outline-none"
+                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded-md py-2 px-3 focus:outline-none appearance-none pr-8"
                     disabled
                 >
                     <option>No spaces available</option>
                 </select>
+                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <Icon name="expand_more" />
+                </div>
             </div>
             {/if}
         </div>
 
-        <div class="flex flex-col gap-2 mt-8">
+        <div class="flex flex-col gap-1.5 mt-6">
             {#each sideBarItems as item}
-                <div class="w-full py-3 px-4 rounded-sm {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#28282A]'}">
-                    <a href={item.url} onclick={handleNavigation(item.url)} class="p-0 h-6 text-[#F5F5F5] flex gap-4 items-center no-underline">
+                <div class="w-full rounded-md {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#333335]'} transition-colors duration-150">
+                    <a href={item.url} onclick={handleNavigation(item.url)} class="py-2.5 px-3.5 h-auto text-[#F5F5F5] flex gap-3.5 items-center no-underline">
                         <Icon 
-                            name={item.icon}
+                            name={item.icon} class="text-xl"
                         />
                         <span>{item.name}</span>
                     </a>
@@ -192,19 +201,20 @@ import { supabase } from '$lib/clients/supabaseClient';
         </div>
         
     {:else}
-        <img src="/images/mapit_logo_no_bg.png" class="size-9 object-contain pt-2" alt="MAPIT Logo">
+        <img src="/images/mapit_logo_no_bg.png" class="size-8 object-contain" alt="MAPIT Logo">
         
-        <button onclick={handleResize} class="p-0 h-6 text-[#F5F5F5]">
+        <button onclick={handleResize} class="p-1 text-[#F5F5F5] h-8 w-8 flex items-center justify-center rounded hover:bg-[#3a3a3c]">
             <Icon 
                 name="last_page"
             />
         </button>
 
-        <div class="flex flex-col gap-4 w-full mt-4">
+        <div class="flex flex-col gap-3 w-full mt-3">
             {#each sideBarItems as item}
                 <a href={item.url} onclick={handleNavigation(item.url)} 
-                   class="p-2 py-6 h-6 text-[#F5F5F5] rounded-sm -mx-1 flex items-center justify-center w-[calc(100%+8px)] no-underline {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#28282A]'}">
-                    <Icon name={item.icon} />
+                   title={item.name}
+                   class="p-2 h-auto text-[#F5F5F5] rounded-md flex items-center justify-center w-full no-underline {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#333335]'} transition-colors duration-150">
+                    <Icon name={item.icon} class="text-xl" />
                 </a>
             {/each}
         </div>
