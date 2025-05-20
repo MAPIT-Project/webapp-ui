@@ -20,6 +20,7 @@ import { supabase } from '$lib/clients/supabaseClient'; // Import client-side Su
     // Space management
     let userCollaborations = $state<{ id: string; name: string }[]>([]);
     let isLoadingSpaces = $state(true);
+    let navigationEffectHasRunOnceAfterLoading = false; // Flag for navigation effect
     
     onMount(async () => {
         // Client-side session check
@@ -74,6 +75,27 @@ import { supabase } from '$lib/clients/supabaseClient'; // Import client-side Su
         } else if (!spaceExists && currentSpace === 'personal' && spaces.length > 0 && spaces[0].id !== 'personal') {
             setSpace(spaces[0].id);
         }
+    });
+
+    // Effect to navigate to /dashboard when currentSpace changes
+    $effect(() => {
+        if (isLoadingSpaces) {
+            navigationEffectHasRunOnceAfterLoading = false; // Reset flag if loading starts again
+            return;
+        }
+
+        if (!navigationEffectHasRunOnceAfterLoading) {
+            navigationEffectHasRunOnceAfterLoading = true;
+            // This is the first run after spaces are loaded and currentSpace is initialized.
+            // Do not navigate yet.
+            return;
+        }
+
+        // If we reach here, it means:
+        // 1. Not loading spaces.
+        // 2. This is not the first run of the effect after loading completed.
+        // 3. Therefore, currentSpace must have changed.
+        goto('/dashboard');
     });
 
     function handleSpaceChange(event: Event) {

@@ -1,13 +1,13 @@
 import { supabase } from './supabaseClient';
-import type { Conversation, Message } from '$lib/server/db/schema';
+import type { conversation, message } from '$lib/server/db/schema'; // MODIFIED
 import { getCurrentClient } from './clientService';
 import { get } from 'svelte/store';
-import { useDemo } from '$lib/stores/apiModeStore';
+import { useDemo } from '$lib/stores/apiModeStore'; 
 
 /**
  * Create a new conversation for the current user
  */
-export async function createConversation(firstMessage: string): Promise<Conversation | null> {
+export async function createConversation(firstMessage: string, spaceId: string | null = null): Promise<conversation | null> { // MODIFIED
     try {
         // First, we need to get the current client to get their ID
         const client = await getCurrentClient();
@@ -17,18 +17,19 @@ export async function createConversation(firstMessage: string): Promise<Conversa
             return null;
         }
         
-        // Create a conversation with a default name based on the first message
-        // We'll truncate the message to use as the conversation name
         const nameFromMessage = firstMessage.length > 30 
             ? firstMessage.substring(0, 30) + '...' 
             : firstMessage;
+
+        const collaborationIdToInsert = (spaceId && spaceId !== 'personal') ? parseInt(spaceId) : null;
             
-        const { data: conversation, error: convError } = await supabase
+        const { data: newConversation, error: convError } = await supabase // Renamed to newConversation to avoid conflict
             .from('conversation')
             .insert([{ 
                 user_id: client.id,
                 name: nameFromMessage,
-                topic: 'General'
+                topic: 'General',
+                collaboration_id: collaborationIdToInsert
             }])
             .select()
             .single();
@@ -38,7 +39,7 @@ export async function createConversation(firstMessage: string): Promise<Conversa
             return null;
         }
         
-        return conversation;
+        return newConversation; // MODIFIED
     } catch (error) {
         console.error('Unexpected error creating conversation:', error);
         return null;
@@ -48,7 +49,7 @@ export async function createConversation(firstMessage: string): Promise<Conversa
 /**
  * Add a user message to a conversation
  */
-export async function addUserMessage(conversationId: number, text: string): Promise<Message | null> {
+export async function addUserMessage(conversationId: number, text: string): Promise<message | null> { // MODIFIED
     try {
         const { data: message, error } = await supabase
             .from('message')
@@ -75,7 +76,7 @@ export async function addUserMessage(conversationId: number, text: string): Prom
 /**
  * Add an AI response message to a conversation
  */
-export async function addAIMessage(conversationId: number, text: string): Promise<Message | null> {
+export async function addAIMessage(conversationId: number, text: string): Promise<message | null> { // MODIFIED
     try {
         const { data: message, error } = await supabase
             .from('message')
@@ -131,19 +132,18 @@ export async function getAIResponse(question: string): Promise<string> {
 /**
  * Get all messages for a specific conversation
  */
-export async function getConversationMessages(conversationId: number): Promise<Message[]> {
+export async function getConversationMessages(conversationId: number): Promise<message[]> { // MODIFIED
     try {
         const { data, error } = await supabase
             .from('message')
             .select('*')
             .eq('conversation_id', conversationId)
             .order('created_at', { ascending: true });
-        
+
         if (error) {
             console.error('Error fetching messages:', error);
             return [];
         }
-        
         return data || [];
     } catch (error) {
         console.error('Unexpected error fetching messages:', error);
@@ -152,22 +152,32 @@ export async function getConversationMessages(conversationId: number): Promise<M
 }
 
 /**
- * Get all conversations for the current user
+ * Get all conversations based on the spaceId (personal or collaboration)
  */
-export async function getUserConversations(): Promise<Conversation[]> {
+export async function getUserConversations(spaceId: string): Promise<conversation[]> { // MODIFIED
     try {
         const client = await getCurrentClient();
-        
         if (!client) {
             console.error('Cannot fetch conversations: No authenticated client found');
             return [];
         }
-        
-        const { data, error } = await supabase
-            .from('conversation')
-            .select('*')
-            .eq('user_id', client.id)
-            .order('created_at', { ascending: false });
+
+        let query = supabase.from('conversation').select('*');
+
+        if (spaceId === 'personal') {
+            query = query.eq('user_id', client.id).is('collaboration_id', null);
+        } else {
+            const collaborationIdNum = parseInt(spaceId);
+            if (isNaN(collaborationIdNum)) {
+                console.error('Invalid collaboration ID for fetching conversations:', spaceId);
+                return [];
+            }
+            query = query.eq('collaboration_id', collaborationIdNum);
+            // Optionally, you might still want to ensure the user is part of this collaboration
+            // This depends on your security model. For now, we fetch all conversations for that collaboration.
+        }
+
+        const { data, error } = await query.order('updated_at', { ascending: false });
         
         if (error) {
             console.error('Error fetching conversations:', error);
