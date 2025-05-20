@@ -2,9 +2,15 @@
 import Icon from "$lib/components/generic/icon.svelte";
 import { goto } from "$app/navigation";
 import { page } from "$app/stores";
-import { getSpace, setSpace } from "$lib/stores/collaborationStore.svelte";
+import { 
+    getSpace, 
+    setSpace, 
+    getAllAvailableSpaces, // MODIFIED: Use the new getter function
+    fetchUserCollaborations, 
+    getIsLoadingUserCollaborations
+} from "$lib/stores/collaborationStore.svelte";
 import { onMount } from 'svelte';
-import { supabase } from '$lib/clients/supabaseClient'; // Import client-side Supabase
+import { supabase } from '$lib/clients/supabaseClient';
 
     interface Props {
         onUpdateWidth: (width: number) => void;
@@ -18,54 +24,25 @@ import { supabase } from '$lib/clients/supabaseClient'; // Import client-side Su
     let open: boolean = $state(false);
 
     // Space management
-    let userCollaborations = $state<{ id: string; name: string }[]>([]);
-    let isLoadingSpaces = $state(true);
-    let navigationEffectHasRunOnceAfterLoading = false; // Flag for navigation effect
+    let navigationEffectHasRunOnceAfterLoading = false; 
     
     onMount(async () => {
-        // Client-side session check
         const { data: { session: clientSession } } = await supabase.auth.getSession();
-        console.log('[Sidebar onMount] Client-side session:', clientSession);
         if (!clientSession) {
-            console.error('[Sidebar onMount] No active client-side session. User might be logged out or session expired.');
-            // Optionally, you could trigger a redirect to login here if appropriate for your app flow
-            // For now, we'll let the API call proceed and potentially fail with 401,
-            // which might be handled by a global error handler or page-level logic.
+            console.error('[Sidebar onMount] No active client-side session.');
         }
-
-        isLoadingSpaces = true;
-        try {
-            const response = await fetch('/api/user-collaborations', {
-                credentials: 'include' // Ensure cookies are sent
-            });
-            if (response.ok) {
-                const fetchedCollaborations = await response.json();
-                userCollaborations = fetchedCollaborations.map((c: { id: number | string; name: string }) => ({
-                    ...c,
-                    id: String(c.id) // Ensure ID is a string
-                }));
-            } else {
-                console.error('Failed to fetch collaborations:', response.statusText);
-                userCollaborations = []; // Default to empty on error
-            }
-        } catch (error) {
-            console.error('Error fetching collaborations:', error);
-            userCollaborations = []; // Default to empty on error
-        } finally {
-            isLoadingSpaces = false;
-        }
+        // Fetch collaborations when the sidebar mounts
+        await fetchUserCollaborations(); 
     });
 
-    let spaces = $derived([
-        { id: 'personal', name: 'Personal' },
-        ...userCollaborations
-    ]);
-
+    // Use derived state from the store via the new getter
+    let spaces = $derived(getAllAvailableSpaces()); // MODIFIED
+    let isLoadingSpaces = $derived(getIsLoadingUserCollaborations());
     let currentSpace = $derived(getSpace());
 
     // Effect to ensure currentSpace is valid after spaces are loaded/updated
     $effect(() => {
-        if (isLoadingSpaces) return; // Don't run effect while spaces are loading
+        if (isLoadingSpaces) return; 
 
         const spaceExists = spaces.find(s => s.id === currentSpace);
         if (!spaceExists && currentSpace !== 'personal') {
@@ -73,28 +50,25 @@ import { supabase } from '$lib/clients/supabaseClient'; // Import client-side Su
                  setSpace('personal');
             }
         } else if (!spaceExists && currentSpace === 'personal' && spaces.length > 0 && spaces[0].id !== 'personal') {
+            // This case might be redundant if 'personal' is always first and present
+            // but kept for safety if store logic changes how 'personal' is added.
             setSpace(spaces[0].id);
         }
     });
 
     // Effect to navigate to /dashboard when currentSpace changes
     $effect(() => {
+        const _cs = currentSpace; // Ensure currentSpace is a dependency of this effect
+
         if (isLoadingSpaces) {
-            navigationEffectHasRunOnceAfterLoading = false; // Reset flag if loading starts again
+            navigationEffectHasRunOnceAfterLoading = false; 
             return;
         }
 
         if (!navigationEffectHasRunOnceAfterLoading) {
             navigationEffectHasRunOnceAfterLoading = true;
-            // This is the first run after spaces are loaded and currentSpace is initialized.
-            // Do not navigate yet.
             return;
         }
-
-        // If we reach here, it means:
-        // 1. Not loading spaces.
-        // 2. This is not the first run of the effect after loading completed.
-        // 3. Therefore, currentSpace must have changed.
         goto('/dashboard');
     });
 
@@ -181,9 +155,10 @@ import { supabase } from '$lib/clients/supabaseClient'; // Import client-side Su
             </div>
             {:else if spaces.length > 0}
             <div class="space-selector">
+                <!-- Ensure this reflects the store's current space -->
                 <select 
                     class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={currentSpace}
+                    value={currentSpace} 
                     onchange={handleSpaceChange}
                 >
                     {#each spaces as space (space.id)}

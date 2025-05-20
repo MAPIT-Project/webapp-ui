@@ -63,7 +63,7 @@
                         <p class="text-red-300 mb-4">{clientError}</p>
                         <button 
                             class="px-4 py-2 bg-red-700/50 hover:bg-red-700/80 text-white rounded-lg transition-colors"
-                            on:click={() => window.location.reload()}
+                            onclick={() => window.location.reload()}
                         >
                             <div class="flex items-center">
                                 <Icon name="refresh" class="mr-2" />

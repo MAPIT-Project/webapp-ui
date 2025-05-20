@@ -2,15 +2,16 @@
 import { onMount } from 'svelte';
 import Modal from '$lib/components/generic/modal.svelte';
 import type { Collaboration } from '$lib/types/schema';
-import { createCollaboration, getUserCollaborations, deleteCollaboration } from '$lib/clients/collaborationService';
+import { createCollaboration, getUserCollaborations as fetchCollaborationsFromAPI, deleteCollaboration } from '$lib/clients/collaborationService';
+import { addCollaborationToStore, removeCollaborationFromStore, fetchUserCollaborations } from '$lib/stores/collaborationStore.svelte';
 import CollabTile from './components/collab-tile.svelte';
 
-let collaborations: Collaboration[] = [];
-let isModalOpen = false;
-let isLoading = true;
-let error: string | null = null;
-let newTitle = '';
-let newDescription = '';
+let collaborations: Collaboration[] = $state([]);
+let isModalOpen = $state(false);
+let isLoading = $state(true);
+let error: string | null = $state(null);
+let newTitle = $state('');
+let newDescription = $state('');
 
 onMount(async () => {
     await loadCollaborations();
@@ -20,8 +21,9 @@ async function loadCollaborations() {
     try {
         isLoading = true;
         error = null;
-        collaborations = await getUserCollaborations();
-        console.log('Collaborations loaded:', collaborations);
+        const apiCollaborations = await fetchCollaborationsFromAPI(); 
+        collaborations = apiCollaborations;
+        console.log('Collaborations loaded for page:', collaborations);
     } catch (err) {
         console.error('Error loading collaborations:', err);
         error = 'Failed to load collaborations. Please try again.';
@@ -44,18 +46,19 @@ async function addCollaboration() {
     if (!newTitle.trim()) return;
 
     try {
+        isLoading = true;
         error = null;
-        const collaboration = await createCollaboration(newTitle.trim(), newDescription.trim() || null);
+        const newCollabData = await createCollaboration(newTitle.trim(), newDescription.trim() || null);
         
-        if (collaboration) {
-            // Add necessary properties to match the structure of collaborations from getUserCollaborations
+        if (newCollabData) {
             const enhancedCollaboration = {
-                ...collaboration,
-                collaboratorsCount: 1, // Start with 1 (just the creator)
-                client_collaboration: [{ role: 'owner' }] // Add the client_collaboration with owner role
+                ...newCollabData,
+                collaboratorsCount: 1, 
+                client_collaboration: [{ role: 'owner' }]
             };
-            
             collaborations = [enhancedCollaboration, ...collaborations];
+            
+            addCollaborationToStore(newCollabData); 
             closeModal();
         } else {
             error = 'Failed to create collaboration. Please try again.';
@@ -63,6 +66,8 @@ async function addCollaboration() {
     } catch (err) {
         console.error('Error creating collaboration:', err);
         error = 'An error occurred while creating the collaboration.';
+    } finally {
+        isLoading = false;
     }
 }
 
@@ -76,8 +81,8 @@ async function handleDeleteCollaboration(event: CustomEvent<{id: string}>) {
         const success = await deleteCollaboration(id);
         
         if (success) {
-            // Remove the deleted collaboration from the list
-            collaborations = collaborations.filter(collab => collab.id !== Number(id));
+            collaborations = collaborations.filter(collab => String(collab.id) !== id);
+            removeCollaborationFromStore(id);
         } else {
             error = 'Failed to delete collaboration. You might not have permission.';
         }
@@ -91,12 +96,11 @@ async function handleDeleteCollaboration(event: CustomEvent<{id: string}>) {
 
 function handleCollabClick(event: CustomEvent<{id: string}>) {
     const { id } = event.detail;
-    // In the future, this could navigate to the collaboration details page
     console.log('Collaboration clicked:', id);
 }
 </script>
 
-<div class="p-6">
+<div class="py-6 max-w-5xl mx-auto">
     {#if error}
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
             <span class="block sm:inline">{error}</span>
@@ -113,7 +117,7 @@ function handleCollabClick(event: CustomEvent<{id: string}>) {
         {:else}
             {#each collaborations as collab}
                 <CollabTile 
-                    id={collab.id}
+                    id={String(collab.id)}
                     title={collab.name} 
                     description={collab.description} 
                     collaboratorsCount={collab.collaboratorsCount}
@@ -122,7 +126,6 @@ function handleCollabClick(event: CustomEvent<{id: string}>) {
                     on:click={handleCollabClick}
                 />
             {/each}
-            <!-- Add new collaboration tile -->
             <div
                 class="flex items-center justify-center border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-50 min-h-[120px]"
                 on:click={openModal}
