@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1742226082438,
-      "tag": "0000_blue_talos",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1742589088446,
-      "tag": "0001_round_lightspeed",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1743264647947,
-      "tag": "0002_loose_mongoose",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1745409200259,
-      "tag": "0003_complete_bishop",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1745446485028,
-      "tag": "0004_lowly_vargas",
+      "when": 1748185635762,
+      "tag": "0000_oval_ezekiel",
       "breakpoints": true
     }
   ]
