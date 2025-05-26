@@ -41,13 +41,6 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
-    
-    # Your FastAPI (when you add it)
-    location /api/ {
-        proxy_pass http://localhost:8000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
 }
 ```
 
@@ -79,4 +72,11 @@ sudo systemctl enable nginx
 16. Build the application
 - > npm run build
 
-17. 
+17. Start the application using PM2
+- > `pm2 start build/index.js --name webapp-ui --env .env`
+
+18. Enable PM2 to start on boot
+- > pm2 startup
+- > pm2 save
+
+19. If apache2 is installed disable this and restart nginx
