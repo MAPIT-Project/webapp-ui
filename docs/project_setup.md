@@ -83,3 +83,6 @@ sudo systemctl enable nginx
 
 20. open up port 54321 for supabase API access
 - > `sudo ufw allow 54321`
+
+21. Load all CSV data into database
+- > Once connected with SSH port forwarding run main.py inside of csv_data_extractor

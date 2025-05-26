@@ -9,16 +9,25 @@ import logging
 import traceback
 from datetime import datetime
 
-# Configure logging
+# Configure logging with UTF-8 encoding to handle Unicode characters
 LOG_FILE = "csv_extractor.log"
 log_format = '%(asctime)s - %(levelname)s - %(message)s'
+
+# Create file handler with UTF-8 encoding
+file_handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter(log_format))
+
+# Create console handler with UTF-8 encoding
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter(log_format))
+
+# Configure root logger
 logging.basicConfig(
     level=logging.INFO,
     format=log_format,
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        logging.StreamHandler(sys.stdout)
-    ]
+    handlers=[file_handler, console_handler]
 )
 logger = logging.getLogger(__name__)
 
@@ -371,7 +380,7 @@ try:
     
     logger.info("✅ Project data loaded successfully!")
 except Exception as e:
-    logger.error(f"❌ Error processing project data: {str(e)}")
+    logger.error(f"Error processing project data: {str(e)}")
     logger.error(traceback.format_exc())
 
 # Load and insert organization data
@@ -473,11 +482,11 @@ try:
                     # Transaction is committed when the context manager exits
             
             success_count += len(batch)
-            logger.info(f"✅ Batch {batch_num} successfully inserted ({len(batch)} records)")
+            logger.info(f"Batch {batch_num} successfully inserted ({len(batch)} records)")
             
         except Exception as batch_e:
             error_count += len(batch)
-            logger.error(f"❌ Failed to insert batch {batch_num}: {str(batch_e)}")
+            logger.error(f"Failed to insert batch {batch_num}: {str(batch_e)}")
             
             # Log details of the first few problematic records
             logger.debug(f"Detailed examination of problematic batch {batch_num}:")
@@ -490,12 +499,12 @@ try:
     logger.info(f"Organization data loading stats: {success_count} records inserted, {error_count} records failed")
     
     if success_count > 0:
-        logger.info("✅ Organization data loaded (at least partially successfully)")
+        logger.info("Organization data loaded (at least partially successfully)")
     else:
-        logger.error("❌ No organization records were loaded successfully")
+        logger.error("No organization records were loaded successfully")
         
 except Exception as e:
-    logger.error(f"❌ Error in overall organization data processing: {str(e)}")
+    logger.error(f"Error in overall organization data processing: {str(e)}")
     logger.error(traceback.format_exc())
 
 # Create a simple report of data loaded
