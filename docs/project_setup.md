@@ -73,10 +73,13 @@ sudo systemctl enable nginx
 - > npm run build
 
 17. Start the application using PM2
-- > `pm2 start build/index.js --name webapp-ui --env .env`
+- > `pm2 start build/index.js --name webapp-ui`
 
 18. Enable PM2 to start on boot
 - > pm2 startup
 - > pm2 save
 
 19. If apache2 is installed disable this and restart nginx
+
+20. open up port 54321 for supabase API access
+- > `sudo ufw allow 54321`
