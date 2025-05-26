@@ -1,9 +1,10 @@
 import { writable, get } from 'svelte/store';
-import type { Conversation } from '$lib/server/db/schema';
+import type { conversation } from '$lib/server/db/schema'; // MODIFIED
 import { getUserConversations } from '$lib/clients/conversationService';
+import { getSpace } from '$lib/stores/collaborationStore.svelte';
 
 interface ConversationStore {
-    conversations: Conversation[];
+    conversations: conversation[]; // MODIFIED
     isLoading: boolean;
     error: string | null;
     loaded: boolean;
@@ -22,7 +23,8 @@ function createConversationStore() {
     return {
         subscribe,
         loadConversations: async (forceReload = false) => {
-            // Don't reload if already loaded and not forcing
+            const currentSpaceId = getSpace();
+
             if (!forceReload) {
                 const currentState = get(store);
                 if (currentState.loaded && !currentState.error) {
@@ -38,12 +40,11 @@ function createConversationStore() {
             });
 
             try {
-                // First check if we can get conversations
-                const conversations = await getUserConversations();
+                const conversations = await getUserConversations(currentSpaceId);
                 set({
                     conversations,
                     isLoading: false,
-                    error: conversations.length === 0 ? "No conversations found" : null,
+                    error: conversations.length === 0 ? `No conversations found in ${currentSpaceId === 'personal' ? 'your personal space' : 'this collaboration'}.` : null,
                     loaded: true
                 });
             } catch (err) {
@@ -55,19 +56,18 @@ function createConversationStore() {
                     loaded: false
                 });
 
-                // If this is the initial load, throw the error so the component can handle it
                 if (!forceReload) {
                     throw err;
                 }
             }
         },
-        addConversation: (conversation: Conversation) => {
+        addConversation: (newConversation: conversation) => { // MODIFIED
             update(state => ({
                 ...state,
-                conversations: [conversation, ...state.conversations]
+                conversations: [newConversation, ...state.conversations]
             }));
         },
-        updateConversation: (id: number, updates: Partial<Conversation>) => {
+        updateConversation: (id: number, updates: Partial<conversation>) => { // MODIFIED
             update(state => ({
                 ...state,
                 conversations: state.conversations.map(conv => 

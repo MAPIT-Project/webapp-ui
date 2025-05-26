@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { scale, fade } from 'svelte/transition';
   import { profileStore } from '$lib/stores/profileStore';
+  import { getSpace } from '$lib/stores/collaborationStore.svelte';
   
   let isLoaded = $state(false); // Changed to $state
   let currentTeam = "Marketing Team";
@@ -30,8 +31,8 @@
 <div class="p-6 max-w-5xl mx-auto">
   {#if isLoaded}
     <div class="mb-8" in:scale={{ duration: 300, start: 0.95 }}>
-      <h1 class="text-3xl font-semibold">Collaboration Space</h1>
-      <p class="text-gray-400 mt-1">Working with: {currentTeam}</p>
+      <h1 class="text-3xl font-semibold">Collaboration Space: {getSpace()}</h1>
+      <p class="text-gray-400 mt-1">This is an example page</p>
     </div>
     
     <!-- Team Members Section -->

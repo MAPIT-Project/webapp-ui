@@ -74,7 +74,7 @@
             <button 
                 class="py-1.5 px-2 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
                 title="Refresh conversations"
-                on:click={() => conversationStore.loadConversations(true)}
+                onclick={() => conversationStore.loadConversations(true)}
             >
                 <Icon name="refresh" />
             </button>
@@ -98,7 +98,7 @@
                 <p>{$conversationStore.error}</p>
                 <button 
                     class="mt-2 text-[#A0A0A8] hover:underline"
-                    on:click={() => conversationStore.loadConversations(true)}
+                    onclick={() => conversationStore.loadConversations(true)}
                 >
                     Try again
                 </button>
