@@ -107,7 +107,7 @@ export async function getAIResponse(question: string): Promise<string> {
     try {
         // Check if we should use the demo endpoint
         const isDemo = get(useDemo);
-        const endpoint = isDemo ? 'http://localhost:8000/api/demo' : 'http://localhost:8000/api/query';
+        const endpoint = isDemo ? '/api/demo' : '/api/query';
         
         const response = await fetch(endpoint, {
             method: 'POST',
