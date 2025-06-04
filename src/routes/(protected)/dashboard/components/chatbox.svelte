@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createConversation } from "$lib/clients/conversationService";
+    import { createConversation, addUserMessage, addAIMessage, getAIResponse } from "$lib/clients/conversationService";
     import { goto } from "$app/navigation";
     import Icon from "$lib/components/generic/icon.svelte";
     import { getSpace } from "$lib/stores/collaborationStore.svelte";
@@ -25,6 +25,22 @@
                 throw new Error("Failed to create conversation");
             }
             
+            // Add the user's message to the conversation
+            const userMessage = await addUserMessage(conversation.id, currentInput);
+            if (!userMessage) {
+                throw new Error("Failed to add user message");
+            }
+            
+            // Get AI response
+            const aiResponseData = await getAIResponse(currentInput);
+            
+            // Add the AI response to the conversation
+            const aiMessage = await addAIMessage(conversation.id, aiResponseData.answer);
+            if (!aiMessage) {
+                throw new Error("Failed to add AI response");
+            }
+            
+            // Navigate to the conversation page
             goto(`/dashboard/conversations/${conversation.id}`);
             
         } catch (err) {
@@ -77,7 +93,7 @@
             <input
                 type="text"
                 bind:value={userInput}
-                placeholder="Send a message..."
+                placeholder={isProcessing ? "Creating conversation..." : "Send a message..."}
                 class="w-full px-5 py-4 pr-14 bg-[#383842] border border-[#4A4A57]/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#525252]/70 transition-all"
                 disabled={isProcessing}
             />
@@ -86,9 +102,25 @@
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#A0A0A8] hover:text-white p-2 rounded-md disabled:opacity-50 transition-colors"
                 disabled={isProcessing || !userInput.trim()}
             >
-                <Icon name="send" iconClass="text-current" />
+                {#if isProcessing}
+                    <div class="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full"></div>
+                {:else}
+                    <Icon name="send" iconClass="text-current" />
+                {/if}
             </button>
         </div>
+        
+        <!-- Loading status indicator -->
+        {#if isProcessing}
+            <div class="mt-3 flex items-center justify-center gap-3 text-gray-400 text-sm">
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce"></div>
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+                <span>Creating conversation and getting AI response...</span>
+            </div>
+        {/if}
     </form>
     
     {#if error}
