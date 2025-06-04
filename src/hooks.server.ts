@@ -4,9 +4,9 @@ import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
   // Log all incoming requests and their cookies
-  console.log(`[HOOKS] Request path: ${event.url.pathname}`);
+  // console.log(`[HOOKS] Request path: ${event.url.pathname}`);
   const cookies = event.request.headers.get('cookie');
-  console.log(`[HOOKS] Cookies for ${event.url.pathname}:`, cookies || 'No cookies sent');
+  // console.log(`[HOOKS] Cookies for ${event.url.pathname}:`, cookies || 'No cookies sent');
 
   event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
