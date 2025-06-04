@@ -44,8 +44,15 @@
 				console.log("Login successful:", result.user);
 				// Update user store
 				user.set(result.user);
-				// Navigate to dashboard
-				await goto('/dashboard', { invalidateAll: true });
+				
+				// Add a small delay to ensure cookies are processed
+				await new Promise(resolve => setTimeout(resolve, 100));
+				
+				// Navigate to dashboard with proper invalidation
+				await goto('/dashboard', { 
+					invalidateAll: true,
+					replaceState: true 
+				});
 			} else {
 				errorMessage = 'Login failed';
 			}
