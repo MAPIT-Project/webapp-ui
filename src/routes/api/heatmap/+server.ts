@@ -1,11 +1,28 @@
-import { db } from '$lib/server/db';
-import { organizations, projects } from '$lib/server/db/schema';
-import { json } from '@sveltejs/kit';
-import { eq, and, ilike, or, inArray, count } from 'drizzle-orm';
 import type { RequestHandler } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ request, url }) => {
+export const GET: RequestHandler = async ({ request, url, cookies }) => {
   try {
+    const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+      cookies: {
+        get: (key: string) => cookies.get(key),
+        set: (key: string, value: string, options: any) => {
+          cookies.set(key, value, { ...options, path: '/' });
+        },
+        remove: (key: string, options: any) => {
+          cookies.delete(key, { ...options, path: '/' });
+        }
+      }
+    });
+
+    // Verify authentication
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session?.user) {
+      return json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Extract viewport parameters
     const north = parseFloat(url.searchParams.get('north') || '90');
     const south = parseFloat(url.searchParams.get('south') || '-90');
@@ -41,61 +58,37 @@ export const GET: RequestHandler = async ({ request, url }) => {
       }
     }
     
-    // If search keyword is provided, first find matching projects
-    let matchingProjectIds: number[] = [];
-    let totalMatchCount = 0;
-    
+    // Build the query with search filters
+    let organizationsQuery = supabase
+      .from('organizations')
+      .select(`
+        organisationID,
+        name,
+        geolocation,
+        projectID,
+        projects!inner (
+          id,
+          title,
+          objective,
+          ecMaxContribution
+        )
+      `);
+
+    // If search keyword is provided, filter projects
     if (searchKeyword) {
-      const searchPattern = `%${searchKeyword}%`;
-      
-      // Find all projects that match the search keyword in title or objective
-      const matchingProjects = await db
-        .select({ id: projects.id })
-        .from(projects)
-        .where(
-          or(
-            ilike(projects.title, searchPattern),
-            ilike(projects.objective, searchPattern)
-          )
-        );
-      
-      matchingProjectIds = matchingProjects.map(p => p.id);
-      
-      // If no projects match, return empty result early
-      if (matchingProjectIds.length === 0) {
-        return json({ results: [], totalCount: 0 });
-      }
-      
-      // Get the total count of matching organizations for accurate reporting
-      const countResult = await db
-        .select({ value: count() })
-        .from(organizations)
-        .where(inArray(organizations.projectID, matchingProjectIds));
-        
-      totalMatchCount = countResult[0]?.value || 0;
+      organizationsQuery = organizationsQuery.or(
+        `projects.title.ilike.%${searchKeyword}%,projects.objective.ilike.%${searchKeyword}%`,
+        { foreignTable: 'projects' }
+      );
     }
-    
-    // Prepare the query to fetch organizations
-    let query = db
-      .select({
-        organisationID: organizations.organisationID,
-        name: organizations.name,
-        geolocation: organizations.geolocation,
-        projectID: organizations.projectID,
-        ecMaxContribution: projects.ecMaxContribution,
-        projectTitle: projects.title,
-        projectObjective: projects.objective,
-      })
-      .from(organizations)
-      .leftJoin(projects, eq(organizations.projectID, projects.id));
-    
-    // Apply project ID filter if we're searching
-    if (searchKeyword && matchingProjectIds.length > 0) {
-      query = query.where(inArray(organizations.projectID, matchingProjectIds));
+
+    const { data, error } = await organizationsQuery;
+
+    if (error) {
+      console.error('Error fetching organizations:', error);
+      return json({ error: 'Failed to fetch organization data' }, { status: 500 });
     }
-    
-    const data = await query;
-    
+
     // Group by organisationID and filter by viewport bounds
     const grouped: Record<string, {
       organisationID: string,
@@ -112,8 +105,8 @@ export const GET: RequestHandler = async ({ request, url }) => {
       }>
     }> = {};
 
-    for (const row of data) {
-      if (!row.geolocation || !row.ecMaxContribution) continue;
+    for (const row of data || []) {
+      if (!row.geolocation || !row.projects?.ecMaxContribution) continue;
       
       const [lat, lng] = row.geolocation.split(',').map(Number);
       
@@ -121,8 +114,8 @@ export const GET: RequestHandler = async ({ request, url }) => {
       if (!searchKeyword && (lat > north || lat < south || lng > east || lng < west)) continue;
       
       const id = row.organisationID;
-      const contribution = Number(row.ecMaxContribution);
-      const isSearchMatch = searchKeyword ? true : false; // All results are matches if searching
+      const contribution = Number(row.projects.ecMaxContribution);
+      const isSearchMatch = searchKeyword ? true : false;
       
       if (!grouped[id]) {
         grouped[id] = {
@@ -141,12 +134,12 @@ export const GET: RequestHandler = async ({ request, url }) => {
       
       // Add project info to the list of matching projects 
       // (we only add this for search results to save memory)
-      if (isSearchMatch && row.projectID && row.projectTitle) {
+      if (isSearchMatch && row.projectID && row.projects?.title) {
         grouped[id].matchingProjects.push({
           projectID: row.projectID,
-          title: row.projectTitle,
+          title: row.projects.title,
           contribution: contribution,
-          objective: row.projectObjective || 'No objective provided'
+          objective: row.projects.objective || 'No objective provided'
         });
       }
     }
@@ -174,7 +167,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
     return json({ 
       results: finalResults, 
-      totalCount: searchKeyword ? totalMatchCount : finalResults.length 
+      totalCount: searchKeyword ? (data?.length || 0) : finalResults.length 
     });
   } catch (error) {
     console.error('Error in heatmap endpoint:', error);

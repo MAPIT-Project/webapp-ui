@@ -1,10 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '$lib/server/db';
-import { client, clientCollaboration, collaboration as collaborationTable } from '$lib/server/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals, cookies }) => {
     const session = await locals.getSession();
 
     if (!session?.user) {
@@ -14,47 +13,59 @@ export const GET: RequestHandler = async ({ locals }) => {
     const authId = session.user.id;
 
     try {
-        // 1. Get the client_id from the auth_id
-        const clientRecord = await db
-            .select({ id: client.id })
-            .from(client)
-            .where(eq(client.authId, authId))
-            .limit(1)
-            .then(rows => rows[0]);
+        const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+            cookies: {
+                get: (key: string) => cookies.get(key),
+                set: (key: string, value: string, options: any) => {
+                    cookies.set(key, value, { ...options, path: '/' });
+                },
+                remove: (key: string, options: any) => {
+                    cookies.delete(key, { ...options, path: '/' });
+                }
+            }
+        });
 
-        if (!clientRecord) {
+        // 1. Get the client_id from the auth_id
+        const { data: clientRecord, error: clientError } = await supabase
+            .from('client')
+            .select('id')
+            .eq('authId', authId)
+            .single();
+
+        if (clientError || !clientRecord) {
             console.warn(`No client record found for authId: ${authId}`);
             return json([]); // Return empty array if no client profile found
         }
 
         const clientId = clientRecord.id;
 
-        // 2. Get collaboration_ids for this client
-        const clientCollaborations = await db
-            .select({ collaborationId: clientCollaboration.collaborationId })
-            .from(clientCollaboration)
-            .where(eq(clientCollaboration.clientId, clientId));
+        // 2. Get collaboration_ids for this client and join with collaboration details
+        const { data: collaborations, error: collaborationsError } = await supabase
+            .from('clientCollaboration')
+            .select(`
+                collaboration:collaborationId (
+                    id,
+                    name
+                )
+            `)
+            .eq('clientId', clientId);
 
-        if (clientCollaborations.length === 0) {
+        if (collaborationsError) {
+            console.error('Error fetching collaborations:', collaborationsError);
+            return json({ error: 'Failed to fetch collaborations' }, { status: 500 });
+        }
+
+        if (!collaborations || collaborations.length === 0) {
             return json([]); // No collaborations for this user
         }
 
-        const collaborationIds = clientCollaborations.map(cc => cc.collaborationId);
-
-        // 3. Get collaboration details for these IDs
-        const collaborations = await db
-            .select({
-                id: collaborationTable.id,
-                name: collaborationTable.name,
-            })
-            .from(collaborationTable)
-            .where(inArray(collaborationTable.id, collaborationIds));
-
         // Format for the frontend (ensure id is a string for consistency with 'personal' space)
-        const formattedCollaborations = collaborations.map(c => ({
-            id: String(c.id), // Convert numeric ID to string
-            name: c.name,
-        }));
+        const formattedCollaborations = collaborations
+            .filter(c => c.collaboration) // Filter out any null collaborations
+            .map(c => ({
+                id: String(c.collaboration.id), // Convert numeric ID to string
+                name: c.collaboration.name,
+            }));
 
         return json(formattedCollaborations);
 
