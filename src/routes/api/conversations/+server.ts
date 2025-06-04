@@ -78,15 +78,16 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             return json({ error: 'Client not found' }, { status: 404 });
         }
 
-        // Create conversation
+        // Create conversation with correct column name
         const conversationData: any = {
-            client_id: client.id,
+            user_id: client.id,  // Changed from client_id to user_id to match schema
             name: name || `Conversation ${new Date().toLocaleDateString()}`,
             topic: topic || firstMessage || 'New conversation'
         };
 
-        if (spaceId) {
-            conversationData.space_id = spaceId;
+        // Handle spaceId (collaboration_id)
+        if (spaceId && spaceId !== 'personal') {
+            conversationData.collaboration_id = parseInt(spaceId);
         }
 
         const { data: conversation, error: conversationError } = await supabase

@@ -40,9 +40,9 @@ export const GET: RequestHandler = async ({ cookies }) => {
             .from('collaboration')
             .select(`
                 *,
-                collaboration_members!inner(role)
+                client_collaboration!inner(role)
             `)
-            .eq('collaboration_members.client_id', client.id);
+            .eq('client_collaboration.client_id', client.id);
 
         if (error) {
             console.error('Error fetching collaborations:', error);
@@ -103,8 +103,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             .from('collaboration')
             .insert([{
                 name,
-                description,
-                created_by: client.id
+                description
             }])
             .select()
             .single();
@@ -116,7 +115,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
         // Add creator as owner
         const { error: memberError } = await supabase
-            .from('collaboration_members')
+            .from('client_collaboration')
             .insert([{
                 collaboration_id: collaboration.id,
                 client_id: client.id,
@@ -178,14 +177,15 @@ export const DELETE: RequestHandler = async ({ url, cookies }) => {
         }
 
         // Check if user is owner of the collaboration
-        const { data: collaboration } = await supabase
-            .from('collaboration')
-            .select('*')
-            .eq('id', collaborationId)
-            .eq('created_by', client.id)
+        const { data: membership } = await supabase
+            .from('client_collaboration')
+            .select('role')
+            .eq('collaboration_id', collaborationId)
+            .eq('client_id', client.id)
+            .eq('role', 'owner')
             .maybeSingle();
 
-        if (!collaboration) {
+        if (!membership) {
             return json({ error: 'Collaboration not found or access denied' }, { status: 404 });
         }
 

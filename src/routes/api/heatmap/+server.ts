@@ -66,28 +66,65 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
         name,
         geolocation,
         projectID,
-        projects!inner (
-          id,
-          title,
-          objective,
-          ecMaxContribution
-        )
+        ecContribution,
+        netEcContribution,
+        totalCost
+      `);
+
+    // If search keyword is provided, we'll filter after getting the data
+    const { data: orgData, error: orgError } = await organizationsQuery;
+
+    if (orgError) {
+      console.error('Error fetching organizations:', orgError);
+      return json({ error: 'Failed to fetch organization data' }, { status: 500 });
+    }
+
+    // Get projects data separately
+    let projectsQuery = supabase
+      .from('projects')
+      .select(`
+        id,
+        title,
+        objective,
+        ecMaxContribution
       `);
 
     // If search keyword is provided, filter projects
     if (searchKeyword) {
-      organizationsQuery = organizationsQuery.or(
-        `projects.title.ilike.%${searchKeyword}%,projects.objective.ilike.%${searchKeyword}%`,
-        { foreignTable: 'projects' }
+      projectsQuery = projectsQuery.or(
+        `title.ilike.%${searchKeyword}%,objective.ilike.%${searchKeyword}%`
       );
     }
 
-    const { data, error } = await organizationsQuery;
+    const { data: projectsData, error: projectsError } = await projectsQuery;
 
-    if (error) {
-      console.error('Error fetching organizations:', error);
-      return json({ error: 'Failed to fetch organization data' }, { status: 500 });
+    if (projectsError) {
+      console.error('Error fetching projects:', projectsError);
+      return json({ error: 'Failed to fetch project data' }, { status: 500 });
     }
+
+    // Create a map for quick project lookup
+    const projectsMap = new Map();
+    projectsData?.forEach(project => {
+      projectsMap.set(project.id, project);
+    });
+
+    // Join the data manually
+    const joinedData = orgData?.filter(org => {
+      const project = projectsMap.get(org.projectID);
+      if (!project) return false;
+      
+      // If searching, only include orgs with matching projects
+      if (searchKeyword) {
+        return project.title?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+               project.objective?.toLowerCase().includes(searchKeyword.toLowerCase());
+      }
+      
+      return true;
+    }).map(org => ({
+      ...org,
+      projects: projectsMap.get(org.projectID)
+    })) || [];
 
     // Group by organisationID and filter by viewport bounds
     const grouped: Record<string, {
@@ -105,7 +142,7 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
       }>
     }> = {};
 
-    for (const row of data || []) {
+    for (const row of joinedData || []) {
       if (!row.geolocation || !row.projects?.ecMaxContribution) continue;
       
       const [lat, lng] = row.geolocation.split(',').map(Number);
@@ -167,7 +204,7 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
 
     return json({ 
       results: finalResults, 
-      totalCount: searchKeyword ? (data?.length || 0) : finalResults.length 
+      totalCount: searchKeyword ? (joinedData?.length || 0) : finalResults.length 
     });
   } catch (error) {
     console.error('Error in heatmap endpoint:', error);
