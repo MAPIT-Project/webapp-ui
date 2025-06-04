@@ -11,14 +11,22 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             return json({ error: 'Email and password are required' }, { status: 400 });
         }
 
-        // Create server-side Supabase client
+        // Create server-side Supabase client with proper cookie handling
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
             cookies: {
                 get: (key: string) => cookies.get(key),
                 set: (key: string, value: string, options: any) => {
-                    cookies.set(key, value, { ...options, path: '/' });
+                    console.log(`[LOGIN] Setting cookie: ${key} = ${value ? 'has_value' : 'empty'}`);
+                    cookies.set(key, value, { 
+                        ...options, 
+                        path: '/',
+                        httpOnly: false,  // Allow client access
+                        secure: false,    // For localhost development
+                        sameSite: 'lax'   // Allow cross-site requests
+                    });
                 },
                 remove: (key: string, options: any) => {
+                    console.log(`[LOGIN] Removing cookie: ${key}`);
                     cookies.delete(key, { ...options, path: '/' });
                 }
             }
@@ -35,9 +43,12 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             return json({ error: error.message }, { status: 401 });
         }
 
-        if (!data.user) {
+        if (!data.user || !data.session) {
             return json({ error: 'Authentication failed' }, { status: 401 });
         }
+
+        console.log(`[LOGIN] Successfully authenticated user: ${data.user.email}`);
+        console.log(`[LOGIN] Session expires at: ${new Date(data.session.expires_at * 1000).toISOString()}`);
 
         // Return success response with user data
         return json({
@@ -48,8 +59,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
                 created_at: data.user.created_at
             },
             session: {
-                access_token: data.session?.access_token,
-                expires_at: data.session?.expires_at
+                access_token: data.session.access_token,
+                expires_at: data.session.expires_at
             }
         });
 

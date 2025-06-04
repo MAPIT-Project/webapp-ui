@@ -1,5 +1,5 @@
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient, type CookieOptions } from '@supabase/ssr'; // Changed from @supabase/auth-helpers-sveltekit
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -12,10 +12,22 @@ export const handle: Handle = async ({ event, resolve }) => {
     cookies: {
       get: (key: string) => event.cookies.get(key),
       set: (key: string, value: string, options: CookieOptions) => {
-        event.cookies.set(key, value, { ...options, path: '/' });
+        event.cookies.set(key, value, { 
+          ...options, 
+          path: '/',
+          httpOnly: false,  // Allow client access for auth cookies
+          secure: false,    // For localhost development
+          sameSite: 'lax'   // Allow cross-site requests
+        });
       },
       remove: (key: string, options: CookieOptions) => {
-        event.cookies.delete(key, { ...options, path: '/' });
+        event.cookies.delete(key, { 
+          ...options, 
+          path: '/',
+          httpOnly: false,
+          secure: false,
+          sameSite: 'lax'
+        });
       },
     },
   });
@@ -25,8 +37,8 @@ export const handle: Handle = async ({ event, resolve }) => {
       data: { session },
     } = await event.locals.supabase.auth.getSession();
     // Log session status when getSession is called
-    if (event.url.pathname.startsWith('/api/')) { // Log specifically for API routes
-        console.log(`[HOOKS] getSession() called for API route ${event.url.pathname}. Session present: ${!!session}`);
+    if (event.url.pathname.startsWith('/api/') || event.url.pathname.startsWith('/(protected)')) {
+        console.log(`[HOOKS] getSession() called for ${event.url.pathname}. Session present: ${!!session}, User: ${session?.user?.email || 'none'}`);
     }
     return session;
   };
