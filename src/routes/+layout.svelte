@@ -27,7 +27,7 @@
     });
 </script>
 
-<div class="min-w-[100vw] min-h-screen bg-[#2B2A2C]">
+<div class="w-screen h-screen bg-[#2B2A2C] overflow-hidden">
     {@render children()}
     <Toast position="top-right" />
     <ShortcutsHelp />

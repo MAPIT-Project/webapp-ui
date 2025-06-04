@@ -40,13 +40,22 @@ class KeyboardShortcutsManager {
   private handleKeyboardEvent = (event: KeyboardEvent): void => {
     if (!this.enabled) return;
     
-    // Skip if user is typing in an input field
+    // Skip if user is typing in an input field, textarea, or contenteditable element
     const target = event.target as HTMLElement;
     if (
       target.tagName === 'INPUT' || 
       target.tagName === 'TEXTAREA' || 
-      target.isContentEditable
+      target.isContentEditable ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('[contenteditable="true"]')
     ) {
+      return;
+    }
+    
+    // Skip if any modifier keys are being held (except for specific shortcuts)
+    // This prevents ? from triggering when user is typing shift+/ to get ?
+    if (event.key === '?' && (event.ctrlKey || event.altKey || event.metaKey)) {
       return;
     }
     
@@ -204,19 +213,6 @@ export function useKeyboardShortcuts(
  * Common keyboard shortcuts for the application
  */
 export const commonShortcuts: KeyboardShortcut[] = [
-  {
-    key: '?',
-    callback: () => {
-      // Show keyboard shortcuts help dialog
-      if (browser) {
-        console.log("? shortcut triggered, dispatching toggle-shortcuts-help event");
-        document.dispatchEvent(new CustomEvent('toggle-shortcuts-help'));
-      }
-    },
-    description: 'Show keyboard shortcuts help',
-    category: 'General',
-    global: true
-  },
   {
     key: 'esc',
     callback: () => {

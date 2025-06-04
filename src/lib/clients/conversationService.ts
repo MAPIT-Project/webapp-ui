@@ -3,6 +3,15 @@ import type { conversation, message } from '$lib/server/db/schema'; // MODIFIED
 import { getCurrentClient } from './clientService';
 import { get } from 'svelte/store';
 import { useDemo } from '$lib/stores/apiModeStore'; 
+import { currentProvider } from '$lib/stores/aiProviderStore';
+
+// Define interface for AI response
+export interface AIResponseData {
+  answer: string;
+  ai_provider?: string;
+  model_used?: string;
+  demo?: boolean;
+}
 
 /**
  * Create a new conversation for the current user
@@ -103,18 +112,29 @@ export async function addAIMessage(conversationId: number, text: string): Promis
 /**
  * Get an AI response from the API
  */
-export async function getAIResponse(question: string): Promise<string> {
+export async function getAIResponse(question: string): Promise<AIResponseData> {
     try {
         // Check if we should use the demo endpoint
         const isDemo = get(useDemo);
         const endpoint = isDemo ? 'http://localhost:8000/api/demo' : 'http://localhost:8000/api/query';
+        
+        // Get the current selected provider if not in demo mode
+        const provider = get(currentProvider);
+        
+        // Prepare the request body
+        const requestBody: any = { question };
+        
+        // Add AI provider if specified and not in demo mode
+        if (provider && !isDemo) {
+            requestBody.ai_provider = provider;
+        }
         
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ question }),
+            body: JSON.stringify(requestBody),
         });
         
         if (!response.ok) {
@@ -122,10 +142,17 @@ export async function getAIResponse(question: string): Promise<string> {
         }
         
         const data = await response.json();
-        return data.answer;
+        return {
+            answer: data.answer,
+            ai_provider: data.ai_provider,
+            model_used: data.model_used,
+            demo: data.demo
+        };
     } catch (error) {
         console.error('Error fetching AI response:', error);
-        return "I'm sorry, I wasn't able to generate a response. Please try again later.";
+        return {
+            answer: "I'm sorry, I wasn't able to generate a response. Please try again later."
+        };
     }
 }
 

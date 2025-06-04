@@ -7,6 +7,8 @@
 	import { ensureClientExists } from "$lib/clients/clientService";
 	import { onMount } from "svelte";
 	import ApiModeToggle from "../components/api-mode-toggle.svelte";
+	import AIProviderSelector from "../components/ai-provider-selector.svelte";
+	import { fetchAvailableProviders } from '$lib/stores/aiProviderStore';
 
 	
 	let clientLoading: boolean = $state(true);
@@ -22,6 +24,8 @@
 	                console.error("Failed to create or find client record");
 	                clientError = "Failed to initialize user data";
 	            }
+	            // Fetch available AI providers
+	            await fetchAvailableProviders();
 	        } catch (err) {
 	            console.error("Error during client initialization:", err);
 	            clientError = "Error setting up user account";
@@ -43,8 +47,9 @@
             <span class="text-[#A0A0A8] text-xs">AI Domain Expert Tool <span class="text-[0.5rem] font-bold ml-1 bg-gray-700 text-gray-300 px-1 py-0.5 rounded">BETA</span></span>
         </div>
         
-        <!-- API Mode Toggle -->
-        <div class="absolute right-4 top-4 z-10">
+        <!-- API Controls -->
+        <div class="absolute right-4 top-4 z-10 flex items-center gap-2">
+            <AIProviderSelector />
             <ApiModeToggle />
         </div>
     

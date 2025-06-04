@@ -47,24 +47,8 @@
       console.log('Registering toggle-shortcuts-help event listener');
       document.addEventListener('toggle-shortcuts-help', handleToggleShortcutsHelp);
       
-      // For demonstration, open the dialog when pressing the '?' key
-      const keyHandler = (e: KeyboardEvent) => {
-        if (e.key === '?' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-          console.log('? key pressed directly');
-          e.preventDefault();
-          isOpen = true;
-          loadShortcuts(); // Reload shortcuts when modal is opened
-        }
-      };
-      
-      window.addEventListener('keydown', keyHandler);
-      
       // Load shortcuts initially
       loadShortcuts();
-      
-      return () => {
-        window.removeEventListener('keydown', keyHandler);
-      };
     }
   });
   
