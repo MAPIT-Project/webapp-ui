@@ -55,19 +55,39 @@ export const POST: RequestHandler = async ({ request }) => {
     // Handle API response
     if (!apiResponse.ok) {
       let errorMessage = `CORDIS API error: ${apiResponse.status}`;
+      let errorDetails = apiResponse.statusText;
       
       try {
-        const errorData: ErrorResponse = await apiResponse.json();
-        errorMessage = errorData.detail || errorMessage;
-      } catch {
-        // If we can't parse the error response, use the status text
-        errorMessage = `${errorMessage} - ${apiResponse.statusText}`;
+        const errorData = await apiResponse.json();
+        // Check for different error response formats
+        if (errorData.detail) {
+          // FastAPI standard error format
+          errorDetails = errorData.detail;
+        } else if (errorData.details) {
+          // Custom error format from the FastAPI app
+          errorDetails = errorData.details;
+        } else if (errorData.error && errorData.details) {
+          // The exact format used in the FastAPI app
+          errorDetails = errorData.details;
+        } else if (typeof errorData === 'string') {
+          errorDetails = errorData;
+        } else {
+          // Fallback to JSON string if structure is unknown
+          errorDetails = JSON.stringify(errorData);
+        }
+      } catch (parseError) {
+        // If we can't parse the error response, try to get it as text
+        try {
+          errorDetails = await apiResponse.text();
+        } catch {
+          errorDetails = `${apiResponse.status} - ${apiResponse.statusText}`;
+        }
       }
 
       return json(
         { 
           error: 'Failed to get response from CORDIS API',
-          details: errorMessage
+          details: errorDetails
         },
         { status: apiResponse.status === 404 ? 503 : apiResponse.status }
       );
