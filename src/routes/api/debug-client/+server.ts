@@ -1,9 +1,22 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
-import { supabase } from '$lib/clients/supabaseClient';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ request }) => {
+export const GET: RequestHandler = async ({ request, cookies }) => {
     try {
+        const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+            cookies: {
+                get: (key: string) => cookies.get(key),
+                set: (key: string, value: string, options: any) => {
+                    cookies.set(key, value, { ...options, path: '/' });
+                },
+                remove: (key: string, options: any) => {
+                    cookies.delete(key, { ...options, path: '/' });
+                }
+            }
+        });
+
         // Get auth session
         const { data: authData, error: authError } = await supabase.auth.getSession();
         
@@ -30,22 +43,24 @@ export const GET: RequestHandler = async ({ request }) => {
         const hasClient = clientData && clientData.length > 0;
         
         return json({
+            success: true,
             session: {
-                user: {
-                    id: authData.session.user.id,
-                    email: authData.session.user.email,
-                }
+                user_id: userId,
+                email: authData.session.user.email
             },
             client: {
-                exists: hasClient,
-                data: hasClient ? clientData[0] : null,
-                error: clientError ? clientError.message : null
-            }
+                found: hasClient,
+                count: clientData?.length || 0,
+                data: clientData?.[0] || null
+            },
+            rls_status: 'Working (server-side)'
         });
+
     } catch (error) {
+        console.error('Server error:', error);
         return json({ 
-            error: 'An error occurred', 
-            details: error instanceof Error ? error.message : String(error) 
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
         }, { status: 500 });
     }
 };

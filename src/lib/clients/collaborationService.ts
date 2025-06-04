@@ -1,4 +1,3 @@
-import { supabase } from './supabaseClient';
 import type { Collaboration, Role } from '$lib/types/schema';
 import { getCurrentClient } from './clientService';
 
@@ -7,45 +6,27 @@ import { getCurrentClient } from './clientService';
  */
 export async function createCollaboration(name: string, description: string | null): Promise<Collaboration | null> {
     try {
-        const client = await getCurrentClient();
-        if (!client) {
-            console.error('Cannot create collaboration: No authenticated client found');
-            return null;
-        }
-
-        // Start a Supabase transaction
-        const { data: collaboration, error: collabError } = await supabase
-            .from('collaboration')
-            .insert([{ 
+        const response = await fetch('/api/collaborations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
                 name,
                 description
-            }])
-            .select()
-            .single();
+            })
+        });
 
-        if (collabError) {
-            console.error('Error creating collaboration:', collabError);
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error creating collaboration:', result.error);
             return null;
         }
 
-        // Add the creator as an owner in client_collaboration
-        const { error: joinError } = await supabase
-            .from('client_collaboration')
-            .insert([{
-                collaboration_id: collaboration.id,
-                client_id: client.id,
-                role: 'owner'
-            }]);
-
-        if (joinError) {
-            console.error('Error adding client to collaboration:', joinError);
-            // TODO: Should probably delete the collaboration in this case
-            return null;
-        }
-
-        return collaboration;
+        return result.collaboration as Collaboration;
     } catch (error) {
-        console.error('Unexpected error creating collaboration:', error);
+        console.error('Error in createCollaboration:', error);
         return null;
     }
 }
@@ -55,38 +36,20 @@ export async function createCollaboration(name: string, description: string | nu
  */
 export async function getUserCollaborations(): Promise<Collaboration[]> {
     try {
-        const client = await getCurrentClient();
-        
-        if (!client) {
-            console.error('Cannot fetch collaborations: No authenticated client found');
+        const response = await fetch('/api/collaborations', {
+            method: 'GET'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error fetching collaborations:', result.error);
             return [];
         }
-        
-        // Updated query to include the number of collaborators for each collaboration
-        const { data, error } = await supabase
-            .from('collaboration')
-            .select(`
-                *,
-                client_collaboration!inner(*),
-                collaborators:client_collaboration(count)
-            `)
-            .eq('client_collaboration.client_id', client.id)
-            .order('created_at', { ascending: false });
-        
-        if (error) {
-            console.error('Error fetching collaborations:', error);
-            return [];
-        }
-        
-        // Transform the data to include collaborator count as a direct property
-        const enhancedData = data?.map(collab => ({
-            ...collab,
-            collaboratorsCount: collab.collaborators ? collab.collaborators[0].count : 0
-        })) || [];
-        
-        return enhancedData;
+
+        return result.collaborations as Collaboration[];
     } catch (error) {
-        console.error('Unexpected error fetching collaborations:', error);
+        console.error('Error in getUserCollaborations:', error);
         return [];
     }
 }
@@ -96,57 +59,20 @@ export async function getUserCollaborations(): Promise<Collaboration[]> {
  */
 export async function deleteCollaboration(collaborationId: string): Promise<boolean> {
     try {
-        const client = await getCurrentClient();
-        
-        if (!client) {
-            console.error('Cannot delete collaboration: No authenticated client found');
+        const response = await fetch(`/api/collaborations?id=${collaborationId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error deleting collaboration:', result.error);
             return false;
         }
-        
-        // First, check if the user is the owner of the collaboration
-        const { data: membership, error: membershipError } = await supabase
-            .from('client_collaboration')
-            .select('role')
-            .eq('collaboration_id', collaborationId)
-            .eq('client_id', client.id)
-            .single();
-            
-        if (membershipError || !membership) {
-            console.error('Error checking collaboration membership:', membershipError);
-            return false;
-        }
-        
-        // Only owners can delete collaborations
-        if (membership.role !== 'owner') {
-            console.error('Cannot delete collaboration: User is not the owner');
-            return false;
-        }
-        
-        // First delete all client_collaboration records for this collaboration
-        const { error: deleteCollabMembersError } = await supabase
-            .from('client_collaboration')
-            .delete()
-            .eq('collaboration_id', collaborationId);
-            
-        if (deleteCollabMembersError) {
-            console.error('Error deleting collaboration memberships:', deleteCollabMembersError);
-            return false;
-        }
-        
-        // Now that references are removed, delete the collaboration
-        const { error: deleteError } = await supabase
-            .from('collaboration')
-            .delete()
-            .eq('id', collaborationId);
-            
-        if (deleteError) {
-            console.error('Error deleting collaboration:', deleteError);
-            return false;
-        }
-        
-        return true;
+
+        return result.success;
     } catch (error) {
-        console.error('Unexpected error deleting collaboration:', error);
+        console.error('Error in deleteCollaboration:', error);
         return false;
     }
 }

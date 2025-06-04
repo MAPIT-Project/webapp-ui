@@ -1,5 +1,4 @@
-import { supabase } from './supabaseClient';
-import type { conversation, message } from '$lib/server/db/schema'; // MODIFIED
+import type { conversation, message } from '$lib/server/db/schema';
 import { getCurrentClient } from './clientService';
 import { get } from 'svelte/store';
 import { useDemo } from '$lib/stores/apiModeStore'; 
@@ -16,39 +15,33 @@ export interface AIResponseData {
 /**
  * Create a new conversation for the current user
  */
-export async function createConversation(firstMessage: string, spaceId: string | null = null): Promise<conversation | null> { // MODIFIED
+export async function createConversation(firstMessage: string, spaceId: string | null = null): Promise<conversation | null> {
     try {
-        // First, we need to get the current client to get their ID
-        const client = await getCurrentClient();
-        
-        if (!client) {
-            console.error('Cannot create conversation: No authenticated client found');
-            return null;
-        }
-        
         const nameFromMessage = firstMessage.length > 30 
             ? firstMessage.substring(0, 30) + '...' 
             : firstMessage;
 
-        const collaborationIdToInsert = (spaceId && spaceId !== 'personal') ? parseInt(spaceId) : null;
-            
-        const { data: newConversation, error: convError } = await supabase // Renamed to newConversation to avoid conflict
-            .from('conversation')
-            .insert([{ 
-                user_id: client.id,
-                name: nameFromMessage,
+        const response = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
                 topic: 'General',
-                collaboration_id: collaborationIdToInsert
-            }])
-            .select()
-            .single();
-        
-        if (convError) {
-            console.error('Error creating conversation:', convError);
+                name: nameFromMessage,
+                firstMessage,
+                spaceId: (spaceId && spaceId !== 'personal') ? spaceId : null
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error creating conversation:', result.error);
             return null;
         }
-        
-        return newConversation; // MODIFIED
+
+        return result.conversation as conversation;
     } catch (error) {
         console.error('Unexpected error creating conversation:', error);
         return null;
@@ -58,24 +51,28 @@ export async function createConversation(firstMessage: string, spaceId: string |
 /**
  * Add a user message to a conversation
  */
-export async function addUserMessage(conversationId: number, text: string): Promise<message | null> { // MODIFIED
+export async function addUserMessage(conversationId: number, text: string): Promise<message | null> {
     try {
-        const { data: message, error } = await supabase
-            .from('message')
-            .insert([{ 
-                conversation_id: conversationId, 
+        const response = await fetch('/api/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                conversationId,
                 text,
                 sender: 'user'
-            }])
-            .select()
-            .single();
-        
-        if (error) {
-            console.error('Error adding user message:', error);
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error adding user message:', result.error);
             return null;
         }
-        
-        return message;
+
+        return result.message as message;
     } catch (error) {
         console.error('Unexpected error adding user message:', error);
         return null;
@@ -85,24 +82,28 @@ export async function addUserMessage(conversationId: number, text: string): Prom
 /**
  * Add an AI response message to a conversation
  */
-export async function addAIMessage(conversationId: number, text: string): Promise<message | null> { // MODIFIED
+export async function addAIMessage(conversationId: number, text: string): Promise<message | null> {
     try {
-        const { data: message, error } = await supabase
-            .from('message')
-            .insert([{ 
-                conversation_id: conversationId, 
+        const response = await fetch('/api/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                conversationId,
                 text,
                 sender: 'ai'
-            }])
-            .select()
-            .single();
-        
-        if (error) {
-            console.error('Error adding AI message:', error);
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error adding AI message:', result.error);
             return null;
         }
-        
-        return message;
+
+        return result.message as message;
     } catch (error) {
         console.error('Unexpected error adding AI message:', error);
         return null;
@@ -187,19 +188,20 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
 /**
  * Get all messages for a specific conversation
  */
-export async function getConversationMessages(conversationId: number): Promise<message[]> { // MODIFIED
+export async function getConversationMessages(conversationId: number): Promise<message[]> {
     try {
-        const { data, error } = await supabase
-            .from('message')
-            .select('*')
-            .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true });
+        const response = await fetch(`/api/messages?conversationId=${conversationId}`, {
+            method: 'GET'
+        });
 
-        if (error) {
-            console.error('Error fetching messages:', error);
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error fetching messages:', result.error);
             return [];
         }
-        return data || [];
+
+        return result.messages as message[];
     } catch (error) {
         console.error('Unexpected error fetching messages:', error);
         return [];
@@ -209,37 +211,34 @@ export async function getConversationMessages(conversationId: number): Promise<m
 /**
  * Get all conversations based on the spaceId (personal or collaboration)
  */
-export async function getUserConversations(spaceId: string): Promise<conversation[]> { // MODIFIED
+export async function getUserConversations(spaceId: string): Promise<conversation[]> {
     try {
-        const client = await getCurrentClient();
-        if (!client) {
-            console.error('Cannot fetch conversations: No authenticated client found');
+        // For now, we'll get all conversations and filter client-side
+        // You might want to add spaceId filtering to the API endpoint later
+        const response = await fetch('/api/conversations', {
+            method: 'GET'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error fetching conversations:', result.error);
             return [];
         }
 
-        let query = supabase.from('conversation').select('*');
+        let conversations = result.conversations as conversation[];
 
+        // Filter conversations based on spaceId
         if (spaceId === 'personal') {
-            query = query.eq('user_id', client.id).is('collaboration_id', null);
+            conversations = conversations.filter(conv => !conv.collaboration_id);
         } else {
             const collaborationIdNum = parseInt(spaceId);
-            if (isNaN(collaborationIdNum)) {
-                console.error('Invalid collaboration ID for fetching conversations:', spaceId);
-                return [];
+            if (!isNaN(collaborationIdNum)) {
+                conversations = conversations.filter(conv => conv.collaboration_id === collaborationIdNum);
             }
-            query = query.eq('collaboration_id', collaborationIdNum);
-            // Optionally, you might still want to ensure the user is part of this collaboration
-            // This depends on your security model. For now, we fetch all conversations for that collaboration.
         }
 
-        const { data, error } = await query.order('updated_at', { ascending: false });
-        
-        if (error) {
-            console.error('Error fetching conversations:', error);
-            return [];
-        }
-        
-        return data || [];
+        return conversations;
     } catch (error) {
         console.error('Unexpected error fetching conversations:', error);
         return [];

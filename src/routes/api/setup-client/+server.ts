@@ -1,9 +1,22 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
-import { supabase } from '$lib/clients/supabaseClient';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ request }) => {
+export const GET: RequestHandler = async ({ request, cookies }) => {
     try {
+        const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+            cookies: {
+                get: (key: string) => cookies.get(key),
+                set: (key: string, value: string, options: any) => {
+                    cookies.set(key, value, { ...options, path: '/' });
+                },
+                remove: (key: string, options: any) => {
+                    cookies.delete(key, { ...options, path: '/' });
+                }
+            }
+        });
+
         // Get auth session
         const { data: authData, error: authError } = await supabase.auth.getSession();
         
@@ -79,7 +92,8 @@ export const GET: RequestHandler = async ({ request }) => {
                 .insert([{
                     auth_id: userId,
                     email: userEmail,
-                    name: defaultName,
+                    first_name: defaultName,
+                    last_name: 'User',
                     password: 'password_not_used'
                 }])
                 .select()
@@ -96,22 +110,21 @@ export const GET: RequestHandler = async ({ request }) => {
             
             return json({
                 success: true,
-                message: 'New client record created successfully',
+                message: 'Client record created successfully',
                 client: newClient
             });
         }
-        
-        // Something unexpected happened
+
         return json({
-            error: 'Unexpected client configuration',
-            checkResults: { clientByAuthId, clientByEmail },
-            fix: 'manual'
+            error: 'Unexpected state',
+            checkResults: { clientByAuthId, clientByEmail }
         }, { status: 500 });
-        
+
     } catch (error) {
+        console.error('Server error:', error);
         return json({ 
-            error: 'An error occurred', 
-            details: error instanceof Error ? error.message : String(error) 
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
         }, { status: 500 });
     }
 };

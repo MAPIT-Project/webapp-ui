@@ -1,77 +1,108 @@
-import { supabase } from './supabaseClient';
 import type { Conversation, Message, NewConversation, NewMessage } from '$lib/server/db/schema';
 
 /**
  * Get all conversations for the current user
  */
 export async function getUserConversations() {
-    const { data, error } = await supabase
-        .from('conversation')
-        .select('*')
-        .order('created_at', { ascending: false });
-    
-    if (error) {
-        console.error('Error fetching conversations:', error);
+    try {
+        const response = await fetch('/api/conversations', {
+            method: 'GET'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error fetching conversations:', result.error);
+            return [];
+        }
+
+        return result.conversations as Conversation[];
+    } catch (error) {
+        console.error('Error in getUserConversations:', error);
         return [];
     }
-    
-    return data as Conversation[];
 }
 
 /**
  * Create a new conversation
  */
 export async function createConversation(topic: string, name: string) {
-    const { data, error } = await supabase
-        .from('conversation')
-        .insert([{ topic, name }])
-        .select()
-        .single();
-    
-    if (error) {
-        console.error('Error creating conversation:', error);
+    try {
+        const response = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                topic,
+                name
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error creating conversation:', result.error);
+            return null;
+        }
+
+        return result.conversation as Conversation;
+    } catch (error) {
+        console.error('Error in createConversation:', error);
         return null;
     }
-    
-    return data as Conversation;
 }
 
 /**
  * Get messages for a specific conversation
  */
 export async function getConversationMessages(conversationId: number) {
-    const { data, error } = await supabase
-        .from('message')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-    
-    if (error) {
-        console.error('Error fetching messages:', error);
+    try {
+        const response = await fetch(`/api/messages?conversationId=${conversationId}`, {
+            method: 'GET'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error fetching messages:', result.error);
+            return [];
+        }
+
+        return result.messages as Message[];
+    } catch (error) {
+        console.error('Error in getConversationMessages:', error);
         return [];
     }
-    
-    return data as Message[];
 }
 
 /**
  * Add a message to a conversation
  */
 export async function addMessage(conversationId: number, text: string, sender: 'user' | 'ai' | 'system') {
-    const { data, error } = await supabase
-        .from('message')
-        .insert([{ 
-            conversation_id: conversationId, 
-            text, 
-            sender 
-        }])
-        .select()
-        .single();
-    
-    if (error) {
-        console.error('Error adding message:', error);
+    try {
+        const response = await fetch('/api/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                conversationId,
+                text,
+                sender
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error adding message:', result.error);
+            return null;
+        }
+
+        return result.message as Message;
+    } catch (error) {
+        console.error('Error in addMessage:', error);
         return null;
     }
-    
-    return data as Message;
 }

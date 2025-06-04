@@ -1,10 +1,11 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
-import { supabase } from '$lib/clients/supabaseClient';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { createServerClient } from '@supabase/ssr';
 import { env } from '$env/dynamic/private';
 import postgres from 'postgres';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, cookies }) => {
     try {
         const body = await request.json();
         const { auth_id, email } = body;
@@ -13,6 +14,18 @@ export const POST: RequestHandler = async ({ request }) => {
             return json({ error: 'Missing required fields' }, { status: 400 });
         }
         
+        const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+            cookies: {
+                get: (key: string) => cookies.get(key),
+                set: (key: string, value: string, options: any) => {
+                    cookies.set(key, value, { ...options, path: '/' });
+                },
+                remove: (key: string, options: any) => {
+                    cookies.delete(key, { ...options, path: '/' });
+                }
+            }
+        });
+
         // Get auth session to verify user
         const { data: authData } = await supabase.auth.getSession();
         
@@ -55,7 +68,8 @@ export const POST: RequestHandler = async ({ request }) => {
             .insert([{
                 auth_id,
                 email,
-                name: `${name}_${now}`, // Add timestamp to avoid conflicts
+                first_name: `${name}_${now}`, // Add timestamp to avoid conflicts
+                last_name: 'User',
                 password: 'password_not_used'
             }])
             .select()
@@ -63,22 +77,22 @@ export const POST: RequestHandler = async ({ request }) => {
             
         if (insertError) {
             return json({ 
-                error: 'Failed to create client even with fallback',
+                error: 'Failed to create client',
                 details: insertError.message
             }, { status: 500 });
         }
         
-        return json({
+        return json({ 
             success: true,
-            message: 'Created client with fallback method',
+            message: 'New client created',
             client: newClient
         });
-        
+
     } catch (error) {
-        console.error('Error in force-create-client:', error);
+        console.error('Server error:', error);
         return json({ 
-            error: 'An error occurred', 
-            details: error instanceof Error ? error.message : String(error) 
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
         }, { status: 500 });
     }
 };

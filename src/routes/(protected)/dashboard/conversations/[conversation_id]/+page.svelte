@@ -1,6 +1,6 @@
 <script lang="ts">
     import { page } from "$app/stores";
-    import { onMount } from "svelte"; // Added missing import
+    import { onMount } from "svelte";
     import Icon from "$lib/components/generic/icon.svelte";
     import { 
         getConversationMessages,
@@ -10,7 +10,6 @@
     } from "$lib/clients/conversationService";
     import type { Message, Conversation } from "$lib/server/db/schema";
     import ChatSidebar from "../../components/chat-sidebar.svelte";
-    import { supabase } from "$lib/clients/supabaseClient";
     import ApiModeToggle from "../../components/api-mode-toggle.svelte";
     import { marked } from 'marked';
     import DOMPurify from 'dompurify';
@@ -51,17 +50,21 @@
         }
     });
     
-    // Load conversation details (title)
+    // Load conversation details using API endpoint
     async function loadConversationDetails(id: number) {
         try {
-            const { data, error: supabaseError } = await supabase
-                .from('conversation')
-                .select('*')
-                .eq('id', id)
-                .single();
-                
-            if (supabaseError) throw supabaseError;
-            conversation = data;
+            const response = await fetch(`/api/conversations/${id}`, {
+                method: 'GET'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                console.error('Error loading conversation details:', result.error);
+                return;
+            }
+
+            conversation = result.conversation;
         } catch (err) {
             console.error("Error loading conversation details:", err);
         }
