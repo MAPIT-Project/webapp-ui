@@ -1,8 +1,6 @@
 <script lang="ts">
 	import Icon from "$lib/components/generic/icon.svelte";
-	import { supabase } from "$lib/clients/supabaseClient"; 
 	import { goto } from "$app/navigation";
-	import { createClientWithUserId } from "$lib/clients/clientService";
 	
 	// State for password visibility toggle
 	let showPassword = false;
@@ -46,34 +44,33 @@
 		errorMessage = '';
 		
 		try {
-			// Use supabase directly for signup
-			const { data, error } = await supabase.auth.signUp({
-				email,
-				password
+			// Use our server-side authentication API instead of direct Supabase call
+			const response = await fetch('/api/auth/register', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					email,
+					password,
+					firstName,
+					lastName
+				})
 			});
+
+			const result = await response.json();
 			
-			if (error) {
-				console.error("Registration Error:", error.message);
-				errorMessage = error.message;
-			} else if (data?.user) {
-				// Registration successful
-				console.log('Registration successful:', data.user);
-				
-				// Create client record using the auth user ID directly
-				// Pass first and last name to the client creation function
-				const client = await createClientWithUserId(
-					data.user.id,  // Use the exact auth user ID
-					email,         // Use the exact email
-					firstName,     // First name
-					lastName       // Last name
-				);
-				
-				console.log('Client record created with auth_id:', client?.auth_id);
+			if (!response.ok) {
+				console.error("Registration Error:", result.error);
+				errorMessage = result.error || 'Registration failed';
+			} else if (result.success) {
+				console.log('Registration successful:', result.user);
+				console.log('Client record created:', result.client);
 				
 				// Navigate to login page
 				window.location.href = '/login?registered=true';
 			} else {
-				errorMessage = 'Registration completed but user data was not returned';
+				errorMessage = 'Registration failed';
 			}
 		} catch (err) {
 			console.error("Unexpected error:", err);

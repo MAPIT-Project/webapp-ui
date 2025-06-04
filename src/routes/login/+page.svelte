@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Icon from "$lib/components/generic/icon.svelte";
-	import { supabase } from "$lib/clients/supabaseClient";
 	import { page } from "$app/stores";
 	import { goto } from "$app/navigation";
 	import { user } from '$lib/stores/sessionStore';
@@ -24,19 +23,31 @@
 		errorMessage = '';
 		
 		try {
-			const { data, error } = await supabase.auth.signInWithPassword({
-				email,
-				password
+			// Use our server-side authentication API instead of direct Supabase call
+			const response = await fetch('/api/auth/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					email,
+					password
+				})
 			});
+
+			const result = await response.json();
 			
-			if (error) {
-				console.error("Login Error:", error.message);
-				errorMessage = error.message;
-			} else {
-				 // Update user store
-				user.set(data.user);
+			if (!response.ok) {
+				console.error("Login Error:", result.error);
+				errorMessage = result.error || 'Login failed';
+			} else if (result.success) {
+				console.log("Login successful:", result.user);
+				// Update user store
+				user.set(result.user);
 				// Navigate to dashboard
 				await goto('/dashboard', { invalidateAll: true });
+			} else {
+				errorMessage = 'Login failed';
 			}
 		} catch (err) {
 			console.error("Unexpected error:", err);
