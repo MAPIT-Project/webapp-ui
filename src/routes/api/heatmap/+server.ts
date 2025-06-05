@@ -1,28 +1,11 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import { db } from '$lib/server/db';
+import { organizations, projects } from '$lib/server/db/schema';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
+import { eq, and, ilike, or, inArray, count } from 'drizzle-orm';
+import type { RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ request, url, cookies }) => {
+export const GET: RequestHandler = async ({ request, url }) => {
   try {
-    const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-      cookies: {
-        get: (key: string) => cookies.get(key),
-        set: (key: string, value: string, options: any) => {
-          cookies.set(key, value, { ...options, path: '/' });
-        },
-        remove: (key: string, options: any) => {
-          cookies.delete(key, { ...options, path: '/' });
-        }
-      }
-    });
-
-    // Verify authentication
-    const { data: authData } = await supabase.auth.getSession();
-    if (!authData.session?.user) {
-      return json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Extract viewport parameters
     const north = parseFloat(url.searchParams.get('north') || '90');
     const south = parseFloat(url.searchParams.get('south') || '-90');
@@ -58,74 +41,61 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
       }
     }
     
-    // Build the query with search filters
-    let organizationsQuery = supabase
-      .from('organizations')
-      .select(`
-        organisationID,
-        name,
-        geolocation,
-        projectID,
-        ecContribution,
-        netEcContribution,
-        totalCost
-      `);
-
-    // If search keyword is provided, we'll filter after getting the data
-    const { data: orgData, error: orgError } = await organizationsQuery;
-
-    if (orgError) {
-      console.error('Error fetching organizations:', orgError);
-      return json({ error: 'Failed to fetch organization data' }, { status: 500 });
-    }
-
-    // Get projects data separately
-    let projectsQuery = supabase
-      .from('projects')
-      .select(`
-        id,
-        title,
-        objective,
-        ecMaxContribution
-      `);
-
-    // If search keyword is provided, filter projects
+    // If search keyword is provided, first find matching projects
+    let matchingProjectIds: number[] = [];
+    let totalMatchCount = 0;
+    
     if (searchKeyword) {
-      projectsQuery = projectsQuery.or(
-        `title.ilike.%${searchKeyword}%,objective.ilike.%${searchKeyword}%`
-      );
-    }
-
-    const { data: projectsData, error: projectsError } = await projectsQuery;
-
-    if (projectsError) {
-      console.error('Error fetching projects:', projectsError);
-      return json({ error: 'Failed to fetch project data' }, { status: 500 });
-    }
-
-    // Create a map for quick project lookup
-    const projectsMap = new Map();
-    projectsData?.forEach(project => {
-      projectsMap.set(project.id, project);
-    });
-
-    // Join the data manually
-    const joinedData = orgData?.filter(org => {
-      const project = projectsMap.get(org.projectID);
-      if (!project) return false;
+      const searchPattern = `%${searchKeyword}%`;
       
-      // If searching, only include orgs with matching projects
-      if (searchKeyword) {
-        return project.title?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-               project.objective?.toLowerCase().includes(searchKeyword.toLowerCase());
+      // Find all projects that match the search keyword in title or objective
+      const matchingProjects = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(
+          or(
+            ilike(projects.title, searchPattern),
+            ilike(projects.objective, searchPattern)
+          )
+        );
+      
+      matchingProjectIds = matchingProjects.map(p => p.id);
+      
+      // If no projects match, return empty result early
+      if (matchingProjectIds.length === 0) {
+        return json({ results: [], totalCount: 0 });
       }
       
-      return true;
-    }).map(org => ({
-      ...org,
-      projects: projectsMap.get(org.projectID)
-    })) || [];
-
+      // Get the total count of matching organizations for accurate reporting
+      const countResult = await db
+        .select({ value: count() })
+        .from(organizations)
+        .where(inArray(organizations.projectID, matchingProjectIds));
+        
+      totalMatchCount = countResult[0]?.value || 0;
+    }
+    
+    // Prepare the query to fetch organizations
+    let query = db
+      .select({
+        organisationID: organizations.organisationID,
+        name: organizations.name,
+        geolocation: organizations.geolocation,
+        projectID: organizations.projectID,
+        ecMaxContribution: projects.ecMaxContribution,
+        projectTitle: projects.title,
+        projectObjective: projects.objective,
+      })
+      .from(organizations)
+      .leftJoin(projects, eq(organizations.projectID, projects.id));
+    
+    // Apply project ID filter if we're searching
+    if (searchKeyword && matchingProjectIds.length > 0) {
+      query = query.where(inArray(organizations.projectID, matchingProjectIds));
+    }
+    
+    const data = await query;
+    
     // Group by organisationID and filter by viewport bounds
     const grouped: Record<string, {
       organisationID: string,
@@ -142,8 +112,8 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
       }>
     }> = {};
 
-    for (const row of joinedData || []) {
-      if (!row.geolocation || !row.projects?.ecMaxContribution) continue;
+    for (const row of data) {
+      if (!row.geolocation || !row.ecMaxContribution) continue;
       
       const [lat, lng] = row.geolocation.split(',').map(Number);
       
@@ -151,8 +121,8 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
       if (!searchKeyword && (lat > north || lat < south || lng > east || lng < west)) continue;
       
       const id = row.organisationID;
-      const contribution = Number(row.projects.ecMaxContribution);
-      const isSearchMatch = searchKeyword ? true : false;
+      const contribution = Number(row.ecMaxContribution);
+      const isSearchMatch = searchKeyword ? true : false; // All results are matches if searching
       
       if (!grouped[id]) {
         grouped[id] = {
@@ -171,12 +141,12 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
       
       // Add project info to the list of matching projects 
       // (we only add this for search results to save memory)
-      if (isSearchMatch && row.projectID && row.projects?.title) {
+      if (isSearchMatch && row.projectID && row.projectTitle) {
         grouped[id].matchingProjects.push({
           projectID: row.projectID,
-          title: row.projects.title,
+          title: row.projectTitle,
           contribution: contribution,
-          objective: row.projects.objective || 'No objective provided'
+          objective: row.projectObjective || 'No objective provided'
         });
       }
     }
@@ -204,7 +174,7 @@ export const GET: RequestHandler = async ({ request, url, cookies }) => {
 
     return json({ 
       results: finalResults, 
-      totalCount: searchKeyword ? (joinedData?.length || 0) : finalResults.length 
+      totalCount: searchKeyword ? totalMatchCount : finalResults.length 
     });
   } catch (error) {
     console.error('Error in heatmap endpoint:', error);
