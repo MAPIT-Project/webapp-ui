@@ -190,17 +190,6 @@
     // Function to safely render markdown
     function renderMarkdown(text: string): string {
         try {
-            // Pre-process the text to add proper line breaks for better formatting
-            let processedText = text
-                // Add double line breaks before lines that start with capital letters and contain colons (likely project titles)
-                .replace(/([.!?])\s+([A-Z][^:]*:)/g, '$1\n\n$2')
-                // Add line breaks before RCN numbers
-                .replace(/(\([^)]*RCN:\s*\d+[^)]*\))/g, '\n\n$1')
-                // Ensure proper spacing around colons in project descriptions
-                .replace(/([A-Za-z0-9)]+):\s*/g, '$1: ')
-                // Add line breaks before "Project X" references
-                .replace(/(Project \d+,)/g, '\n\n$1');
-            
             // Configure marked options for better formatting
             marked.setOptions({
                 gfm: true,
@@ -209,7 +198,7 @@
             });
             
             // Parse markdown and sanitize HTML
-            const parsed = marked.parse(processedText);
+            const parsed = marked.parse(text);
             return DOMPurify.sanitize(parsed);
         } catch (error) {
             console.error('Error rendering markdown:', error);
