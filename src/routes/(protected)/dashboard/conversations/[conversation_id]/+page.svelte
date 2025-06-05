@@ -122,7 +122,7 @@
                 lastResponseProvider = aiResponseData.ai_provider || null;
                 lastResponseModel = aiResponseData.model_used || null;
                 
-                // Add the AI response to the conversation
+                // Add the AI response to the conversation (including errors)
                 const aiResponse = await addAIMessage(
                     chatId, 
                     aiResponseData.answer
@@ -180,6 +180,11 @@
             console.error('Error formatting message time:', error);
             return '';
         }
+    }
+
+    // Function to check if a message is an error
+    function isErrorMessage(text: string): boolean {
+        return text.startsWith('Error:');
     }
 
     // Function to safely render markdown
@@ -316,11 +321,28 @@
                                                     </div>
                                                 </div>
                                             {:else}
-                                                <div class="bg-[#3A3A3C] text-gray-100 px-4 py-3 rounded-2xl rounded-tl-md shadow-lg border border-gray-600">
-                                                    <div class="prose prose-sm prose-invert max-w-none">
-                                                        {@html renderMarkdown(message.text)}
+                                                {#if isErrorMessage(message.text)}
+                                                    <!-- Error message styling -->
+                                                    <div class="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded-2xl rounded-tl-md shadow-lg">
+                                                        <div class="flex items-start gap-3">
+                                                            <div class="flex-shrink-0 pt-1">
+                                                                <Icon name="error" class="text-red-400 text-sm" />
+                                                            </div>
+                                                            <div class="flex-1">
+                                                                <div class="prose prose-sm max-w-none">
+                                                                    <p class="whitespace-pre-wrap leading-relaxed m-0 text-red-300">{message.text}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                {:else}
+                                                    <!-- Normal AI response -->
+                                                    <div class="bg-[#3A3A3C] text-gray-100 px-4 py-3 rounded-2xl rounded-tl-md shadow-lg border border-gray-600">
+                                                        <div class="prose prose-sm prose-invert max-w-none">
+                                                            {@html renderMarkdown(message.text)}
+                                                        </div>
+                                                    </div>
+                                                {/if}
                                             {/if}
                                             
                                             <!-- Timestamp -->

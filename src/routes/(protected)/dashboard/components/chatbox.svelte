@@ -31,10 +31,10 @@
                 throw new Error("Failed to add user message");
             }
             
-            // Get AI response
+            // Get AI response (this will now include "Error: " prefix for errors)
             const aiResponseData = await getAIResponse(currentInput);
             
-            // Add the AI response to the conversation
+            // Add the AI response to the conversation (including errors)
             const aiMessage = await addAIMessage(conversation.id, aiResponseData.answer);
             if (!aiMessage) {
                 throw new Error("Failed to add AI response");

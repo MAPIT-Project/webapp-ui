@@ -138,35 +138,23 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
             body: JSON.stringify(requestBody),
         });
         
+        const data = await response.json();
+        
         if (!response.ok) {
-            // Try to extract the error message from the response
-            let errorMessage = `API request failed with status ${response.status}`;
-            
-            try {
-                const errorData = await response.json();
-                if (errorData.details) {
-                    errorMessage = errorData.details;
-                } else if (errorData.error) {
-                    errorMessage = errorData.error;
-                } else if (typeof errorData === 'string') {
-                    errorMessage = errorData;
-                }
-            } catch (parseError) {
-                // If we can't parse the error response, try to get it as text
-                try {
-                    const errorText = await response.text();
-                    if (errorText) {
-                        errorMessage = errorText;
-                    }
-                } catch {
-                    // Keep the default error message
-                }
+            // Handle API error responses - format as error message
+            let errorMessage = `Error: ${data.error || `API request failed with status ${response.status}`}`;
+            if (data.details) {
+                errorMessage += `\n\nDetails: ${data.details}`;
             }
             
-            throw new Error(errorMessage);
+            return {
+                answer: errorMessage,
+                ai_provider: data.ai_provider,
+                model_used: data.model_used,
+                demo: data.demo
+            };
         }
         
-        const data = await response.json();
         return {
             answer: data.answer,
             ai_provider: data.ai_provider,
@@ -176,8 +164,8 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
     } catch (error) {
         console.error('Error fetching AI response:', error);
         
-        // Return the actual error message instead of a generic one
-        const errorMessage = error instanceof Error ? error.message : "I'm sorry, I wasn't able to generate a response. Please try again later.";
+        // Return the actual error message with Error: prefix
+        const errorMessage = `Error: ${error instanceof Error ? error.message : "I'm sorry, I wasn't able to generate a response. Please try again later."}`;
         
         return {
             answer: errorMessage
