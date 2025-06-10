@@ -25,11 +25,8 @@
                 throw new Error("Failed to create conversation");
             }
             
-            // Add the user's message to the conversation
-            const userMessage = await addUserMessage(conversation.id, currentInput);
-            if (!userMessage) {
-                throw new Error("Failed to add user message");
-            }
+            // The user message is already added during conversation creation
+            // so we don't need to add it again with addUserMessage
             
             // Get AI response (this will now include "Error: " prefix for errors)
             const aiResponseData = await getAIResponse(currentInput);
