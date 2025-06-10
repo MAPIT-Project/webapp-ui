@@ -1,8 +1,9 @@
 import { writable, derived } from 'svelte/store';
 import { useDemo } from './apiModeStore';
 
-// Available AI providers
+// Available AI providers with version
 export type AIProvider = 'openai' | 'gemini';
+export type AIVersion = 'V2' | 'V3';
 
 // Provider information interface
 export interface ProviderInfo {
@@ -12,13 +13,16 @@ export interface ProviderInfo {
 
 export interface ProvidersResponse {
   available_providers: {
-    [key: string]: ProviderInfo;
+    [version: string]: {
+      [provider: string]: ProviderInfo;
+    };
   };
   default_provider: string;
 }
 
-// Create a writable store for the selected provider
+// Store for selected provider and version
 export const selectedProvider = writable<AIProvider | null>(null);
+export const selectedVersion = writable<AIVersion>('V3'); // Default to V3
 export const availableProviders = writable<ProvidersResponse | null>(null);
 export const isLoadingProviders = writable<boolean>(false);
 
