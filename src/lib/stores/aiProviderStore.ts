@@ -3,7 +3,7 @@ import { useDemo } from './apiModeStore';
 
 // Available AI providers with version
 export type AIProvider = 'openai' | 'gemini';
-export type AIVersion = 'V2' | 'V3';
+export type AIVersion = `V${number}`; 
 
 // Provider information interface
 export interface ProviderInfo {
