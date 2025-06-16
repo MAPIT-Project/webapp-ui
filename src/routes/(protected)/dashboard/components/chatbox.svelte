@@ -107,15 +107,28 @@
             </button>
         </div>
         
-        <!-- Loading status indicator -->
+        <!-- Enhanced loading status indicator -->
         {#if isProcessing}
-            <div class="mt-3 flex items-center justify-center gap-3 text-gray-400 text-sm">
-                <div class="flex space-x-1">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce"></div>
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.1s"></div>
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.2s"></div>
+            <div class="mt-3 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                <div class="flex items-center justify-center gap-3 text-gray-400 text-sm mb-3">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce"></div>
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.1s"></div>
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.2s"></div>
+                    </div>
+                    <span>Creating conversation and generating response...</span>
                 </div>
-                <span>Creating conversation and getting AI response...</span>
+                
+                <!-- Timing information for new conversations -->
+                <div class="text-xs text-center text-gray-500 bg-gray-700/30 px-3 py-2 rounded border border-gray-600/30">
+                    <div class="flex items-center justify-center gap-2 mb-1">
+                        <Icon name="info" class="text-xs text-blue-400" />
+                        <span class="text-gray-400">Please wait</span>
+                    </div>
+                    <div class="text-gray-500">
+                        Response generation typically takes <span class="text-blue-300">30-60 seconds</span>
+                    </div>
+                </div>
             </div>
         {/if}
     </form>

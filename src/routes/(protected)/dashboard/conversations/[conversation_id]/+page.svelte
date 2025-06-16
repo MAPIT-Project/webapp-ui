@@ -13,7 +13,7 @@
     import ApiModeToggle from "../../components/api-mode-toggle.svelte";
     import { marked } from 'marked';
     import DOMPurify from 'dompurify';
-    import { fetchAvailableProviders } from '$lib/stores/aiProviderStore';
+    import { fetchAvailableProviders, selectedVersion } from '$lib/stores/aiProviderStore';
     import AIProviderSelector from "../../components/ai-provider-selector.svelte";
 
     // State using runes
@@ -25,7 +25,11 @@
     let error = $state<string | null>(null);
     let lastResponseProvider = $state<string | null>(null);
     let lastResponseModel = $state<string | null>(null);
-    
+    let lastResponseVersion = $state<string | null>(null);
+    let lastResponseDataSource = $state<string | null>(null);
+    let lastResponseProcessingTime = $state<number | null>(null);
+    let lastResponseProjectsFound = $state<number | null>(null);
+
     // Reference to the messages container for auto-scrolling
     let messagesContainer: HTMLDivElement;
     
@@ -121,6 +125,10 @@
                 // Store provider and model info
                 lastResponseProvider = aiResponseData.ai_provider || null;
                 lastResponseModel = aiResponseData.model_used || null;
+                lastResponseVersion = aiResponseData.ai_version || null;
+                lastResponseDataSource = aiResponseData.data_source || null;
+                lastResponseProcessingTime = aiResponseData.processing_time || null;
+                lastResponseProjectsFound = aiResponseData.projects_found || null;
                 
                 // Add the AI response to the conversation (including errors)
                 const aiResponse = await addAIMessage(
@@ -199,7 +207,15 @@
             
             // Parse markdown and sanitize HTML
             const parsed = marked.parse(text);
-            return DOMPurify.sanitize(parsed);
+            let sanitized = DOMPurify.sanitize(parsed);
+            
+            // Post-process to add target="_blank" to all links
+            sanitized = sanitized.replace(
+                /<a\s+href="([^"]*)"([^>]*)>/g, 
+                '<a href="$1" target="_blank" rel="noopener noreferrer"$2>'
+            );
+            
+            return sanitized;
         } catch (error) {
             console.error('Error rendering markdown:', error);
             return text;
@@ -250,12 +266,38 @@
                 {/if}
                 
                 <!-- AI Provider info with dark styling -->
-                {#if lastResponseProvider && lastResponseModel}
-                    <div class="mt-4">
-                        <span class="inline-flex items-center gap-2 text-xs bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full border border-gray-600">
-                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                            Powered by {lastResponseProvider} ({lastResponseModel})
-                        </span>
+                {#if lastResponseProvider || lastResponseDataSource}
+                    <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                        {#if lastResponseProvider && lastResponseModel}
+                            <span class="inline-flex items-center gap-2 text-xs bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full border border-gray-600">
+                                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                {lastResponseProvider} ({lastResponseModel})
+                                {#if lastResponseVersion}
+                                    <span class="text-blue-400">• {lastResponseVersion}</span>
+                                {/if}
+                            </span>
+                        {/if}
+                        
+                        {#if lastResponseDataSource}
+                            <span class="inline-flex items-center gap-2 text-xs bg-blue-900/20 text-blue-300 px-3 py-1.5 rounded-full border border-blue-700">
+                                <Icon name="storage" class="text-xs" />
+                                {lastResponseDataSource}
+                            </span>
+                        {/if}
+                        
+                        {#if lastResponseProcessingTime}
+                            <span class="inline-flex items-center gap-2 text-xs bg-purple-900/20 text-purple-300 px-3 py-1.5 rounded-full border border-purple-700">
+                                <Icon name="timer" class="text-xs" />
+                                {lastResponseProcessingTime.toFixed(2)}s
+                            </span>
+                        {/if}
+                        
+                        {#if lastResponseProjectsFound !== null && lastResponseProjectsFound !== undefined}
+                            <span class="inline-flex items-center gap-2 text-xs bg-emerald-900/20 text-emerald-300 px-3 py-1.5 rounded-full border border-emerald-700">
+                                <Icon name="folder" class="text-xs" />
+                                {lastResponseProjectsFound} projects
+                            </span>
+                        {/if}
                     </div>
                 {/if}
             </div>
@@ -354,14 +396,30 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="bg-[#3A3A3C] px-4 py-3 rounded-2xl rounded-tl-md shadow-lg border border-gray-600">
-                                        <div class="flex items-center gap-1">
-                                            <div class="flex space-x-1">
-                                                <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
-                                                <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.1s"></div>
-                                                <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.2s"></div>
+                                    <!-- Enhanced typing indicator with timing info - only shows while sending -->
+                                    <div class="bg-[#3A3A3C] px-4 py-4 rounded-2xl rounded-tl-md shadow-lg border border-gray-600 max-w-md">
+                                        <div class="space-y-3">
+                                            <!-- Animated dots -->
+                                            <div class="flex items-center gap-2">
+                                                <div class="flex space-x-1">
+                                                    <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
+                                                    <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.1s"></div>
+                                                    <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.2s"></div>
+                                                </div>
+                                                <span class="text-xs text-gray-400 ml-2">AI is analyzing your query...</span>
                                             </div>
-                                            <span class="text-xs text-gray-400 ml-2">AI is thinking...</span>
+                                            
+                                            <!-- Timing information -->
+                                            <div class="text-xs text-gray-500 bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600/50">
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <Icon name="schedule" class="text-xs text-blue-400" />
+                                                    <span class="text-gray-400 font-medium">Response Time</span>
+                                                </div>
+                                                <div class="space-y-1 ml-5">
+                                                    <div class="text-gray-400">• Average: <span class="text-blue-300">40 seconds</span></div>
+                                                    <div class="text-gray-500">• Complex queries may take longer</div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -438,15 +496,16 @@
         background: rgba(255, 255, 255, 0.3);
     }
     
-    /* Dark prose styles for AI responses */
+    /* Enhanced prose styles for AI responses */
     :global(.prose) {
         font-size: 0.95rem;
         line-height: 1.7;
         color: #e5e7eb;
+        max-width: none;
     }
     
     :global(.prose p) {
-        margin-bottom: 1rem;
+        margin-bottom: 1.2rem;
         color: #e5e7eb;
     }
     
@@ -454,53 +513,167 @@
         margin-bottom: 0;
     }
     
+    /* Enhanced heading styles with colors */
     :global(.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6) {
-        color: #f3f4f6;
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
+        color: #60a5fa;
+        margin-top: 1.8rem;
+        margin-bottom: 0.8rem;
+        font-weight: 700;
+        line-height: 1.3;
     }
     
     :global(.prose h1:first-child, .prose h2:first-child, .prose h3:first-child) {
         margin-top: 0;
     }
     
+    :global(.prose h1) {
+        font-size: 1.5rem;
+        color: #60a5fa;
+    }
+    
+    :global(.prose h2) {
+        font-size: 1.3rem;
+        color: #34d399;
+    }
+    
+    :global(.prose h3) {
+        font-size: 1.15rem;
+        color: #ffffff;
+    }
+    
+    /* Enhanced list styles */
     :global(.prose ul, .prose ol) {
-        margin: 1rem 0;
-        padding-left: 1.5rem;
+        margin: 1.2rem 0;
+        padding-left: 1.8rem;
     }
     
     :global(.prose li) {
-        margin: 0.25rem 0;
+        margin: 0.6rem 0;
+        color: #d1d5db;
     }
     
-    :global(.prose pre) {
-        background-color: rgba(0, 0, 0, 0.4) !important;
-        padding: 1rem !important;
-        border-radius: 0.75rem !important;
-        overflow-x: auto;
-        margin: 1rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        font-size: 0.875rem;
+    :global(.prose ul li) {
+        position: relative;
     }
     
+    :global(.prose ul li::marker) {
+        color: #60a5fa;
+        font-weight: bold;
+    }
+    
+    :global(.prose ol li::marker) {
+        color: #34d399;
+        font-weight: bold;
+    }
+    
+    /* Enhanced strong/bold text */
+    :global(.prose strong, .prose b) {
+        color: #ffffff;
+        font-weight: 700;
+    }
+    
+    /* Enhanced emphasis/italic text */
+    :global(.prose em, .prose i) {
+        color: #93c5fd;
+        font-style: italic;
+    }
+    
+    /* Enhanced link styles */
+    :global(.prose a) {
+        color: #60a5fa;
+        text-decoration: underline;
+        text-decoration-color: rgba(96, 165, 250, 0.5);
+        transition: all 0.2s ease;
+    }
+    
+    :global(.prose a:hover) {
+        color: #93c5fd;
+        text-decoration-color: #93c5fd;
+    }
+    
+    /* Enhanced code styles */
     :global(.prose code) {
-        background-color: rgba(255, 255, 255, 0.1);
-        padding: 0.15rem 0.4rem;
+        background-color: rgba(99, 102, 241, 0.15);
+        color: #c7d2fe;
+        padding: 0.2rem 0.5rem;
         border-radius: 0.375rem;
         font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace !important;
         font-size: 0.875em;
         font-weight: 500;
-        color: #e5e7eb;
+        border: 1px solid rgba(99, 102, 241, 0.2);
     }
     
+    :global(.prose pre) {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        padding: 1.2rem !important;
+        border-radius: 0.75rem !important;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid rgba(99, 102, 241, 0.2) !important;
+        font-size: 0.875rem;
+    }
+    
+    :global(.prose pre code) {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: #e2e8f0;
+    }
+    
+    /* Enhanced blockquote styles */
     :global(.prose blockquote) {
-        border-left: 4px solid rgba(255, 255, 255, 0.2);
-        padding-left: 1rem;
-        margin: 1rem 0;
+        border-left: 4px solid #60a5fa;
+        padding-left: 1.2rem;
+        margin: 1.5rem 0;
         font-style: italic;
+        color: #cbd5e1;
+        background-color: rgba(96, 165, 250, 0.05);
+        padding: 1rem 1.2rem;
+        border-radius: 0.5rem;
+    }
+    
+    /* Enhanced table styles */
+    :global(.prose table) {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        background-color: rgba(30, 41, 59, 0.5);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    :global(.prose th) {
+        background-color: rgba(60, 75, 100, 0.8);
+        color: #ffffff;
+        font-weight: 700;
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+    }
+    
+    :global(.prose td) {
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
         color: #d1d5db;
-        opacity: 0.8;
+    }
+    
+    :global(.prose tr:nth-child(even)) {
+        background-color: rgba(51, 65, 85, 0.3);
+    }
+    
+    /* Special styling for nested project details */
+    :global(.prose ul ul) {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        background-color: rgba(15, 23, 42, 0.4);
+        padding: 0.6rem;
+        border-radius: 0.375rem;
+        border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    :global(.prose ul ul li) {
+        margin: 0.3rem 0;
+        font-size: 0.9rem;
     }
     
     /* Smooth animations */

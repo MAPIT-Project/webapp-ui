@@ -2,13 +2,17 @@ import type { conversation, message } from '$lib/server/db/schema';
 import { getCurrentClient } from './clientService';
 import { get } from 'svelte/store';
 import { useDemo } from '$lib/stores/apiModeStore'; 
-import { currentProvider } from '$lib/stores/aiProviderStore';
+import { currentProvider, selectedVersion } from '$lib/stores/aiProviderStore';
 
 // Define interface for AI response
 export interface AIResponseData {
   answer: string;
   ai_provider?: string;
   model_used?: string;
+  ai_version?: string;
+  data_source?: string;
+  processing_time?: number;
+  projects_found?: number;
   demo?: boolean;
 }
 
@@ -119,8 +123,9 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
         const isDemo = get(useDemo);
         const endpoint = isDemo ? '/api/demo' : '/api/query';
         
-        // Get the current selected provider if not in demo mode
+        // Get the current selected provider and version if not in demo mode
         const provider = get(currentProvider);
+        const version = get(selectedVersion);
         
         // Prepare the request body
         const requestBody: any = { question };
@@ -128,6 +133,11 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
         // Add AI provider if specified and not in demo mode
         if (provider && !isDemo) {
             requestBody.ai_provider = provider;
+        }
+        
+        // Add AI version if specified and not in demo mode
+        if (version && !isDemo) {
+            requestBody.ai_version = version;
         }
         
         const response = await fetch(endpoint, {
@@ -151,6 +161,10 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
                 answer: errorMessage,
                 ai_provider: data.ai_provider,
                 model_used: data.model_used,
+                ai_version: data.ai_version,
+                data_source: data.data_source,
+                processing_time: data.processing_time,
+                projects_found: data.projects_found,
                 demo: data.demo
             };
         }
@@ -159,6 +173,10 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
             answer: data.answer,
             ai_provider: data.ai_provider,
             model_used: data.model_used,
+            ai_version: data.ai_version,
+            data_source: data.data_source,
+            processing_time: data.processing_time,
+            projects_found: data.projects_found,
             demo: data.demo
         };
     } catch (error) {
