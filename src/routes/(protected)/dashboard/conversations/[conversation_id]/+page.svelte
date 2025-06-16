@@ -227,50 +227,47 @@
     <ChatSidebar />
     
     <div class="flex-1 flex flex-col relative h-full overflow-hidden">
-        <!-- Top header with dark glass morphism effect -->
-        <div class="absolute top-0 left-0 right-0 h-16 bg-[#2B2A2C]/90 backdrop-blur-xl border-b border-gray-700/50 z-10">
-            <div class="flex items-center justify-between h-full px-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center">
-                        <Icon name="smart_toy" class="text-white text-sm" />
+        <!-- Top header with dark glass morphism effect - made smaller -->
+        <div class="absolute top-0 left-0 right-0 h-12 bg-[#2B2A2C]/90 backdrop-blur-xl border-b border-gray-700/50 z-10">
+            <div class="flex items-center justify-between h-full px-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center">
+                        <Icon name="smart_toy" class="text-white text-xs" />
                     </div>
                     <div>
-                        <span class="text-gray-100 text-sm font-medium">AI Assistant</span>
-                        <span class="text-xs font-semibold ml-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-2 py-1 rounded-full">BETA</span>
+                        <span class="text-gray-100 text-xs font-medium">AI Assistant</span>
+                        <span class="text-xs font-semibold ml-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-1.5 py-0.5 rounded-full">BETA</span>
                     </div>
                 </div>
                 
                 <!-- API Controls -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <AIProviderSelector />
                     <ApiModeToggle />
                 </div>
             </div>
         </div>
     
-        <div class="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto overflow-hidden pt-16">
-            <!-- Chat title area -->
-            <div class="flex-shrink-0 p-6 text-center">
+        <div class="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto overflow-hidden pt-12">
+            <!-- Chat title area - made smaller -->
+            <div class="flex-shrink-0 p-4 text-center">
                 {#if conversation}
                     <div class="space-y-2">
-                        <h1 class="text-2xl font-bold text-gray-100">{conversation.name}</h1>
-                        {#if conversation.topic}
-                            <p class="text-sm text-gray-400">{conversation.topic}</p>
-                        {/if}
+                        <h1 class="text-xl font-semibold text-gray-100">{conversation.name}</h1>
                     </div>
                 {:else if !isLoading}
                     <div class="space-y-2">
-                        <h1 class="text-2xl font-bold text-gray-100">New Conversation</h1>
-                        <p class="text-sm text-gray-400">How can I help you today?</p>
+                        <h1 class="text-xl font-semibold text-gray-100">New Conversation</h1>
+                        <p class="text-xs text-gray-400">How can I help you today?</p>
                     </div>
                 {/if}
                 
-                <!-- AI Provider info with dark styling -->
+                <!-- AI Provider info with dark styling - made smaller -->
                 {#if lastResponseProvider || lastResponseDataSource}
-                    <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                    <div class="mt-3 flex flex-wrap gap-2 justify-center">
                         {#if lastResponseProvider && lastResponseModel}
-                            <span class="inline-flex items-center gap-2 text-xs bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full border border-gray-600">
-                                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span class="inline-flex items-center gap-2 text-xs bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full border border-gray-600">
+                                <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                                 {lastResponseProvider} ({lastResponseModel})
                                 {#if lastResponseVersion}
                                     <span class="text-blue-400">• {lastResponseVersion}</span>
@@ -279,21 +276,21 @@
                         {/if}
                         
                         {#if lastResponseDataSource}
-                            <span class="inline-flex items-center gap-2 text-xs bg-blue-900/20 text-blue-300 px-3 py-1.5 rounded-full border border-blue-700">
+                            <span class="inline-flex items-center gap-2 text-xs bg-blue-900/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-700">
                                 <Icon name="storage" class="text-xs" />
                                 {lastResponseDataSource}
                             </span>
                         {/if}
                         
                         {#if lastResponseProcessingTime}
-                            <span class="inline-flex items-center gap-2 text-xs bg-purple-900/20 text-purple-300 px-3 py-1.5 rounded-full border border-purple-700">
+                            <span class="inline-flex items-center gap-2 text-xs bg-purple-900/20 text-purple-300 px-2.5 py-1 rounded-full border border-purple-700">
                                 <Icon name="timer" class="text-xs" />
                                 {lastResponseProcessingTime.toFixed(2)}s
                             </span>
                         {/if}
                         
                         {#if lastResponseProjectsFound !== null && lastResponseProjectsFound !== undefined}
-                            <span class="inline-flex items-center gap-2 text-xs bg-emerald-900/20 text-emerald-300 px-3 py-1.5 rounded-full border border-emerald-700">
+                            <span class="inline-flex items-center gap-2 text-xs bg-emerald-900/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-700">
                                 <Icon name="folder" class="text-xs" />
                                 {lastResponseProjectsFound} projects
                             </span>

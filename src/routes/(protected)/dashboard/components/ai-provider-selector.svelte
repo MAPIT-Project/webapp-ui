@@ -26,25 +26,25 @@
     : {};
 </script>
 
-<div class="flex items-center gap-2 text-xs text-gray-400 rounded p-2 bg-gray-800 border border-gray-700">
+<div class="flex items-center gap-2 text-xs text-gray-400 rounded px-2 py-1 bg-gray-800 border border-gray-700">
   {#if $isLoadingProviders}
-    <div class="flex items-center gap-2">
-      <div class="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-blue-500"></div>
-      <span>Loading providers...</span>
+    <div class="flex items-center gap-1">
+      <div class="animate-spin rounded-full h-2.5 w-2.5 border-t-2 border-b-2 border-blue-500"></div>
+      <span class="text-xs">Loading...</span>
     </div>
   {:else if $useDemo}
-    <div class="flex items-center gap-2">
-      <Icon name="rocket_launch" class="text-gray-400" />
-      <span>Using Demo API</span>
+    <div class="flex items-center gap-1">
+      <Icon name="rocket_launch" class="text-gray-400 text-xs" />
+      <span class="text-xs">Demo</span>
     </div>
   {:else if $availableProviders}
-    <div class="flex items-center gap-3">
-      <Icon name="smart_toy" class="text-gray-400" />
+    <div class="flex items-center gap-2">
+      <Icon name="smart_toy" class="text-gray-400 text-xs" />
       
       <!-- Version Selector -->
       <div class="relative">
         <select
-          class="appearance-none bg-gray-700 border border-gray-600 text-white rounded py-1 px-2 pr-6 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-xs"
+          class="appearance-none bg-gray-700 border border-gray-600 text-white rounded py-0.5 px-1.5 pr-4 leading-tight focus:outline-none focus:ring-1 focus:ring-blue-500/40 text-xs"
           value={$selectedVersion}
           onchange={handleVersionChange}
           disabled={$useDemo}
@@ -53,7 +53,7 @@
             <option value={version}>{version}</option>
           {/each}
         </select>
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-400">
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-0.5 text-gray-400">
           <Icon name="expand_more" class="text-xs" />
         </div>
       </div>
@@ -61,33 +61,33 @@
       <!-- Provider Selector -->
       <div class="relative">
         <select
-          class="appearance-none bg-gray-700 border border-gray-600 text-white rounded py-1 px-3 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-xs"
+          class="appearance-none bg-gray-700 border border-gray-600 text-white rounded py-0.5 px-2 pr-5 leading-tight focus:outline-none focus:ring-1 focus:ring-blue-500/40 text-xs"
           value={$selectedProvider || ''}
           onchange={handleProviderChange}
           disabled={$useDemo}
         >
           {#each Object.entries(currentVersionProviders) as [provider, info]}
-            <option value={provider}>{provider} ({info.model})</option>
+            <option value={provider}>{provider}</option>
           {/each}
         </select>
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-          <Icon name="expand_more" />
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-400">
+          <Icon name="expand_more" class="text-xs" />
         </div>
       </div>
     </div>
   {:else}
-    <div class="flex items-center gap-2">
-      <Icon name="warning" class="text-yellow-500" />
-      <span>No AI providers available</span>
+    <div class="flex items-center gap-1">
+      <Icon name="warning" class="text-yellow-500 text-xs" />
+      <span class="text-xs">No providers</span>
     </div>
   {/if}
 
   <div class="relative group">
-    <Icon name="info" class="h-4 w-4 cursor-help text-gray-500" />
+    <Icon name="info" class="h-3 w-3 cursor-help text-gray-500" />
     <div class="tooltip opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 
-              absolute mt-4 -right-2 bg-gray-900 border border-gray-700 rounded p-2 text-xs w-64 z-50 pointer-events-none shadow-lg">
-      <p class="mb-1">Select API version and AI provider for generating responses.</p>
-      <p>Different versions and providers may have varying capabilities and response styles.</p>
+              absolute mt-2 -right-2 bg-gray-900 border border-gray-700 rounded p-2 text-xs w-48 z-50 pointer-events-none shadow-lg">
+      <p class="mb-1">Select API version and provider.</p>
+      <p>Different versions may have varying capabilities.</p>
     </div>
   </div>
 </div>
