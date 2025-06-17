@@ -59,6 +59,7 @@
 		"daisyui": "^4.12.14",
 		"deck.gl": "^9.1.8",
 		"dompurify": "^3.2.5",
+		"dotenv": "^16.5.0",
 		"drizzle-orm": "^0.33.0",
 		"lightweight-charts": "^4.2.2",
 		"lucide-svelte": "^0.454.0",
