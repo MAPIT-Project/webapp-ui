@@ -17,12 +17,25 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
             }
         });
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-        if (!session?.user) {
-            return json({ error: 'No authenticated user found' }, { status: 401 });
+        if (userError || !user) {
+            return json({ error: 'No authenticated user found or error fetching user' }, { status: 401 });
         }
-        const userId = session.user.id;
+        const authUserId = user.id; // This is the UUID
+
+        // Fetch the local client ID (integer) using the authUserId (UUID)
+        const { data: clientRecord, error: clientError } = await supabase
+            .from('client')
+            .select('id')
+            .eq('auth_id', authUserId)
+            .single();
+
+        if (clientError || !clientRecord) {
+            console.error('Error fetching client record or client not found:', clientError);
+            return json({ error: 'User profile not found or error fetching profile.' }, { status: 404 });
+        }
+        const localClientId = clientRecord.id; // This is the integer client ID
 
         const spaceId = url.searchParams.get('spaceId');
 
@@ -33,7 +46,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
         let query = supabase.from('conversation').select('*');
 
         if (spaceId === 'personal') {
-            query = query.eq('user_id', userId).is('collaboration_id', null);
+            query = query.eq('user_id', localClientId).is('collaboration_id', null);
         } else {
             // Assuming spaceId is a numeric collaboration_id
             const collaborationIdNum = parseInt(spaceId);
@@ -43,13 +56,14 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
             query = query.eq('collaboration_id', collaborationIdNum);
             
             // IMPORTANT: Add a check to ensure the user is part of this collaboration.
-            // This might involve a join or a subquery to check a 'collaboration_members' table.
+            // This might involve a join or a subquery to check a 'collaboration_members' table
+            // using localClientId.
             // Example (conceptual, adapt to your schema):
             // const { data: memberCheck, error: memberError } = await supabase
             //     .from('collaboration_members')
             //     .select('id', { count: 'exact' })
             //     .eq('collaboration_id', collaborationIdNum)
-            //     .eq('user_id', userId);
+            //     .eq('client_id', localClientId); // Use localClientId here
             // if (memberError || memberCheck[0]?.count === 0) {
             //     return json({ error: 'Forbidden: You are not a member of this collaboration space.' }, { status: 403 });
             // }
@@ -90,11 +104,25 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             }
         });
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
             return json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = session.user.id;
+        const authUserId = user.id; // UUID
+
+        // Fetch the local client ID (integer) using the authUserId (UUID)
+        const { data: clientRecord, error: clientError } = await supabase
+            .from('client')
+            .select('id')
+            .eq('auth_id', authUserId)
+            .single();
+
+        if (clientError || !clientRecord) {
+            console.error('Error fetching client record for POST or client not found:', clientError);
+            return json({ error: 'User profile not found for creating conversation.' }, { status: 404 });
+        }
+        const localClientId = clientRecord.id; // Integer client ID
+
 
         const { topic, name, firstMessage, spaceId } = await request.json();
 
@@ -107,12 +135,12 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
              return json({ error: 'Invalid spaceId for collaboration' }, { status: 400 });
         }
 
-        // TODO: If collaborationId is provided, verify user is part of that collaboration before creating.
+        // TODO: If collaborationId is provided, verify user (localClientId) is part of that collaboration.
 
         const { data: newConversation, error: insertError } = await supabase
             .from('conversation')
             .insert({
-                user_id: userId, // Always associate with the authenticated user
+                user_id: localClientId, // Use the integer localClientId
                 topic: topic || 'General',
                 name: name,
                 collaboration_id: collaborationId,

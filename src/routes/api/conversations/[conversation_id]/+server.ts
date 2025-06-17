@@ -23,12 +23,26 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
             }
         });
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        if (!session?.user) {
-            return json({ error: 'No authenticated user found' }, { status: 401 });
+        if (userError || !user) {
+            return json({ error: 'No authenticated user found or error fetching user' }, { status: 401 });
         }
-        const userId = session.user.id;
+        const authUserId = user.id; // UUID
+
+        // Fetch the local client ID (integer) using the authUserId (UUID)
+        const { data: clientRecord, error: clientError } = await supabase
+            .from('client')
+            .select('id')
+            .eq('auth_id', authUserId)
+            .single();
+
+        if (clientError || !clientRecord) {
+            console.error('Error fetching client record for conversation access or client not found:', clientError);
+            return json({ error: 'User profile not found for accessing conversation.' }, { status: 404 });
+        }
+        const localClientId = clientRecord.id; // Integer client ID
+
 
         const { data: conversation, error } = await supabase
             .from('conversation')
@@ -54,17 +68,17 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
         // 2. If it's a collaboration conversation, the user must be part of that collaboration.
         //    (This part needs a proper check against your collaboration membership table/logic)
         if (conversation.collaboration_id === null) { // Personal conversation
-            if (conversation.user_id !== userId) {
+            if (conversation.user_id !== localClientId) { // Compare with integer localClientId
                 return json({ error: 'Forbidden: You do not have access to this conversation' }, { status: 403 });
             }
         } else { // Collaboration conversation
-            // TODO: Implement robust check to ensure userId is a member of conversation.collaboration_id
+            // TODO: Implement robust check to ensure localClientId is a member of conversation.collaboration_id
             // For example, query a 'collaboration_members' table:
             // const { data: member, error: memberError } = await supabase
             //    .from('collaboration_members')
             //    .select('id')
             //    .eq('collaboration_id', conversation.collaboration_id)
-            //    .eq('user_id', userId)
+            //    .eq('client_id', localClientId) // Use localClientId here
             //    .maybeSingle();
             // if (memberError || !member) {
             //    return json({ error: 'Forbidden: You are not part of this collaboration space or conversation' }, { status: 403 });
@@ -74,9 +88,9 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
             // However, a direct access attempt should still be validated.
             // A simple placeholder: if not the creator, deny if no further collab check.
             // This is NOT a complete collaboration check.
-            if (conversation.user_id !== userId) {
+            if (conversation.user_id !== localClientId) { // Compare with integer localClientId
                  // This is a simplistic check. A real check would verify membership in conversation.collaboration_id
-                 // console.warn(`Warning: User ${userId} accessed collab conversation ${conversation.id} without full membership check.`);
+                 // console.warn(`Warning: User ${localClientId} accessed collab conversation ${conversation.id} without full membership check.`);
             }
         }
 
