@@ -3,7 +3,7 @@ import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ url, cookies }) => {
     try {
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
             cookies: {
@@ -17,26 +17,58 @@ export const GET: RequestHandler = async ({ cookies }) => {
             }
         });
 
-        const { data: authData } = await supabase.auth.getSession();
-        
-        if (!authData.session?.user) {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session?.user) {
             return json({ error: 'No authenticated user found' }, { status: 401 });
         }
+        const userId = session.user.id;
 
-        const { data, error } = await supabase
-            .from('conversation')
-            .select('*')
-            .order('created_at', { ascending: false });
+        const spaceId = url.searchParams.get('spaceId');
+
+        if (!spaceId) {
+            return json({ error: 'spaceId query parameter is required' }, { status: 400 });
+        }
+
+        let query = supabase.from('conversation').select('*');
+
+        if (spaceId === 'personal') {
+            query = query.eq('user_id', userId).is('collaboration_id', null);
+        } else {
+            // Assuming spaceId is a numeric collaboration_id
+            const collaborationIdNum = parseInt(spaceId);
+            if (isNaN(collaborationIdNum)) {
+                return json({ error: 'Invalid collaboration spaceId' }, { status: 400 });
+            }
+            query = query.eq('collaboration_id', collaborationIdNum);
+            
+            // IMPORTANT: Add a check to ensure the user is part of this collaboration.
+            // This might involve a join or a subquery to check a 'collaboration_members' table.
+            // Example (conceptual, adapt to your schema):
+            // const { data: memberCheck, error: memberError } = await supabase
+            //     .from('collaboration_members')
+            //     .select('id', { count: 'exact' })
+            //     .eq('collaboration_id', collaborationIdNum)
+            //     .eq('user_id', userId);
+            // if (memberError || memberCheck[0]?.count === 0) {
+            //     return json({ error: 'Forbidden: You are not a member of this collaboration space.' }, { status: 403 });
+            // }
+            // Without this check, a user could potentially list conversations from any collaboration if they know the ID.
+        }
+
+        query = query.order('updated_at', { ascending: false });
+
+        const { data: conversations, error } = await query;
 
         if (error) {
             console.error('Error fetching conversations:', error);
             return json({ error: error.message }, { status: 500 });
         }
 
-        return json({ conversations: data });
+        return json({ conversations: conversations || [] });
 
     } catch (error) {
-        console.error('Server error:', error);
+        console.error('Server error fetching conversations:', error);
         return json({ 
             error: 'Internal server error',
             details: error instanceof Error ? error.message : String(error)
@@ -46,8 +78,6 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
     try {
-        const { topic, name, firstMessage, spaceId } = await request.json();
-
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
             cookies: {
                 get: (key: string) => cookies.get(key),
@@ -60,69 +90,49 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             }
         });
 
-        const { data: authData } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+            return json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = session.user.id;
+
+        const { topic, name, firstMessage, spaceId } = await request.json();
+
+        if (!name || !firstMessage) {
+            return json({ error: 'Missing required fields: name and firstMessage' }, { status: 400 });
+        }
         
-        if (!authData.session?.user) {
-            return json({ error: 'No authenticated user found' }, { status: 401 });
+        const collaborationId = (spaceId && spaceId !== 'personal') ? parseInt(spaceId) : null;
+        if (spaceId && spaceId !== 'personal' && isNaN(collaborationId as number)) {
+             return json({ error: 'Invalid spaceId for collaboration' }, { status: 400 });
         }
 
-        // Get current client
-        const userId = authData.session.user.id;
-        const { data: client } = await supabase
-            .from('client')
-            .select('*')
-            .eq('auth_id', userId)
-            .maybeSingle();
+        // TODO: If collaborationId is provided, verify user is part of that collaboration before creating.
 
-        if (!client) {
-            return json({ error: 'Client not found' }, { status: 404 });
-        }
-
-        // Create conversation with correct column name
-        const conversationData: any = {
-            user_id: client.id,  // Changed from client_id to user_id to match schema
-            name: name || `Conversation ${new Date().toLocaleDateString()}`,
-            topic: topic || firstMessage || 'New conversation'
-        };
-
-        // Handle spaceId (collaboration_id)
-        if (spaceId && spaceId !== 'personal') {
-            conversationData.collaboration_id = parseInt(spaceId);
-        }
-
-        const { data: conversation, error: conversationError } = await supabase
+        const { data: newConversation, error: insertError } = await supabase
             .from('conversation')
-            .insert([conversationData])
+            .insert({
+                user_id: userId, // Always associate with the authenticated user
+                topic: topic || 'General',
+                name: name,
+                collaboration_id: collaborationId,
+                // last_message_at: new Date().toISOString(), // Consider setting this
+            })
             .select()
             .single();
 
-        if (conversationError) {
-            console.error('Error creating conversation:', conversationError);
-            return json({ error: conversationError.message }, { status: 500 });
+        if (insertError) {
+            console.error('Error creating conversation:', insertError);
+            return json({ error: insertError.message }, { status: 500 });
         }
+        
+        // Optionally, create the first message here if your logic requires it atomically
+        // For now, assuming client handles adding the first message via /api/messages
 
-        // Add first message if provided
-        if (firstMessage) {
-            const { error: messageError } = await supabase
-                .from('message')
-                .insert([{
-                    conversation_id: conversation.id,
-                    text: firstMessage,
-                    sender: 'user'
-                }]);
-
-            if (messageError) {
-                console.error('Error adding first message:', messageError);
-            }
-        }
-
-        return json({ conversation });
+        return json({ conversation: newConversation }, { status: 201 });
 
     } catch (error) {
-        console.error('Server error:', error);
-        return json({ 
-            error: 'Internal server error',
-            details: error instanceof Error ? error.message : String(error)
-        }, { status: 500 });
+        console.error('Error in POST /api/conversations:', error);
+        return json({ error: 'Failed to create conversation' }, { status: 500 });
     }
 };

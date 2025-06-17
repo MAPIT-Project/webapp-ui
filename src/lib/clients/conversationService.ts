@@ -224,9 +224,8 @@ export async function getConversationMessages(conversationId: number): Promise<m
  */
 export async function getUserConversations(spaceId: string): Promise<conversation[]> {
     try {
-        // For now, we'll get all conversations and filter client-side
-        // You might want to add spaceId filtering to the API endpoint later
-        const response = await fetch('/api/conversations', {
+        // The backend will handle filtering based on the authenticated user and spaceId.
+        const response = await fetch(`/api/conversations?spaceId=${encodeURIComponent(spaceId)}`, {
             method: 'GET'
         });
 
@@ -237,19 +236,8 @@ export async function getUserConversations(spaceId: string): Promise<conversatio
             return [];
         }
 
-        let conversations = result.conversations as conversation[];
-
-        // Filter conversations based on spaceId
-        if (spaceId === 'personal') {
-            conversations = conversations.filter(conv => !conv.collaboration_id);
-        } else {
-            const collaborationIdNum = parseInt(spaceId);
-            if (!isNaN(collaborationIdNum)) {
-                conversations = conversations.filter(conv => conv.collaboration_id === collaborationIdNum);
-            }
-        }
-
-        return conversations;
+        // The backend now returns only the conversations the user is authorized to see.
+        return result.conversations as conversation[];
     } catch (error) {
         console.error('Unexpected error fetching conversations:', error);
         return [];
