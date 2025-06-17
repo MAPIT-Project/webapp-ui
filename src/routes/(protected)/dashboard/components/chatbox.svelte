@@ -11,7 +11,7 @@
     async function handleSubmit() {
         if (!userInput.trim() || isProcessing) return;
         
-        error = null;
+        error = null; // Correctly assign to the state variable
         isProcessing = true;
         
         try {
@@ -25,8 +25,12 @@
                 throw new Error("Failed to create conversation");
             }
             
-            // The user message is already added during conversation creation
-            // so we don't need to add it again with addUserMessage
+            // Explicitly add the user's first message to the conversation
+            const userMessage = await addUserMessage(conversation.id, currentInput);
+            if (!userMessage) {
+                // Potentially roll back conversation creation or mark it as incomplete
+                throw new Error("Failed to save your message to the new conversation.");
+            }
             
             // Get AI response (this will now include "Error: " prefix for errors)
             const aiResponseData = await getAIResponse(currentInput);
