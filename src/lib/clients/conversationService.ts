@@ -2,7 +2,7 @@ import type { conversation, message } from '$lib/server/db/schema';
 import { getCurrentClient } from './clientService';
 import { get } from 'svelte/store';
 import { useDemo } from '$lib/stores/apiModeStore'; 
-import { currentProvider, selectedVersion } from '$lib/stores/aiProviderStore';
+import { currentProvider, selectedVersion, useLocalDb, isVersionV5OrHigher } from '$lib/stores/aiProviderStore';
 
 // Define interface for AI response
 export interface AIResponseData {
@@ -138,6 +138,11 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
         // Add AI version if specified and not in demo mode
         if (version && !isDemo) {
             requestBody.ai_version = version;
+
+            // Add use_local_db if version is V5 or higher
+            if (isVersionV5OrHigher(version)) {
+                requestBody.use_local_db = get(useLocalDb);
+            }
         }
         
         const response = await fetch(endpoint, {

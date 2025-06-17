@@ -25,6 +25,16 @@ export const selectedProvider = writable<AIProvider | null>(null);
 export const selectedVersion = writable<AIVersion>('V4'); // Will be updated dynamically
 export const availableProviders = writable<ProvidersResponse | null>(null);
 export const isLoadingProviders = writable<boolean>(false);
+export const useLocalDb = writable<boolean>(true); // Default to using local DB
+
+// Helper function to check if version is V5 or higher
+export function isVersionV5OrHigher(versionString: AIVersion | string | null): boolean {
+  if (!versionString || !versionString.startsWith('V')) {
+    return false;
+  }
+  const versionNumber = parseInt(versionString.substring(1));
+  return !isNaN(versionNumber) && versionNumber >= 5;
+}
 
 // Derived store that combines demo mode with provider selection
 export const currentProvider = derived(
