@@ -43,6 +43,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     return session;
   };
 
+  // Ensure session is loaded and any potential cookie-setting side effects from Supabase auth
+  // (like token refresh) are attempted before resolving the main request.
+  await event.locals.supabase.auth.getSession();
+
   return resolve(event, {
     filterSerializedResponseHeaders(name) {
       // Add 'x-supabase-api-version' if required by @supabase/ssr, content-range is usually for Supabase storage or PostgREST
