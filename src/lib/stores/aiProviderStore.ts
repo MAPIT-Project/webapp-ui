@@ -63,7 +63,7 @@ export async function fetchAvailableProviders(): Promise<void> {
   isLoadingProviders.set(true);
   
   try {
-    const response = await fetch('http://localhost:8000/api/providers');
+    const response = await fetch('/api/providers'); // Changed to relative path for our backend proxy
     
     if (!response.ok) {
       throw new Error(`Failed to fetch providers: ${response.status}`);
