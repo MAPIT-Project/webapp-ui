@@ -3,15 +3,7 @@ import type { RequestHandler } from './$types';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ locals, cookies }) => {
-    const session = await locals.getSession();
-
-    if (!session?.user) {
-        return json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const authId = session.user.id;
-
+export const GET: RequestHandler = async ({ cookies }) => {
     try {
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
             cookies: {
@@ -25,11 +17,19 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
             }
         });
 
+        const { data: authData } = await supabase.auth.getSession();
+        
+        if (!authData.session?.user) {
+            return json({ error: 'No authenticated user found' }, { status: 401 });
+        }
+
+        const authId = authData.session.user.id;
+
         // 1. Get the client_id from the auth_id
         const { data: clientRecord, error: clientError } = await supabase
             .from('client')
             .select('id')
-            .eq('authId', authId)
+            .eq('auth_id', authId)
             .single();
 
         if (clientError || !clientRecord) {
@@ -41,14 +41,14 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
 
         // 2. Get collaboration_ids for this client and join with collaboration details
         const { data: collaborations, error: collaborationsError } = await supabase
-            .from('clientCollaboration')
+            .from('client_collaboration')
             .select(`
-                collaboration:collaborationId (
+                collaboration:collaboration_id (
                     id,
                     name
                 )
             `)
-            .eq('clientId', clientId);
+            .eq('client_id', clientId);
 
         if (collaborationsError) {
             console.error('Error fetching collaborations:', collaborationsError);
@@ -63,8 +63,8 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
         const formattedCollaborations = collaborations
             .filter(c => c.collaboration) // Filter out any null collaborations
             .map(c => ({
-                id: String(c.collaboration.id), // Convert numeric ID to string
-                name: c.collaboration.name,
+                id: String((c.collaboration as any).id), // Convert numeric ID to string
+                name: (c.collaboration as any).name,
             }));
 
         return json(formattedCollaborations);

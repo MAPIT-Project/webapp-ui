@@ -37,14 +37,16 @@ export async function fetchUserCollaborations() {
     const response = await fetch('/api/user-collaborations', {
       credentials: 'include' // Ensure cookies are sent
     });
+    
     if (response.ok) {
       const fetchedCollaborations = await response.json();
+      
       userCollaborationItems = fetchedCollaborations.map((c: { id: number | string; name: string }) => ({
         id: String(c.id), // Ensure ID is a string
         name: c.name
       })).sort((a: CollaborationSpace, b: CollaborationSpace) => a.name.localeCompare(b.name));
     } else {
-      console.error('Failed to fetch collaborations in store:', response.statusText);
+      console.error('Failed to fetch collaborations in store:', response.status, response.statusText);
       userCollaborationItems = []; // Default to empty on error
     }
   } catch (error) {
