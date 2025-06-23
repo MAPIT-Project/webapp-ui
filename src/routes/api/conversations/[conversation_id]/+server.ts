@@ -104,3 +104,100 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
         }, { status: 500 });
     }
 };
+
+export const PUT: RequestHandler = async ({ params, request, cookies }) => {
+    try {
+        const conversationId = params.conversation_id;
+        
+        if (!conversationId) {
+            return json({ error: 'Conversation ID is required' }, { status: 400 });
+        }
+
+        const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+            cookies: {
+                get: (key: string) => cookies.get(key),
+                set: (key: string, value: string, options: any) => {
+                    cookies.set(key, value, { ...options, path: '/' });
+                },
+                remove: (key: string, options: any) => {
+                    cookies.delete(key, { ...options, path: '/' });
+                }
+            }
+        });
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+            return json({ error: 'No authenticated user found or error fetching user' }, { status: 401 });
+        }
+        const authUserId = user.id; // UUID
+
+        // Fetch the local client ID (integer) using the authUserId (UUID)
+        const { data: clientRecord, error: clientError } = await supabase
+            .from('client')
+            .select('id')
+            .eq('auth_id', authUserId)
+            .single();
+
+        if (clientError || !clientRecord) {
+            console.error('Error fetching client record for conversation update or client not found:', clientError);
+            return json({ error: 'User profile not found for updating conversation.' }, { status: 404 });
+        }
+        const localClientId = clientRecord.id; // Integer client ID
+
+        const { name } = await request.json();
+
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return json({ error: 'Valid conversation name is required' }, { status: 400 });
+        }
+
+        // First check if conversation exists and user has permission
+        const { data: existingConversation, error: fetchError } = await supabase
+            .from('conversation')
+            .select('*')
+            .eq('id', conversationId)
+            .single();
+
+        if (fetchError || !existingConversation) {
+            return json({ error: 'Conversation not found' }, { status: 404 });
+        }
+
+        // Authorization check
+        if (existingConversation.collaboration_id === null) { // Personal conversation
+            if (existingConversation.user_id !== localClientId) {
+                return json({ error: 'Forbidden: You do not have permission to edit this conversation' }, { status: 403 });
+            }
+        } else { // Collaboration conversation
+            // TODO: Add proper collaboration membership check here
+            // For now, only allow the creator to edit
+            if (existingConversation.user_id !== localClientId) {
+                return json({ error: 'Forbidden: You do not have permission to edit this conversation' }, { status: 403 });
+            }
+        }
+
+        // Update the conversation name
+        const { data: updatedConversation, error: updateError } = await supabase
+            .from('conversation')
+            .update({ 
+                name: name.trim(),
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', conversationId)
+            .select()
+            .single();
+
+        if (updateError) {
+            console.error('Error updating conversation name:', updateError);
+            return json({ error: updateError.message }, { status: 500 });
+        }
+
+        return json({ conversation: updatedConversation });
+
+    } catch (error) {
+        console.error('Server error updating conversation:', error);
+        return json({ 
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
+    }
+};

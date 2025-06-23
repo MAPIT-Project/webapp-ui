@@ -1,10 +1,10 @@
 import { writable, get } from 'svelte/store';
-import type { conversation } from '$lib/server/db/schema'; // MODIFIED
-import { getUserConversations } from '$lib/clients/conversationService';
+import type { Conversation } from '$lib/types/schema'; // MODIFIED
+import { getUserConversations, updateConversationName } from '$lib/clients/conversationService';
 import { getSpace } from '$lib/stores/collaborationStore.svelte';
 
 interface ConversationStore {
-    conversations: conversation[]; // MODIFIED
+    conversations: Conversation[]; // MODIFIED
     isLoading: boolean;
     error: string | null;
     loaded: boolean;
@@ -61,13 +61,13 @@ function createConversationStore() {
                 }
             }
         },
-        addConversation: (newConversation: conversation) => { // MODIFIED
+        addConversation: (newConversation: Conversation) => { // MODIFIED
             update(state => ({
                 ...state,
                 conversations: [newConversation, ...state.conversations]
             }));
         },
-        updateConversation: (id: number, updates: Partial<conversation>) => { // MODIFIED
+        updateConversation: (id: number, updates: Partial<Conversation>) => { // MODIFIED
             update(state => ({
                 ...state,
                 conversations: state.conversations.map(conv => 
@@ -80,6 +80,24 @@ function createConversationStore() {
                 ...state,
                 conversations: state.conversations.filter(conv => conv.id !== id)
             }));
+        },
+        updateConversationName: async (id: number, newName: string): Promise<boolean> => {
+            try {
+                const updatedConversation = await updateConversationName(id, newName);
+                if (updatedConversation) {
+                    update(state => ({
+                        ...state,
+                        conversations: state.conversations.map(conv => 
+                            conv.id === id ? { ...conv, name: newName } : conv
+                        )
+                    }));
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error updating conversation name:', error);
+                return false;
+            }
         }
     };
 }

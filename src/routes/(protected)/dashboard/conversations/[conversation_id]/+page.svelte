@@ -8,13 +8,15 @@
         addAIMessage,
         getAIResponse
     } from "$lib/clients/conversationService";
-    import type { Message, Conversation } from "$lib/server/db/schema";
+    import type { Message, Conversation } from "$lib/types/schema";
     import ChatSidebar from "../../components/chat-sidebar.svelte";
     import ApiModeToggle from "../../components/api-mode-toggle.svelte";
     import { marked } from 'marked';
     import DOMPurify from 'dompurify';
     import { fetchAvailableProviders, selectedVersion } from '$lib/stores/aiProviderStore';
     import AIProviderSelector from "../../components/ai-provider-selector.svelte";
+    import EditableTitle from "$lib/components/generic/editable-title.svelte";
+    import { conversationStore } from "$lib/stores/conversationStore";
 
     // State using runes
     let userInput = $state("");
@@ -32,6 +34,9 @@
 
     // Reference to the messages container for auto-scrolling
     let messagesContainer: HTMLDivElement;
+    
+    // Derived state for conversation name handling
+    let conversationName = $derived(conversation?.name || "Untitled Conversation");
     
     // Derive chatId from URL params
     let chatId = $derived(parseInt($page.params.conversation_id));
@@ -97,6 +102,18 @@
     onMount(() => {
         fetchAvailableProviders();
     });
+
+    // Function to handle saving conversation name
+    async function handleSaveConversationName(newName: string): Promise<boolean> {
+        if (!conversation) return false;
+        
+        const success = await conversationStore.updateConversationName(conversation.id, newName);
+        if (success && conversation) {
+            // Update local conversation object
+            conversation = { ...conversation, name: newName };
+        }
+        return success;
+    }
 
     async function handleSubmit() {
         if (!userInput.trim()) return;
@@ -249,11 +266,19 @@
         </div>
     
         <div class="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto overflow-hidden pt-12">
-            <!-- Chat title area - made smaller -->
-            <div class="flex-shrink-0 p-4 text-center">
+            <!-- Chat title area - with extra space for warning -->
+            <div class="flex-shrink-0 p-4 pb-8 text-center">
                 {#if conversation}
                     <div class="space-y-2">
-                        <h1 class="text-xl font-semibold text-gray-100">{conversation.name}</h1>
+                        <EditableTitle 
+                            value={conversationName}
+                            onSave={handleSaveConversationName}
+                            placeholder="Untitled Conversation"
+                            maxLength={30}
+                            showEditIcon={true}
+                            titleClass="text-xl font-semibold text-gray-100"
+                            inputClass="text-xl font-semibold bg-transparent border-b-2 border-blue-500 text-gray-100 outline-none text-center"
+                        />
                     </div>
                 {:else if !isLoading}
                     <div class="space-y-2">

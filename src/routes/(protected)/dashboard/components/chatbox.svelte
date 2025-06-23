@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import Icon from "$lib/components/generic/icon.svelte";
     import { getSpace } from "$lib/stores/collaborationStore.svelte";
+    import { conversationStore } from "$lib/stores/conversationStore";
     
     let userInput = $state("");
     let isProcessing = $state(false);
@@ -24,6 +25,9 @@
             if (!conversation) {
                 throw new Error("Failed to create conversation");
             }
+
+            // Add the new conversation to the store so it appears in the sidebar immediately
+            conversationStore.addConversation(conversation);
             
             // Explicitly add the user's first message to the conversation
             const userMessage = await addUserMessage(conversation.id, currentInput);
@@ -126,7 +130,7 @@
                 <!-- Timing information for new conversations -->
                 <div class="text-xs text-center text-gray-500 bg-gray-700/30 px-3 py-2 rounded border border-gray-600/30">
                     <div class="flex items-center justify-center gap-2 mb-1">
-                        <Icon name="info" class="text-xs text-blue-400" />
+                        <Icon name="info" iconClass="text-xs text-blue-400" />
                         <span class="text-gray-400">Please wait</span>
                     </div>
                     <div class="text-gray-500">

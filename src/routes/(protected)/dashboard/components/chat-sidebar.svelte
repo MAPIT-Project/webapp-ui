@@ -1,9 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import type { Conversation } from "$lib/server/db/schema";
+    import type { Conversation } from "$lib/types/schema";
     import { page } from "$app/stores";
     import Icon from "$lib/components/generic/icon.svelte";
     import { conversationStore } from "$lib/stores/conversationStore";
+    import EditableTitle from "$lib/components/generic/editable-title.svelte";
     
     // Get the current chat id from the URL if we're on a chat page
     const currentChatId = $derived($page.params.chat_id ? parseInt($page.params.chat_id) : null);
@@ -29,6 +30,11 @@
     onMount(() => {
         loadWithRetry();
     });
+
+    // Function to handle saving conversation name
+    async function handleSaveConversationName(conversationId: number, newName: string): Promise<boolean> {
+        return await conversationStore.updateConversationName(conversationId, newName);
+    }
     
     function formatDate(date: Date | string | null): string {
         if (!date) return '';
@@ -107,7 +113,7 @@
             <div class="p-4 mt-4 bg-[#2B2A2C] rounded-lg border border-[#4A4A57]/30 text-[#A0A0A8] text-sm">
                 <div class="flex justify-center mb-2">
                     <div class="p-2 rounded-full bg-[#3E3E48]">
-                        <Icon name="chat" iconSize="small" class="text-[#A0A0A8]" />
+                        <Icon name="chat" iconSize="sm" className="text-[#A0A0A8]" />
                     </div>
                 </div>
                 <p class="text-center">No conversations yet.</p>
@@ -118,17 +124,27 @@
                 {#each $conversationStore.conversations as conversation}
                     <a 
                         href="/dashboard/conversations/{conversation.id}" 
-                        class="flex items-center justify-between px-4 py-3 mb-1 hover:bg-[#3E3E48] {currentChatId === conversation.id ? 'bg-[#3E3E48]' : ''} rounded-lg transition-colors"
+                        class="flex items-start justify-between px-4 py-3 mb-1 hover:bg-[#3E3E48] {currentChatId === conversation.id ? 'bg-[#3E3E48]' : ''} rounded-lg transition-colors group relative"
                     >
-                        <div class="flex-1 min-w-0">
-                            <p class="text-white text-sm font-medium truncate">
-                                {conversation.name}
-                            </p>
-                            <p class="text-[#A0A0A8] text-xs truncate">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="relative">
+                                <EditableTitle 
+                                    value={conversation.name || "Untitled"}
+                                    onSave={(newName) => handleSaveConversationName(conversation.id, newName)}
+                                    placeholder="Untitled Conversation"
+                                    maxLength={30}
+                                    showEditIcon={true}
+                                    compactMode={true}
+                                    titleClass="text-white text-sm font-medium truncate"
+                                    inputClass="text-white text-sm font-medium bg-transparent border-b border-blue-500 outline-none w-full text-left"
+                                    class="w-full"
+                                />
+                            </div>
+                            <p class="text-[#A0A0A8] text-xs truncate mt-1">
                                 {conversation.topic || 'General'}
                             </p>
                         </div>
-                        <span class="text-[#A0A0A8] text-xs ml-2 flex-shrink-0">
+                        <span class="text-[#A0A0A8] text-xs flex-shrink-0 mt-0.5">
                             {formatDate(conversation.createdAt)}
                         </span>
                     </a>

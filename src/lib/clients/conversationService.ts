@@ -1,4 +1,4 @@
-import type { conversation, message } from '$lib/server/db/schema';
+import type { Conversation, Message } from '$lib/types/schema';
 import { getCurrentClient } from './clientService';
 import { get } from 'svelte/store';
 import { useDemo } from '$lib/stores/apiModeStore'; 
@@ -19,10 +19,10 @@ export interface AIResponseData {
 /**
  * Create a new conversation for the current user
  */
-export async function createConversation(firstMessage: string, spaceId: string | null = null): Promise<conversation | null> {
+export async function createConversation(firstMessage: string, spaceId: string | null = null): Promise<Conversation | null> {
     try {
         const nameFromMessage = firstMessage.length > 30 
-            ? firstMessage.substring(0, 30) + '...' 
+            ? firstMessage.substring(0, 27) + '...' 
             : firstMessage;
 
         const response = await fetch('/api/conversations', {
@@ -45,7 +45,7 @@ export async function createConversation(firstMessage: string, spaceId: string |
             return null;
         }
 
-        return result.conversation as conversation;
+        return result.conversation as Conversation;
     } catch (error) {
         console.error('Unexpected error creating conversation:', error);
         return null;
@@ -55,7 +55,7 @@ export async function createConversation(firstMessage: string, spaceId: string |
 /**
  * Add a user message to a conversation
  */
-export async function addUserMessage(conversationId: number, text: string): Promise<message | null> {
+export async function addUserMessage(conversationId: number, text: string): Promise<Message | null> {
     try {
         const response = await fetch('/api/messages', {
             method: 'POST',
@@ -76,7 +76,7 @@ export async function addUserMessage(conversationId: number, text: string): Prom
             return null;
         }
 
-        return result.message as message;
+        return result.message as Message;
     } catch (error) {
         console.error('Unexpected error adding user message:', error);
         return null;
@@ -86,7 +86,7 @@ export async function addUserMessage(conversationId: number, text: string): Prom
 /**
  * Add an AI response message to a conversation
  */
-export async function addAIMessage(conversationId: number, text: string): Promise<message | null> {
+export async function addAIMessage(conversationId: number, text: string): Promise<Message | null> {
     try {
         const response = await fetch('/api/messages', {
             method: 'POST',
@@ -107,7 +107,7 @@ export async function addAIMessage(conversationId: number, text: string): Promis
             return null;
         }
 
-        return result.message as message;
+        return result.message as Message;
     } catch (error) {
         console.error('Unexpected error adding AI message:', error);
         return null;
@@ -199,7 +199,7 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
 /**
  * Get all messages for a specific conversation
  */
-export async function getConversationMessages(conversationId: number): Promise<message[]> {
+export async function getConversationMessages(conversationId: number): Promise<Message[]> {
     try {
         const response = await fetch(`/api/messages?conversationId=${conversationId}`, {
             method: 'GET'
@@ -212,7 +212,7 @@ export async function getConversationMessages(conversationId: number): Promise<m
             return [];
         }
 
-        return result.messages as message[];
+        return result.messages as Message[];
     } catch (error) {
         console.error('Unexpected error fetching messages:', error);
         return [];
@@ -220,9 +220,38 @@ export async function getConversationMessages(conversationId: number): Promise<m
 }
 
 /**
+ * Update a conversation's name
+ */
+export async function updateConversationName(conversationId: number, newName: string): Promise<Conversation | null> {
+    try {
+        const response = await fetch(`/api/conversations/${conversationId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: newName
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error updating conversation name:', result.error);
+            return null;
+        }
+
+        return result.conversation as Conversation;
+    } catch (error) {
+        console.error('Unexpected error updating conversation name:', error);
+        return null;
+    }
+}
+
+/**
  * Get all conversations based on the spaceId (personal or collaboration)
  */
-export async function getUserConversations(spaceId: string): Promise<conversation[]> {
+export async function getUserConversations(spaceId: string): Promise<Conversation[]> {
     try {
         // The backend will handle filtering based on the authenticated user and spaceId.
         const response = await fetch(`/api/conversations?spaceId=${encodeURIComponent(spaceId)}`, {
@@ -237,7 +266,7 @@ export async function getUserConversations(spaceId: string): Promise<conversatio
         }
 
         // The backend now returns only the conversations the user is authorized to see.
-        return result.conversations as conversation[];
+        return result.conversations as Conversation[];
     } catch (error) {
         console.error('Unexpected error fetching conversations:', error);
         return [];
