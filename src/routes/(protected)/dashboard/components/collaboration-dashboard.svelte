@@ -3,15 +3,20 @@
   import { scale, fade } from 'svelte/transition';
   import { profileStore } from '$lib/stores/profileStore';
   import { getSpace } from '$lib/stores/collaborationStore.svelte';
+  import Modal from '$lib/components/generic/modal.svelte';
+
   
-  let isLoaded = $state(false); // Changed to $state
+  let isLoaded = $state(false);
   let currentTeam = "Marketing Team";
-  let members = [
-    { id: 1, name: "Alex Morgan", role: "Team Lead", avatar: "https://i.pravatar.cc/150?img=1" },
-    { id: 2, name: "Jamie Lee", role: "Designer", avatar: "https://i.pravatar.cc/150?img=2" },
-    { id: 3, name: "Taylor Kim", role: "Developer", avatar: "https://i.pravatar.cc/150?img=3" },
-    { id: 4, name: "Sam Chen", role: "Analyst", avatar: "https://i.pravatar.cc/150?img=4" }
-  ];
+  let members = $state<any[]>([]);
+  let isLoadingMembers = $state(false);
+  let showInviteModal = $state(false);
+  let inviteEmail = $state("");
+  let inviteRole = $state("member");
+  let isInviting = $state(false);
+  let inviteError = $state<string | null>(null);
+  let toastMessage = $state<string | null>(null);
+  let toastType = $state<'success' | 'error'>('success');
   
   let activities = [
     { id: 1, user: "Alex Morgan", action: "created a new document", time: "2 hours ago", type: "document" },
@@ -24,40 +29,175 @@
     // Simulate loading for smooth animation
     setTimeout(() => {
       isLoaded = true;
+      loadMembers();
     }, 100);
   });
+
+  async function loadMembers() {
+    isLoadingMembers = true;
+    try {
+      const spaceId = getSpace();
+      if (spaceId !== 'personal') {
+        const response = await fetch(`/api/collaborations/${spaceId}/members`);
+        if (response.ok) {
+          const data = await response.json();
+          members = data.members;
+        } else {
+          console.error('Failed to load members');
+          // Fallback to dummy data if API fails
+          members = [
+            { id: 1, name: "Alex Morgan", role: "Team Lead", avatar: "https://i.pravatar.cc/150?img=1" },
+            { id: 2, name: "Jamie Lee", role: "Designer", avatar: "https://i.pravatar.cc/150?img=2" },
+            { id: 3, name: "Taylor Kim", role: "Developer", avatar: "https://i.pravatar.cc/150?img=3" },
+            { id: 4, name: "Sam Chen", role: "Analyst", avatar: "https://i.pravatar.cc/150?img=4" }
+          ];
+        }
+      }
+    } catch (error) {
+      console.error('Error loading members:', error);
+      // Fallback to dummy data if network error
+      members = [
+        { id: 1, name: "Alex Morgan", role: "Team Lead", avatar: "https://i.pravatar.cc/150?img=1" },
+        { id: 2, name: "Jamie Lee", role: "Designer", avatar: "https://i.pravatar.cc/150?img=2" },
+        { id: 3, name: "Taylor Kim", role: "Developer", avatar: "https://i.pravatar.cc/150?img=3" },
+        { id: 4, name: "Sam Chen", role: "Analyst", avatar: "https://i.pravatar.cc/150?img=4" }
+      ];
+    } finally {
+      isLoadingMembers = false;
+    }
+  }
+
+  function openInviteModal() {
+    showInviteModal = true;
+    inviteEmail = "";
+    inviteRole = "member";
+    inviteError = null;
+  }
+
+  function closeInviteModal() {
+    showInviteModal = false;
+    inviteEmail = "";
+    inviteRole = "member";
+    inviteError = null;
+  }
+
+  async function handleInvite(event: Event) {
+    event.preventDefault();
+    
+    if (!inviteEmail.trim()) {
+      inviteError = "Please enter an email address";
+      return;
+    }
+
+    if (!inviteEmail.includes('@')) {
+      inviteError = "Please enter a valid email address";
+      return;
+    }
+
+    isInviting = true;
+    inviteError = null;
+
+    try {
+      const spaceId = getSpace();
+      const response = await fetch(`/api/collaborations/${spaceId}/invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          role: inviteRole
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success - add member to list and show toast
+        members = [...members, {
+          id: data.member.id,
+          name: `${data.member.firstName} ${data.member.lastName}`,
+          email: data.member.email,
+          role: data.member.role,
+          avatar: `https://i.pravatar.cc/150?u=${data.member.email}`
+        }];
+        
+        closeInviteModal();
+        showToast(data.message, 'success');
+      } else {
+        inviteError = data.error || 'Failed to invite user';
+      }
+    } catch (error) {
+      console.error('Error inviting user:', error);
+      inviteError = 'Network error. Please try again.';
+    } finally {
+      isInviting = false;
+    }
+  }
+
+  function showToast(message: string, type: 'success' | 'error') {
+    toastMessage = message;
+    toastType = type;
+    
+    // Clear toast after 5 seconds
+    setTimeout(() => {
+      toastMessage = null;
+    }, 5000);
+  }
+
+  function clearToast() {
+    toastMessage = null;
+  }
 </script>
 
 <div class="p-6 max-w-5xl mx-auto">
   {#if isLoaded}
     <div class="mb-8" in:scale={{ duration: 300, start: 0.95 }}>
       <h1 class="text-3xl font-semibold">Collaboration Space: {getSpace()}</h1>
-      <p class="text-gray-400 mt-1">This is an example page</p>
+      <p class="text-gray-400 mt-1">Manage your team and collaborate effectively</p>
     </div>
     
     <!-- Team Members Section -->
     <div in:scale={{ duration: 300, delay: 100, start: 0.95 }}>
       <div class="bg-[#343541] rounded-lg p-6 shadow-md border border-[#444654]/50 mb-8">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-medium text-white">Team Members</h2>
-          <button class="text-sm bg-[#444654] hover:bg-[#565869] py-1 px-3 rounded-md text-white transition-colors">
+          <h2 class="text-xl font-medium text-white">Team Members ({members.length})</h2>
+          <button 
+            onclick={openInviteModal}
+            class="text-sm bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-md text-white transition-colors flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
             Invite Member
           </button>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {#each members as member}
-            <div class="bg-[#2a2b35] p-4 rounded-lg border border-[#444654]/50">
-              <div class="flex items-center">
-                <img src={member.avatar} alt={member.name} class="w-10 h-10 rounded-full mr-3">
-                <div>
-                  <p class="text-white font-medium">{member.name}</p>
-                  <p class="text-gray-400 text-xs">{member.role}</p>
+        {#if isLoadingMembers}
+          <div class="flex justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        {:else}
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {#each members as member}
+              <div class="bg-[#2a2b35] p-4 rounded-lg border border-[#444654]/50 hover:bg-[#34353f] transition-colors">
+                <div class="flex items-center">
+                  <div class="relative">
+                    <img src={member.avatar} alt={member.name} class="w-12 h-12 rounded-full mr-3">
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#2a2b35]"></div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-white font-medium text-sm truncate">
+                      {member.firstName || 'Unknown'} {member.lastName || ''}
+                    </p>
+                    <p class="text-gray-400 text-xs capitalize">{member.role}</p>
+                    <p class="text-gray-500 text-xs truncate">{member.email}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {/if}
       </div>
     </div>
     
@@ -207,3 +347,104 @@
     </div>
   {/if}
 </div>
+
+<!-- Invite Member Modal -->
+<Modal
+  bind:isOpen={showInviteModal}
+  title="Invite Team Member"
+  subtitle="Add a new member to your collaboration"
+  on:cancel={closeInviteModal}
+  closeOnEscape={true}
+  background="bg-[#1E1E1E]"
+>
+  <div slot="content" class="p-4 flex flex-col gap-6 w-full">
+    {#if inviteError}
+      <div class="bg-red-900/20 border border-red-800 rounded-md p-3">
+        <p class="text-red-300 text-sm">{inviteError}</p>
+      </div>
+    {/if}
+    
+    <div class="flex flex-col gap-3">
+      <label for="inviteEmail" class="text-sm font-medium text-gray-300">Email Address</label>
+      <input
+        type="email"
+        id="inviteEmail"
+        bind:value={inviteEmail}
+        placeholder="colleague@company.com"
+        class="w-full border border-[#444444] rounded-md px-4 py-2.5 bg-[#2A2A2A] text-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-transparent transition-all duration-200"
+        disabled={isInviting}
+        required
+      />
+    </div>
+    
+    <div class="flex flex-col gap-3">
+      <label for="inviteRole" class="text-sm font-medium text-gray-300">Role</label>
+      <select
+        id="inviteRole"
+        bind:value={inviteRole}
+        class="w-full border border-[#444444] rounded-md px-4 py-2.5 bg-[#2A2A2A] text-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-transparent transition-all duration-200"
+        disabled={isInviting}
+      >
+        <option value="member">Member</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    
+    <div class="bg-[#343541]/30 p-4 rounded-md border border-[#444444] mt-2">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <p class="text-sm text-gray-300">
+          Enter the email address of someone who already has an account. They will be added to this collaboration immediately.
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <div slot="footer" class="flex justify-end gap-3">
+    <button 
+      onclick={closeInviteModal}
+      class="px-4 py-2.5 rounded-md border border-[#444444] text-gray-300 hover:bg-[#2A2A2A] transition-colors duration-200 font-medium"
+      disabled={isInviting}
+    >
+      Cancel
+    </button>
+    <button 
+      onclick={handleInvite}
+      disabled={!inviteEmail.trim() || isInviting}
+      class="px-6 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    >
+      {#if isInviting}
+        <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+        Inviting...
+      {:else}
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+        </svg>
+        Invite Member
+      {/if}
+    </button>
+  </div>
+</Modal>
+
+<!-- Toast Notification -->
+{#if toastMessage}
+  <div class="fixed top-4 right-4 z-50 max-w-sm">
+    <div class="bg-{toastType === 'success' ? 'green' : 'red'}-900 border border-{toastType === 'success' ? 'green' : 'red'}-700 text-{toastType === 'success' ? 'green' : 'red'}-100 px-4 py-3 rounded-lg shadow-lg">
+      <div class="flex items-center justify-between">
+        <p class="text-sm">{toastMessage}</p>
+        <button 
+          onclick={clearToast}
+          class="ml-3 text-{toastType === 'success' ? 'green' : 'red'}-300 hover:text-{toastType === 'success' ? 'green' : 'red'}-100"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

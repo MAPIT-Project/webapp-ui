@@ -64,6 +64,7 @@ export const conversationRelations = relations(conversation, ({ one, many }) => 
 export const message = pgTable('message', {
   id: serial('id').primaryKey(),
   conversationId: integer('conversation_id').references(() => conversation.id).notNull(),
+  userId: integer('user_id').references(() => client.id),
   text: text('text').notNull(),
   sender: varchar('sender', { length: 50 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -74,6 +75,10 @@ export const messageRelations = relations(message, ({ one }) => ({
   conversation: one(conversation, {
     fields: [message.conversationId],
     references: [conversation.id],
+  }),
+  user: one(client, {
+    fields: [message.userId],
+    references: [client.id],
   }),
 }));
 

@@ -218,13 +218,12 @@
             // Configure marked options for better formatting
             marked.setOptions({
                 gfm: true,
-                breaks: true, // Convert \n to <br>
-                sanitize: false // We'll use DOMPurify for sanitization
+                breaks: true // Convert \n to <br>
             });
             
             // Parse markdown and sanitize HTML
-            const parsed = marked.parse(text);
-            let sanitized = DOMPurify.sanitize(parsed);
+            const parsed = marked.parse(text) as string;
+            let sanitized = DOMPurify.sanitize(parsed) as string;
             
             // Post-process to add target="_blank" to all links
             sanitized = sanitized.replace(
@@ -400,7 +399,7 @@
                                             
                                             <!-- Timestamp -->
                                             <div class="text-xs text-gray-500 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {formatMessageTime(message.created_at)}
+                                                {formatMessageTime(message.createdAt)}
                                             </div>
                                         </div>
                                     </div>
