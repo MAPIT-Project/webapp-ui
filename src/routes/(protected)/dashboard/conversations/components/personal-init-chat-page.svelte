@@ -120,14 +120,14 @@
                                 How can I help you today?
                             </h1>
                         </div>
-                        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                        <!-- <p class="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
                             Ask me anything about research, analysis, writing, or get assistance with your projects. 
                             I'm here to help you explore ideas and find solutions.
-                        </p>
+                        </p> -->
                     </div>
                     
                     <!-- Features highlight -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 w-full max-w-4xl" in:scale={{ duration: 400, delay: 300, start: 0.95 }}>
+                    <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 w-full max-w-4xl" in:scale={{ duration: 400, delay: 300, start: 0.95 }}>
                         <div class="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-xl p-4 text-center group hover:scale-105 transition-transform">
                             <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-500/30 transition-colors">
                                 <Icon name="search" iconClass="text-blue-400 text-sm" />
@@ -151,7 +151,7 @@
                             <h3 class="text-white font-semibold mb-1">Creative Solutions</h3>
                             <p class="text-gray-400 text-sm">Brainstorm ideas and solve complex problems</p>
                         </div>
-                    </div>
+                    </div> -->
                     
                     <!-- Chat interface -->
                     <div in:scale={{ duration: 400, delay: 400, start: 0.95 }}>

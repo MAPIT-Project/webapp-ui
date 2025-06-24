@@ -176,11 +176,11 @@
     {/if}
     
     <!-- Enhanced Example Cards -->
-    <div class="space-y-6">
-        <div class="text-center" in:fade={{ delay: 100 }}>
+    <div class="space-y-6 pt-8">
+        <!-- <div class="text-center" in:fade={{ delay: 100 }}>
             <h2 class="text-2xl font-semibold text-white mb-2">Get started with these examples</h2>
-            <p class="text-gray-400 text-lg">Choose a topic or ask your own question</p>
-        </div>
+            <p class="text-gray-400 ">Choose a topic or ask your own question</p>
+        </div> -->
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" in:scale={{ duration: 300, delay: 200, start: 0.98 }}>
             {#each examples as example, i}
