@@ -237,6 +237,17 @@
             return text;
         }
     }
+    
+    // Function to highlight @mapit in messages
+    function highlightMapitInMessage(text: string): string {
+        // Replace @mapit (case insensitive) with highlighted version
+        return text.replace(/@mapit\b/gi, '<span class="mapit-highlight">@mapit</span>');
+    }
+    
+    // Check if input contains @mapit for styling
+    function hasMapitInput(text: string): boolean {
+        return /@mapit\b/i.test(text);
+    }
 </script>
 
 <div class="w-full h-screen flex bg-[#2B2A2C] overflow-hidden">
@@ -248,7 +259,7 @@
             <div class="flex items-center justify-between h-full px-4">
                 <div class="flex items-center gap-2">
                     <div class="w-6 h-6 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center">
-                        <Icon name="smart_toy" class="text-white text-xs" />
+                        <Icon name="smart_toy" className="text-white text-xs" />
                     </div>
                     <div>
                         <span class="text-gray-100 text-xs font-medium">AI Assistant</span>
@@ -301,21 +312,21 @@
                         
                         {#if lastResponseDataSource}
                             <span class="inline-flex items-center gap-2 text-xs bg-blue-900/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-700">
-                                <Icon name="storage" class="text-xs" />
+                                <Icon name="storage" className="text-xs" />
                                 {lastResponseDataSource}
                             </span>
                         {/if}
                         
                         {#if lastResponseProcessingTime}
                             <span class="inline-flex items-center gap-2 text-xs bg-purple-900/20 text-purple-300 px-2.5 py-1 rounded-full border border-purple-700">
-                                <Icon name="timer" class="text-xs" />
+                                <Icon name="timer" className="text-xs" />
                                 {lastResponseProcessingTime.toFixed(2)}s
                             </span>
                         {/if}
                         
                         {#if lastResponseProjectsFound !== null && lastResponseProjectsFound !== undefined}
                             <span class="inline-flex items-center gap-2 text-xs bg-emerald-900/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-700">
-                                <Icon name="folder" class="text-xs" />
+                                <Icon name="folder" className="text-xs" />
                                 {lastResponseProjectsFound} projects
                             </span>
                         {/if}
@@ -339,7 +350,7 @@
                     <div class="flex items-center justify-center h-full">
                         <div class="text-center p-8 max-w-md">
                             <div class="mx-auto w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                                <Icon name="chat" class="text-white text-xl" />
+                                <Icon name="chat" className="text-white text-xl" />
                             </div>
                             <h3 class="text-xl font-semibold text-gray-200 mb-3">Start a conversation</h3>
                             <p class="text-gray-400 leading-relaxed">I'm here to help answer your questions and assist with your tasks. What would you like to know?</p>
@@ -354,11 +365,11 @@
                                     <div class="flex-shrink-0">
                                         {#if message.sender === 'user'}
                                             <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center shadow-lg">
-                                                <Icon name="person" class="text-white text-sm" />
+                                                <Icon name="person" className="text-white text-sm" />
                                             </div>
                                         {:else}
                                             <div class="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                                                <Icon name="smart_toy" class="text-white text-sm" />
+                                                <Icon name="smart_toy" className="text-white text-sm" />
                                             </div>
                                         {/if}
                                     </div>
@@ -369,7 +380,9 @@
                                             {#if message.sender === 'user'}
                                                 <div class="bg-gray-600 text-white px-4 py-3 rounded-2xl rounded-tr-md shadow-lg">
                                                     <div class="prose prose-sm max-w-none">
-                                                        <p class="whitespace-pre-wrap leading-relaxed m-0">{message.text}</p>
+                                                        <p class="whitespace-pre-wrap leading-relaxed m-0">
+                                                            {@html highlightMapitInMessage(message.text)}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             {:else}
@@ -378,7 +391,7 @@
                                                     <div class="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded-2xl rounded-tl-md shadow-lg">
                                                         <div class="flex items-start gap-3">
                                                             <div class="flex-shrink-0 pt-1">
-                                                                <Icon name="error" class="text-red-400 text-sm" />
+                                                                <Icon name="error" className="text-red-400 text-sm" />
                                                             </div>
                                                             <div class="flex-1">
                                                                 <div class="prose prose-sm max-w-none">
@@ -413,7 +426,7 @@
                                 <div class="flex items-start gap-4">
                                     <div class="flex-shrink-0">
                                         <div class="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                                            <Icon name="smart_toy" class="text-white text-sm" />
+                                            <Icon name="smart_toy" className="text-white text-sm" />
                                         </div>
                                     </div>
                                     
@@ -433,7 +446,7 @@
                                             <!-- Timing information -->
                                             <div class="text-xs text-gray-500 bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600/50">
                                                 <div class="flex items-center gap-2 mb-1">
-                                                    <Icon name="schedule" class="text-xs text-blue-400" />
+                                                    <Icon name="schedule" className="text-xs text-blue-400" />
                                                     <span class="text-gray-400 font-medium">Response Time</span>
                                                 </div>
                                                 <div class="space-y-1 ml-5">
@@ -456,7 +469,7 @@
                             <div class="flex items-center gap-3">
                                 <div class="flex-shrink-0">
                                     <div class="w-6 h-6 rounded-full bg-red-800 flex items-center justify-center">
-                                        <Icon name="error" class="text-red-400 text-sm" />
+                                        <Icon name="error" className="text-red-400 text-sm" />
                                     </div>
                                 </div>
                                 <p class="text-sm">{error}</p>
@@ -474,7 +487,7 @@
                             type="text"
                             bind:value={userInput}
                             placeholder="Message AI Assistant..."
-                            class="w-full px-4 py-4 bg-transparent text-gray-100 focus:outline-none placeholder-gray-400 pr-12 rounded-2xl"
+                            class="w-full px-4 py-4 bg-transparent text-gray-100 focus:outline-none placeholder-gray-400 pr-12 rounded-2xl {hasMapitInput(userInput) ? 'mapit-input-active' : ''}"
                             disabled={isSending}
                         />
                         <button
@@ -482,7 +495,7 @@
                             class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2.5 rounded-xl transition-all duration-200 {userInput.trim() && !isSending ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg hover:shadow-xl' : 'bg-gray-600 text-gray-400'}"
                             disabled={isSending || !userInput.trim()}
                         >
-                            <Icon name="send" class="text-current" />
+                            <Icon name="send" className="text-current" />
                         </button>
                     </div>
                     
@@ -695,6 +708,25 @@
     :global(.prose ul ul li) {
         margin: 0.3rem 0;
         font-size: 0.9rem;
+    }
+    
+    /* @mapit highlighting */
+    :global(.mapit-highlight) {
+        background: linear-gradient(90deg, #10b981, #059669);
+        color: white;
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.9em;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Input field @mapit highlighting */
+    .mapit-input-active {
+        color: #10b981 !important;
+        font-weight: 600 !important;
+        text-shadow: 0 0 8px rgba(16, 185, 129, 0.4) !important;
     }
     
     /* Smooth animations */
