@@ -131,7 +131,7 @@ import { supabase } from '$lib/clients/supabaseClient';
     };
 </script>
 
-<div style="width: {width}px;" class="absolute transition-all h-screen bg-[#252527] {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-md">
+<div style="width: {width}px;" class="fixed top-0 left-0 transition-all h-screen bg-[#252527] {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-md z-20">
     {#if !open}
         <div class="flex flex-col gap-5">
             <div class="flex justify-between items-center">
@@ -192,7 +192,7 @@ import { supabase } from '$lib/clients/supabaseClient';
                 <div class="w-full rounded-md {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#333335]'} transition-colors duration-150">
                     <a href={item.url} onclick={handleNavigation(item.url)} class="py-2.5 px-3.5 h-auto text-[#F5F5F5] flex gap-3.5 items-center no-underline">
                         <Icon 
-                            name={item.icon} class="text-xl"
+                            name={item.icon} className="text-xl"
                         />
                         <span>{item.name}</span>
                     </a>
@@ -214,7 +214,7 @@ import { supabase } from '$lib/clients/supabaseClient';
                 <a href={item.url} onclick={handleNavigation(item.url)} 
                    title={item.name}
                    class="p-2 h-auto text-[#F5F5F5] rounded-md flex items-center justify-center w-full no-underline {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#333335]'} transition-colors duration-150">
-                    <Icon name={item.icon} class="text-xl" />
+                    <Icon name={item.icon} className="text-xl" />
                 </a>
             {/each}
         </div>

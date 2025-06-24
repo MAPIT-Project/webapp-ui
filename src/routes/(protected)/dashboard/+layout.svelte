@@ -76,7 +76,7 @@
 <div id="teleport-container"></div>
 
 <Sidebar onUpdateWidth={updateWidth} />
-<div style="margin-left: {sidebarWidth}px" class="transition-[margin] duration-150 ease-in-out bg-[#2B2A2C]">
+<div style="margin-left: {sidebarWidth}px" class="h-screen overflow-hidden flex flex-col transition-[margin] duration-150 ease-in-out bg-[#2B2A2C]">
 	<!-- User menu -->
     <div class="absolute right-4 top-4 z-10">
         <button class="text-[#CACACA] text-sm flex items-center gap-2 hover:text-white" onclick={handleSignOut}>
@@ -84,6 +84,10 @@
             <Icon name="logout" iconSize="sm" />
         </button>
     </div>
-	{@render children()}
+	
+	<!-- Main content area that scrolls -->
+	<div class="flex-1 overflow-y-auto">
+		{@render children()}
+	</div>
 </div>
 

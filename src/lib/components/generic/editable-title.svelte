@@ -150,7 +150,7 @@
             {/if}
         </div>
     {:else}
-        <div class="group relative {compactMode ? 'flex items-center justify-between w-full' : 'inline-flex items-center gap-2'}">
+        <div class="group relative {compactMode ? 'flex items-center justify-between w-full' : 'inline-flex items-center'}">
             <h1 
                 class="{titleClass} {compactMode ? 'flex-1 min-w-0' : ''}"
                 title="{value || placeholder}"
@@ -160,7 +160,7 @@
             {#if showEditIcon}
                 <button
                     onclick={(e) => startEditing(e)}
-                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 {compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-gray-700/50 flex-shrink-0 relative z-10"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 {compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-gray-700/50 z-10 {compactMode ? 'flex-shrink-0 relative' : 'absolute top-1/2 -translate-y-1/2 left-full ml-2'}"
                     title="Edit title"
                 >
                     <svg width="{compactMode ? '12' : '14'}" height="{compactMode ? '12' : '14'}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -171,4 +171,4 @@
             {/if}
         </div>
     {/if}
-</div> 
+</div>

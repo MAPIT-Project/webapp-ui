@@ -27,14 +27,14 @@
 	}
 </script>
 
-{#if getSpace() !== 'personal'} <!-- Use getter directly in the template for reactivity -->
+<!-- {#if getSpace() !== 'personal'} 
 	<div class="bg-yellow-500 text-black p-2 text-center text-sm">
 		You are in a collaboration workspace: <strong>{getSpace()}</strong>.
 		<button on:click={switchToPersonalSpace} class="underline hover:text-blue-700 ml-2">
 			(Go back to Personal Space)
 		</button>
 	</div>
-{/if}
+{/if} -->
 
 {#if loading && !data.session} 
 	// Show loading indicator only if session is not yet available from server

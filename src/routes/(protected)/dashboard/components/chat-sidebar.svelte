@@ -8,9 +8,15 @@
     import Modal from "$lib/components/generic/modal.svelte";
     import { getCurrentClient } from "$lib/clients/clientService";
     import { goto } from "$app/navigation";
+    import { getSpace } from "$lib/stores/collaborationStore.svelte";
     
     // Get the current chat id from the URL if we're on a chat page
     const currentChatId = $derived($page.params.conversation_id ? parseInt($page.params.conversation_id) : null);
+    
+    // Get current space to determine if we're in a collaboration
+    const currentSpace = $derived(getSpace());
+    const isCollaboration = $derived(currentSpace && currentSpace !== 'personal');
+    const sidebarTitle = $derived(isCollaboration ? 'Shared chats' : 'Chats');
     
     let loadAttempts = $state(0);
     const MAX_RETRIES = 3;
@@ -162,7 +168,7 @@
 <div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-[#1E1E20] border-r border-[#4A4A57]/30 flex-shrink-0 overflow-hidden">
     <div class="p-4 border-b border-[#4A4A57]/30 flex justify-between items-center">
         <div class="flex items-center">
-            <h2 class="text-lg font-medium text-white">Chats</h2>
+            <h2 class="text-lg font-medium text-white">{sidebarTitle}</h2>
         </div>
         <div class="flex gap-2">
             <button 

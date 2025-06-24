@@ -148,9 +148,39 @@
   function clearToast() {
     toastMessage = null;
   }
+  
+  // Get user initials for avatar (similar to collaboration chat)
+  function getUserInitials(member: any): string {
+    if (!member) return 'U';
+    const firstInitial = member.firstName?.[0] || '';
+    const lastInitial = member.lastName?.[0] || '';
+    return `${firstInitial}${lastInitial}`.toUpperCase() || 'U';
+  }
+
+  // Get display name for a user
+  function getUserDisplayName(member: any): string {
+    if (!member) return 'Unknown User';
+    const displayName = `${member.firstName || ''} ${member.lastName || ''}`.trim();
+    return displayName || 'Unknown User';
+  }
+
+  // Get background color for avatar (similar to collaboration chat)
+  function getAvatarBackground(index: number): string {
+    const colors = [
+      'bg-blue-500',
+      'bg-purple-500', 
+      'bg-green-500',
+      'bg-orange-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-red-500',
+      'bg-teal-500'
+    ];
+    return colors[index % colors.length];
+  }
 </script>
 
-<div class="p-6 max-w-5xl mx-auto">
+<div class="p-6 pb-12 max-w-5xl mx-auto">
   {#if isLoaded}
     <div class="mb-8" in:scale={{ duration: 300, start: 0.95 }}>
       <h1 class="text-3xl font-semibold">Collaboration Space: {getSpace()}</h1>
@@ -179,16 +209,22 @@
           </div>
         {:else}
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {#each members as member}
+            {#each members as member, index}
               <div class="bg-[#2a2b35] p-4 rounded-lg border border-[#444654]/50 hover:bg-[#34353f] transition-colors">
                 <div class="flex items-center">
-                  <div class="relative">
-                    <img src={member.avatar} alt={member.name} class="w-12 h-12 rounded-full mr-3">
+                  <div class="relative mr-3">
+                    <!-- Avatar with user initials -->
+                    <div class="w-12 h-12 rounded-full {getAvatarBackground(index)} flex items-center justify-center shadow-lg">
+                      <span class="text-white text-sm font-semibold">
+                        {getUserInitials(member)}
+                      </span>
+                    </div>
+                    <!-- Online status indicator -->
                     <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#2a2b35]"></div>
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-white font-medium text-sm truncate">
-                      {member.firstName || 'Unknown'} {member.lastName || ''}
+                      {getUserDisplayName(member)}
                     </p>
                     <p class="text-gray-400 text-xs capitalize">{member.role}</p>
                     <p class="text-gray-500 text-xs truncate">{member.email}</p>
