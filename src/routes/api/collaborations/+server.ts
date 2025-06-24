@@ -3,8 +3,10 @@ import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ url, cookies }) => {
     try {
+        const collaborationId = url.searchParams.get('id');
+        
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
             cookies: {
                 get: (key: string) => cookies.get(key),
@@ -35,21 +37,41 @@ export const GET: RequestHandler = async ({ cookies }) => {
             return json({ error: 'Client not found' }, { status: 404 });
         }
 
-        // Get collaborations where user is a member
-        const { data: collaborations, error } = await supabase
-            .from('collaboration')
-            .select(`
-                *,
-                client_collaboration!inner(role)
-            `)
-            .eq('client_collaboration.client_id', client.id);
+        if (collaborationId) {
+            // Get specific collaboration by ID
+            const { data: collaboration, error } = await supabase
+                .from('collaboration')
+                .select(`
+                    *,
+                    client_collaboration!inner(role)
+                `)
+                .eq('id', collaborationId)
+                .eq('client_collaboration.client_id', client.id)
+                .single();
 
-        if (error) {
-            console.error('Error fetching collaborations:', error);
-            return json({ error: error.message }, { status: 500 });
+            if (error) {
+                console.error('Error fetching collaboration:', error);
+                return json({ error: error.message }, { status: 500 });
+            }
+
+            return json({ collaboration });
+        } else {
+            // Get all collaborations where user is a member
+            const { data: collaborations, error } = await supabase
+                .from('collaboration')
+                .select(`
+                    *,
+                    client_collaboration!inner(role)
+                `)
+                .eq('client_collaboration.client_id', client.id);
+
+            if (error) {
+                console.error('Error fetching collaborations:', error);
+                return json({ error: error.message }, { status: 500 });
+            }
+
+            return json({ collaborations });
         }
-
-        return json({ collaborations });
 
     } catch (error) {
         console.error('Server error:', error);

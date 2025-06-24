@@ -9,6 +9,7 @@
   let isLoaded = $state(false);
   let currentTeam = "Marketing Team";
   let members = $state<any[]>([]);
+  let collaborationName = $state<string>("");
   let isLoadingMembers = $state(false);
   let showInviteModal = $state(false);
   let inviteEmail = $state("");
@@ -29,9 +30,30 @@
     // Simulate loading for smooth animation
     setTimeout(() => {
       isLoaded = true;
+      loadCollaborationDetails();
       loadMembers();
     }, 100);
   });
+
+  async function loadCollaborationDetails() {
+    try {
+      const spaceId = getSpace();
+      if (spaceId !== 'personal') {
+        const response = await fetch(`/api/collaborations?id=${spaceId}`);
+        if (response.ok) {
+          const data = await response.json();
+          collaborationName = data.collaboration?.name || `Collaboration ${spaceId}`;
+        } else {
+          console.error('Failed to load collaboration details');
+          collaborationName = `Collaboration ${spaceId}`;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading collaboration details:', error);
+      const spaceId = getSpace();
+      collaborationName = `Collaboration ${spaceId}`;
+    }
+  }
 
   async function loadMembers() {
     isLoadingMembers = true;
@@ -183,7 +205,7 @@
 <div class="p-6 pb-12 max-w-5xl mx-auto">
   {#if isLoaded}
     <div class="mb-8" in:scale={{ duration: 300, start: 0.95 }}>
-      <h1 class="text-3xl font-semibold">Collaboration Space: {getSpace()}</h1>
+      <h1 class="text-3xl font-semibold">Collaboration Space: {collaborationName || getSpace()}</h1>
       <p class="text-gray-400 mt-1">Manage your team and collaborate effectively</p>
     </div>
     
