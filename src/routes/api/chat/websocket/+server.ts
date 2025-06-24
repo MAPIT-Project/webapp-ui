@@ -1,6 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { createServerClient } from '@supabase/ssr';
 
 // For now, we'll implement a polling-based approach instead of websockets
@@ -80,7 +81,22 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             return json({ error: 'Failed to save message' }, { status: 500 });
         }
 
-        return json({ message: newMessage });
+        // Transform the response to use camelCase for consistency
+        const transformedMessage = {
+            ...newMessage,
+            conversationId: newMessage.conversation_id,
+            userId: newMessage.user_id,
+            createdAt: newMessage.created_at,
+            updatedAt: newMessage.updated_at,
+            user: newMessage.user ? {
+                id: newMessage.user.id,
+                firstName: newMessage.user.first_name,
+                lastName: newMessage.user.last_name,
+                email: newMessage.user.email
+            } : null
+        };
+
+        return json({ message: transformedMessage });
 
     } catch (error) {
         console.error('Server error:', error);
@@ -101,6 +117,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
             return json({ error: 'Conversation ID is required' }, { status: 400 });
         }
 
+        // Use regular client for authentication
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
             cookies: {
                 get: (key: string) => cookies.get(key),
@@ -119,8 +136,37 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
             return json({ error: 'No authenticated user found' }, { status: 401 });
         }
 
-        // Build query
-        let query = supabase
+        // Use service role client for fetching messages with user data (bypasses RLS)
+        const serviceSupabase = createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+            cookies: {
+                get: (key: string) => cookies.get(key),
+                set: (key: string, value: string, options: any) => {
+                    cookies.set(key, value, { ...options, path: '/' });
+                },
+                remove: (key: string, options: any) => {
+                    cookies.delete(key, { ...options, path: '/' });
+                }
+            }
+        });
+
+        // Verify user has access to this conversation using regular client
+        const { data: conversation, error: convError } = await supabase
+            .from('conversation')
+            .select('id, collaboration_id, user_id')
+            .eq('id', conversationId)
+            .single();
+
+        if (convError || !conversation) {
+            return json({ error: 'Conversation not found or access denied' }, { status: 404 });
+        }
+
+        // Check if it's a collaboration conversation
+        if (!conversation.collaboration_id) {
+            return json({ error: 'This endpoint is for collaboration conversations only' }, { status: 403 });
+        }
+
+        // Build query using service role (can see all user data)
+        let query = serviceSupabase
             .from('message')
             .select(`
                 *,
@@ -141,7 +187,24 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
             return json({ error: error.message }, { status: 500 });
         }
 
-        return json({ messages: data || [] });
+        // Transform all messages to use camelCase for consistency
+        const transformedMessages = (data || []).map(message => {
+            return {
+                ...message,
+                conversationId: message.conversation_id,
+                userId: message.user_id,
+                createdAt: message.created_at,
+                updatedAt: message.updated_at,
+                user: message.user ? {
+                    id: message.user.id,
+                    firstName: message.user.first_name,
+                    lastName: message.user.last_name,
+                    email: message.user.email
+                } : null
+            };
+        });
+
+        return json({ messages: transformedMessages });
 
     } catch (error) {
         console.error('Server error:', error);

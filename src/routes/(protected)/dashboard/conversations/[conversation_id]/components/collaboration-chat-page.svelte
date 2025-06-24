@@ -12,6 +12,7 @@
     import ChatSidebar from "../../../components/chat-sidebar.svelte";
     import EditableTitle from "$lib/components/generic/editable-title.svelte";
     import { conversationStore } from "$lib/stores/conversationStore";
+    import { getCurrentClient } from "$lib/clients/clientService";
     import { marked } from 'marked';
     import DOMPurify from 'dompurify';
 
@@ -19,6 +20,7 @@
     let userInput = $state("");
     let messages = $state<CollaborationMessage[]>([]);
     let conversation = $state<Conversation | null>(null);
+    let currentUser = $state<any>(null);
     let isLoading = $state(false);
     let isSending = $state(false);
     let error = $state<string | null>(null);
@@ -39,6 +41,7 @@
     // Effect to load messages and conversation details when chatId changes
     $effect(() => {
         if (chatId) {
+            loadCurrentUser();
             loadMessages(chatId);
             loadConversationDetails(chatId);
             startPolling(chatId);
@@ -228,14 +231,28 @@
 
     // Get display name for a user
     function getUserDisplayName(user: CollaborationMessage['user']): string {
-        if (!user) return 'Unknown User';
-        return `${user.firstName} ${user.lastName}`;
+        if (!user) {
+            return 'Unknown User';
+        }
+        const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        return displayName || 'Unknown User';
     }
 
     // Get user initials for avatar
     function getUserInitials(user: CollaborationMessage['user']): string {
         if (!user) return 'U';
-        return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
+        const firstInitial = user.firstName?.[0] || '';
+        const lastInitial = user.lastName?.[0] || '';
+        return `${firstInitial}${lastInitial}`.toUpperCase() || 'U';
+    }
+
+    // Load current user info
+    async function loadCurrentUser() {
+        try {
+            currentUser = await getCurrentClient();
+        } catch (err) {
+            console.error("Error loading current user:", err);
+        }
     }
 </script>
 
@@ -315,7 +332,7 @@
                 {:else}
                     <div class="space-y-6 pb-6">
                         {#each messages as message, index}
-                            {@const isOwnMessage = message.sender === 'user' && message.userId}
+                            {@const isOwnMessage = currentUser && message.userId === currentUser.id}
                             <div class="group relative">
                                 <div class="flex items-start gap-4 {isOwnMessage ? 'flex-row-reverse' : 'flex-row'}">
                                     <!-- Avatar with user initials -->

@@ -1,5 +1,5 @@
 {
-  "id": "5fbb0a41-afad-4f60-b440-d8e98c52c175",
+  "id": "d3200362-395f-4d15-8fcb-4fe991521049",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -301,6 +301,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "text": {
           "name": "text",
           "type": "text",
@@ -336,6 +342,19 @@
           "tableTo": "conversation",
           "columnsFrom": [
             "conversation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "message_user_id_client_id_fk": {
+          "name": "message_user_id_client_id_fk",
+          "tableFrom": "message",
+          "tableTo": "client",
+          "columnsFrom": [
+            "user_id"
           ],
           "columnsTo": [
             "id"

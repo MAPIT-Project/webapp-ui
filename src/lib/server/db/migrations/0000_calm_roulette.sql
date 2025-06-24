@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS "conversation" (
 CREATE TABLE IF NOT EXISTS "message" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"conversation_id" integer NOT NULL,
+	"user_id" integer,
 	"text" text NOT NULL,
 	"sender" varchar(50) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -137,6 +138,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "message" ADD CONSTRAINT "message_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversation"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "message" ADD CONSTRAINT "message_user_id_client_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."client"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
