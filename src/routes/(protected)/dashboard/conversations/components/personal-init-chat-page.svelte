@@ -6,6 +6,7 @@
 	import { supabase } from '$lib/clients/supabaseClient';
 	import { ensureClientExists } from "$lib/clients/clientService";
 	import { onMount } from "svelte";
+	import { scale, fade } from "svelte/transition";
 	import ApiModeToggle from "../../components/api-mode-toggle.svelte";
 	import AIProviderSelector from "../../components/ai-provider-selector.svelte";
 	import { fetchAvailableProviders } from '$lib/stores/aiProviderStore';
@@ -36,53 +37,128 @@
 	});
 </script>
 
-<div class="w-full min-h-screen h-full flex relative bg-[#2B2A2C]">
+<div class="w-full min-h-screen h-full flex relative bg-gradient-to-br from-[#2B2A2C] via-[#282729] to-[#252327]">
     
     <!-- Chat sidebar -->
     <ChatSidebar />
     
     <!-- Main content -->
-    <div class="flex-1 flex items-center justify-center relative">
-        <div class="absolute left-4 top-4 z-10 flex items-center">
-            <span class="text-[#A0A0A8] text-xs">AI Domain Expert Tool <span class="text-[0.5rem] font-bold ml-1 bg-gray-700 text-gray-300 px-1 py-0.5 rounded">BETA</span></span>
-        </div>
-        
-        <!-- API Controls -->
-        <div class="absolute right-4 top-4 z-10 flex items-center gap-2">
-            <AIProviderSelector />
-            <ApiModeToggle />
-        </div>
-    
-        {#if clientLoading}
-            <div class="w-full p-4 flex justify-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#A0A0A8]"></div>
-            </div>
-        {:else if clientError}
-            <div class="w-full max-w-[800px] p-6 bg-red-900/30 border border-red-700/50 rounded-lg mb-6 shadow-lg">
-                <div class="flex items-start">
-                    <div class="mr-4 p-2 bg-red-900/50 rounded-lg">
-                        <Icon name="error" class="text-red-400" />
+    <div class="flex-1 flex flex-col relative overflow-hidden">
+        <!-- Header Bar -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-700/30 bg-gradient-to-r from-gray-800/30 to-gray-900/30 backdrop-blur-sm">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                        <Icon name="smart_toy" iconClass="text-white text-sm" />
                     </div>
                     <div>
-                        <h3 class="text-lg font-medium text-red-300 mb-2">Error</h3>
-                        <p class="text-red-300 mb-4">{clientError}</p>
-                        <button 
-                            class="px-4 py-2 bg-red-700/50 hover:bg-red-700/80 text-white rounded-lg transition-colors"
-                            onclick={() => window.location.reload()}
-                        >
-                            <div class="flex items-center">
-                                <Icon name="refresh" class="mr-2" />
-                                Retry
-                            </div>
-                        </button>
+                        <span class="text-white font-medium">MAPIT AI</span>
+                        <span class="text-xs text-blue-400 font-bold ml-2 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-500/30">BETA</span>
                     </div>
                 </div>
             </div>
-        {:else}
-            <div class="w-[800px] flex flex-col items-center pt-10">
-                <span class="text-3xl pb-8 font-semibold text-white">How can I help you today?</span>
-                <Chatbox />
+            
+            <!-- API Controls -->
+            <div class="flex items-center gap-3">
+                <AIProviderSelector />
+                <ApiModeToggle />
             </div>
-        {/if}
+        </div>
+    
+        <!-- Main Content Area -->
+        <div class="flex-1 flex items-center justify-center p-6 relative">
+            <!-- Background decoration -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-blue-500/5 blur-3xl"></div>
+                <div class="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-purple-500/5 blur-3xl"></div>
+            </div>
+            
+            {#if clientLoading}
+                <div class="flex flex-col items-center gap-6" in:fade={{ duration: 300 }}>
+                    <!-- Enhanced loading animation -->
+                    <div class="relative">
+                        <div class="w-16 h-16 rounded-full border-4 border-gray-700/30 border-t-blue-500 animate-spin"></div>
+                        <div class="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-r-purple-500 animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-white mb-2">Setting up your workspace</h3>
+                        <p class="text-gray-400">Initializing AI services and user data...</p>
+                    </div>
+                </div>
+            {:else if clientError}
+                <div class="w-full max-w-md" in:scale={{ duration: 300, start: 0.95 }}>
+                    <div class="bg-gradient-to-r from-red-900/40 to-red-800/40 border border-red-500/50 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 bg-red-500/20 rounded-xl">
+                                <Icon name="error" iconClass="text-red-400 w-6 h-6" />
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-red-200 mb-2">Something went wrong</h3>
+                                <p class="text-red-300 mb-4 text-sm leading-relaxed">{clientError}</p>
+                                <button 
+                                    class="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-medium shadow-lg hover:shadow-red-500/25"
+                                    onclick={() => window.location.reload()}
+                                >
+                                    <div class="flex items-center justify-center gap-2">
+                                        <Icon name="refresh" iconClass="w-4 h-4" />
+                                        Try Again
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {:else}
+                <div class="w-full max-w-5xl flex flex-col items-center" in:fade={{ duration: 400, delay: 100 }}>
+                    <!-- Welcome Section -->
+                    <div class="text-center mb-12" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
+                        <div class="inline-flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                                <Icon name="psychology" iconClass="text-white text-xl" />
+                            </div>
+                            <h1 class="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                How can I help you today?
+                            </h1>
+                        </div>
+                        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                            Ask me anything about research, analysis, writing, or get assistance with your projects. 
+                            I'm here to help you explore ideas and find solutions.
+                        </p>
+                    </div>
+                    
+                    <!-- Features highlight -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 w-full max-w-4xl" in:scale={{ duration: 400, delay: 300, start: 0.95 }}>
+                        <div class="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-xl p-4 text-center group hover:scale-105 transition-transform">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-500/30 transition-colors">
+                                <Icon name="search" iconClass="text-blue-400 text-sm" />
+                            </div>
+                            <h3 class="text-white font-semibold mb-1">Research & Analysis</h3>
+                            <p class="text-gray-400 text-sm">Get insights on complex topics and data analysis</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-xl p-4 text-center group hover:scale-105 transition-transform">
+                            <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors">
+                                <Icon name="edit" iconClass="text-purple-400 text-sm" />
+                            </div>
+                            <h3 class="text-white font-semibold mb-1">Writing & Editing</h3>
+                            <p class="text-gray-400 text-sm">Craft compelling content and improve your writing</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-xl p-4 text-center group hover:scale-105 transition-transform">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center mx-auto mb-3 group-hover:bg-emerald-500/30 transition-colors">
+                                <Icon name="lightbulb" iconClass="text-emerald-400 text-sm" />
+                            </div>
+                            <h3 class="text-white font-semibold mb-1">Creative Solutions</h3>
+                            <p class="text-gray-400 text-sm">Brainstorm ideas and solve complex problems</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat interface -->
+                    <div in:scale={{ duration: 400, delay: 400, start: 0.95 }}>
+                        <Chatbox />
+                    </div>
+                </div>
+            {/if}
+        </div>
     </div>
 </div>

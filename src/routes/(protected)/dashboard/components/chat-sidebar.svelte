@@ -165,60 +165,89 @@
     }
 </script>
 
-<div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-[#1E1E20] border-r border-[#4A4A57]/30 flex-shrink-0 overflow-hidden">
-    <div class="p-4 border-b border-[#4A4A57]/30 flex justify-between items-center">
-        <div class="flex items-center">
-            <h2 class="text-lg font-medium text-white">{sidebarTitle}</h2>
-        </div>
-        <div class="flex gap-2">
-            <button 
-                class="py-1.5 px-2 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
-                title="Refresh conversations"
-                onclick={() => conversationStore.loadConversations(true)}
-            >
-                <Icon name="refresh" />
-            </button>
-            <a 
-                href="/dashboard/conversations" 
-                class="py-1.5 px-2 rounded-lg hover:bg-[#3E3E48] text-white transition-colors"
-                title="New chat"
-            >
-                <Icon name="add_comment"/>
-            </a>
+<div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-gradient-to-b from-[#1E1E20] to-[#1A1A1C] border-r border-[#4A4A57]/20 flex-shrink-0 overflow-hidden shadow-xl">
+    <!-- Header Section -->
+    <div class="p-4 border-b border-[#4A4A57]/20 bg-gradient-to-r from-gray-800/30 to-gray-900/30 backdrop-blur-sm">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <Icon name="chat" iconClass="text-white text-sm" />
+                </div>
+                <h2 class="text-lg font-semibold text-white">{sidebarTitle}</h2>
+            </div>
+            <div class="flex gap-1">
+                <button 
+                    class="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-200 group"
+                    title="Refresh conversations"
+                    onclick={() => conversationStore.loadConversations(true)}
+                >
+                    <Icon name="refresh" iconClass="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
+                </button>
+                <a 
+                    href="/dashboard/conversations" 
+                    class="p-2 rounded-lg hover:bg-blue-500/20 text-gray-400 hover:text-blue-400 transition-all duration-200 group"
+                    title="New chat"
+                >
+                    <Icon name="add_comment" iconClass="w-4 h-4 group-hover:scale-110 transition-transform"/>
+                </a>
+            </div>
         </div>
     </div>
     
-    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-[#1E1E20] px-2">
+    <!-- Conversations List -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 space-y-1">
         {#if $conversationStore.isLoading}
-            <div class="flex justify-center items-center h-20">
-                <div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-[#A0A0A8]"></div>
+            <!-- Enhanced Loading State -->
+            <div class="flex flex-col items-center justify-center h-32 gap-4">
+                <div class="relative">
+                    <div class="w-8 h-8 rounded-full border-2 border-gray-700/30 border-t-blue-500 animate-spin"></div>
+                    <div class="absolute inset-0 w-8 h-8 rounded-full border-2 border-transparent border-r-purple-500 animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                </div>
+                <p class="text-gray-400 text-sm font-medium">Loading conversations...</p>
             </div>
         {:else if $conversationStore.error}
-            <div class="p-4 text-red-400 text-sm">
-                <p>{$conversationStore.error}</p>
-                <button 
-                    class="mt-2 text-[#A0A0A8] hover:underline"
-                    onclick={() => conversationStore.loadConversations(true)}
-                >
-                    Try again
-                </button>
-            </div>
-        {:else if $conversationStore.conversations.length === 0}
-            <div class="p-4 mt-4 bg-[#2B2A2C] rounded-lg border border-[#4A4A57]/30 text-[#A0A0A8] text-sm">
-                <div class="flex justify-center mb-2">
-                    <div class="p-2 rounded-full bg-[#3E3E48]">
-                        <Icon name="chat" iconSize="sm" className="text-[#A0A0A8]" />
+            <!-- Enhanced Error State -->
+            <div class="p-4 m-2 bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-500/30 rounded-xl">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 p-1.5 bg-red-500/20 rounded-lg">
+                        <Icon name="error" iconClass="text-red-400 w-4 h-4" />
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-red-300 text-sm font-medium mb-1">Failed to load</p>
+                        <p class="text-red-400 text-xs mb-3">{$conversationStore.error}</p>
+                        <button 
+                            class="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-300 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                            onclick={() => conversationStore.loadConversations(true)}
+                        >
+                            Try again
+                        </button>
                     </div>
                 </div>
-                <p class="text-center">No conversations yet.</p>
-                <p class="text-center mt-1">Start a new chat to begin.</p>
+            </div>
+        {:else if $conversationStore.conversations.length === 0}
+            <!-- Enhanced Empty State -->
+            <div class="flex flex-col items-center justify-center h-48 gap-4 px-4">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-700/20 to-gray-800/20 border border-gray-600/30 flex items-center justify-center">
+                    <Icon name="chat" iconClass="text-gray-400 w-8 h-8" />
+                </div>
+                <div class="text-center">
+                    <h3 class="text-white font-medium mb-1">No conversations yet</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Start a new conversation to begin chatting with AI assistants</p>
+                </div>
+                <a 
+                    href="/dashboard/conversations"
+                    class="mt-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-all shadow-lg hover:shadow-blue-500/25"
+                >
+                    Start First Chat
+                </a>
             </div>
         {:else}
-            <div class="py-3">
+            <!-- Conversations List -->
+            <div class="space-y-1">
                 {#each $conversationStore.conversations as conversation}
                     <a 
                         href="/dashboard/conversations/{conversation.id}" 
-                        class="flex items-start justify-between px-4 py-3 mb-1 hover:bg-[#3E3E48] {currentChatId === conversation.id ? 'bg-[#3E3E48]' : ''} rounded-lg transition-colors group relative"
+                        class="group relative flex items-start justify-between p-3 hover:bg-gradient-to-r hover:from-gray-800/40 hover:to-gray-700/20 {currentChatId === conversation.id ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/10 border border-blue-500/30' : 'border border-transparent'} rounded-xl transition-all duration-200 hover:shadow-lg"
                     >
                         <div class="flex-1 min-w-0 pr-2">
                             <div class="relative flex items-center justify-between">
@@ -230,8 +259,8 @@
                                         maxLength={30}
                                         showEditIcon={true}
                                         compactMode={true}
-                                        titleClass="text-white text-sm font-medium truncate"
-                                        inputClass="text-white text-sm font-medium bg-transparent border-b border-blue-500 outline-none w-full text-left"
+                                        titleClass="text-white text-sm font-medium truncate {currentChatId === conversation.id ? 'text-blue-100' : 'group-hover:text-blue-100'}"
+                                        inputClass="text-white text-sm font-medium bg-gray-800/50 border border-blue-500/50 rounded-lg px-2 py-1 outline-none w-full text-left"
                                         class="w-full"
                                     />
                                 </div>
@@ -244,11 +273,11 @@
                                         {#if isOwner}
                                             <button
                                                 onclick={(e) => handleDeleteClick(e, conversation)}
-                                                class="ml-1 p-0.5 rounded hover:bg-red-900/30 text-gray-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                                class="ml-2 p-1.5 rounded-lg hover:bg-red-900/30 text-gray-500 hover:text-red-400 transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-110"
                                                 title="Delete conversation (Owner only)"
                                                 disabled={isDeleting}
                                             >
-                                                <Icon name="delete" iconSize="sm" className="text-current" />
+                                                <Icon name="delete" iconClass="w-3.5 h-3.5" />
                                             </button>
                                         {/if}
                                     {:catch}
@@ -256,50 +285,90 @@
                                     {/await}
                                 {/if}
                             </div>
-                            <p class="text-[#A0A0A8] text-xs truncate mt-1">
-                                {conversation.topic || 'General'}
-                            </p>
+                            
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center gap-2">
+                                    <!-- Conversation type indicator -->
+                                    {#if conversation.collaborationId || (conversation as any).collaboration_id}
+                                        <div class="flex items-center gap-1 px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded-full">
+                                            <Icon name="group" iconClass="w-3 h-3 text-purple-400" />
+                                            <span class="text-purple-300 text-xs font-medium">Team</span>
+                                        </div>
+                                    {:else}
+                                        <div class="flex items-center gap-1 px-2 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-full">
+                                            <Icon name="person" iconClass="w-3 h-3 text-blue-400" />
+                                            <span class="text-blue-300 text-xs font-medium">Personal</span>
+                                        </div>
+                                    {/if}
+                                </div>
+                                
+                                <span class="text-gray-500 text-xs font-medium">
+                                    {formatDate(conversation.createdAt)}
+                                </span>
+                            </div>
+                            
+                            {#if conversation.topic && conversation.topic !== 'General'}
+                                <p class="text-gray-400 text-xs truncate mt-1 font-medium">
+                                    {conversation.topic}
+                                </p>
+                            {/if}
                         </div>
-                        <span class="text-[#A0A0A8] text-xs flex-shrink-0 mt-0.5">
-                            {formatDate(conversation.createdAt)}
-                        </span>
+                        
+                        <!-- Active indicator -->
+                        {#if currentChatId === conversation.id}
+                            <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-r-full"></div>
+                        {/if}
                     </a>
                 {/each}
             </div>
         {/if}
     </div>
+    
+    <!-- Footer -->
+    <div class="p-3 border-t border-[#4A4A57]/20 bg-gradient-to-r from-gray-800/20 to-gray-900/20">
+        <div class="flex items-center justify-center">
+            <div class="text-xs text-gray-500 flex items-center gap-1">
+                <Icon name="info" iconClass="w-3 h-3" />
+                <span>{$conversationStore.conversations.length} conversation{$conversationStore.conversations.length !== 1 ? 's' : ''}</span>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Enhanced Delete Confirmation Modal -->
 <Modal
     bind:isOpen={showDeleteConfirm}
     title="Delete Conversation"
     on:cancel={() => showDeleteConfirm = false}
     closeOnEscape={true}
-    background="bg-[#1E1E1E]"
+    background="bg-gradient-to-br from-gray-900 to-gray-800"
 >
-    <div slot="content" class="p-4 flex flex-col gap-4 w-full">
-        <div class="flex items-start gap-3">
+    <div slot="content" class="p-6 flex flex-col gap-6 w-full">
+        <div class="flex items-start gap-4">
             <div class="flex-shrink-0 mt-1">
-                <div class="w-8 h-8 rounded-lg bg-red-900/30 flex items-center justify-center">
-                    <Icon name="warning" className="text-red-400" />
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/20 border border-red-500/30 flex items-center justify-center">
+                    <Icon name="warning" iconClass="text-red-400 w-6 h-6" />
                 </div>
             </div>
             <div class="flex-1">
-                <p class="text-gray-300 text-sm mb-2">
-                    Are you sure you want to delete <strong>"{conversationToDelete?.name || 'this conversation'}"</strong>?
+                <h3 class="text-lg font-semibold text-white mb-2">Delete "{conversationToDelete?.name || 'this conversation'}"?</h3>
+                <p class="text-gray-300 text-sm mb-3 leading-relaxed">
+                    This action cannot be undone. All messages and data in this conversation will be permanently deleted.
                 </p>
-                <p class="text-gray-400 text-xs">
-                    This cannot be undone. All messages in this conversation will be permanently deleted.
-                </p>
+                <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                    <div class="flex items-center gap-2">
+                        <Icon name="info" iconClass="text-red-400 w-4 h-4" />
+                        <span class="text-red-300 text-xs font-medium">This will affect all team members with access to this conversation</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
-    <div slot="footer" class="flex justify-end gap-3">
+    <div slot="footer" class="flex justify-end gap-3 p-6 border-t border-gray-700/50">
         <button 
             onclick={() => showDeleteConfirm = false}
-            class="px-4 py-2.5 rounded-md border border-[#444444] text-gray-300 hover:bg-[#2A2A2A] transition-colors duration-200 font-medium"
+            class="px-6 py-2.5 rounded-xl border border-gray-600/50 text-gray-300 hover:bg-gray-700/30 hover:border-gray-500/50 transition-all duration-200 font-medium"
             disabled={isDeleting}
         >
             Cancel
@@ -307,14 +376,14 @@
         <button 
             onclick={handleDeleteConversation}
             disabled={isDeleting}
-            class="px-6 py-2.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            class="px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-red-500/25"
         >
             {#if isDeleting}
                 <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
                 Deleting...
             {:else}
-                <Icon name="delete" className="text-white" />
-                Delete Chat
+                <Icon name="delete" iconClass="w-4 h-4" />
+                Delete Forever
             {/if}
         </button>
     </div>

@@ -4,6 +4,7 @@
     import Icon from "$lib/components/generic/icon.svelte";
     import { getSpace } from "$lib/stores/collaborationStore.svelte";
     import { conversationStore } from "$lib/stores/conversationStore";
+    import { scale, fade } from "svelte/transition";
     
     let userInput = $state("");
     let isProcessing = $state(false);
@@ -61,25 +62,29 @@
             icon: "science",
             text: "Tell me about funding opportunities in clean energy research",
             shade: "dark",
-            color: "#4CAF50"
+            color: "#10B981", // Emerald
+            category: "Research"
         },
         {
             icon: "health_and_safety",
             text: "What are the latest trends in AI for healthcare?",
             shade: "medium",
-            color: "#2196F3"
+            color: "#3B82F6", // Blue
+            category: "Healthcare"
         },
         {
             icon: "eco",
             text: "Help me draft a proposal outline for sustainable agriculture",
             shade: "dark",
-            color: "#8BC34A"
+            color: "#8B5CF6", // Purple
+            category: "Agriculture"
         },
         {
             icon: "public",
             text: "What EU programs focus on climate change mitigation?",
             shade: "medium",
-            color: "#009688"
+            color: "#F59E0B", // Amber
+            category: "Policy"
         }
     ];
     
@@ -89,83 +94,141 @@
     }
 </script>
 
-<div class="w-full max-w-[800px]">
+<div class="w-full max-w-4xl mx-auto" in:scale={{ duration: 300, start: 0.98 }}>
+    <!-- Enhanced Input Section -->
     <form 
         onsubmit={handleSubmit}
         class="relative mb-8"
+        in:fade={{ duration: 200 }}
     >
-        <div class="relative shadow-lg rounded-lg overflow-hidden">
+        <div class="relative shadow-2xl rounded-2xl overflow-hidden bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm">
             <input
                 type="text"
                 bind:value={userInput}
-                placeholder={isProcessing ? "Creating conversation..." : "Send a message..."}
-                class="w-full px-5 py-4 pr-14 bg-[#383842] border border-[#4A4A57]/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#525252]/70 transition-all"
+                placeholder={isProcessing ? "Creating conversation..." : "What would you like to explore today?"}
+                class="w-full px-6 py-5 pr-16 bg-[#383842]/80 border border-[#4A4A57]/30 rounded-2xl text-white text-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all backdrop-blur-sm"
                 disabled={isProcessing}
             />
             <button
                 type="submit"
-                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#A0A0A8] hover:text-white p-2 rounded-md disabled:opacity-50 transition-colors"
+                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white p-3 rounded-xl hover:bg-white/10 disabled:opacity-50 transition-all duration-200 group"
                 disabled={isProcessing || !userInput.trim()}
             >
                 {#if isProcessing}
-                    <div class="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full"></div>
+                    <div class="animate-spin w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full"></div>
                 {:else}
-                    <Icon name="send" iconClass="text-current" />
+                    <div class="group-hover:scale-110 transition-transform">
+                        <Icon name="send" iconClass="text-current w-5 h-5" />
+                    </div>
                 {/if}
             </button>
         </div>
         
-        <!-- Enhanced loading status indicator -->
+        <!-- Enhanced Loading Status -->
         {#if isProcessing}
-            <div class="mt-3 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                <div class="flex items-center justify-center gap-3 text-gray-400 text-sm mb-3">
-                    <div class="flex space-x-1">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce"></div>
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.1s"></div>
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.2s"></div>
+            <div class="mt-4 bg-gradient-to-r from-gray-800/70 to-gray-900/70 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50" 
+                 in:scale={{ duration: 300, start: 0.95 }}>
+                <div class="flex flex-col items-center gap-4">
+                    <!-- Animated dots -->
+                    <div class="flex items-center gap-3 text-gray-400 text-sm">
+                        <div class="flex space-x-1">
+                            <div class="w-2 h-2 rounded-full bg-blue-500 animate-bounce"></div>
+                            <div class="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style="animation-delay: 0.1s"></div>
+                            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0.2s"></div>
+                        </div>
+                        <span class="font-medium">Creating conversation and generating response...</span>
                     </div>
-                    <span>Creating conversation and generating response...</span>
-                </div>
-                
-                <!-- Timing information for new conversations -->
-                <div class="text-xs text-center text-gray-500 bg-gray-700/30 px-3 py-2 rounded border border-gray-600/30">
-                    <div class="flex items-center justify-center gap-2 mb-1">
-                        <Icon name="info" iconClass="text-xs text-blue-400" />
-                        <span class="text-gray-400">Please wait</span>
+                    
+                    <!-- Progress indicator -->
+                    <div class="w-full bg-gray-700/50 rounded-full h-1 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 animate-pulse"></div>
                     </div>
-                    <div class="text-gray-500">
-                        Response generation typically takes <span class="text-blue-300">30-60 seconds</span>
+                    
+                    <!-- Timing information -->
+                    <div class="text-xs text-center text-gray-400 bg-gray-800/50 px-4 py-3 rounded-lg border border-gray-600/30">
+                        <div class="flex items-center justify-center gap-2 mb-1">
+                            <Icon name="info" iconClass="w-4 h-4 text-blue-400" />
+                            <span>Please wait</span>
+                        </div>
+                        <div class="text-gray-500">
+                            Response generation typically takes <span class="text-blue-300 font-medium">30-60 seconds</span>
+                        </div>
                     </div>
                 </div>
             </div>
         {/if}
     </form>
     
+    <!-- Enhanced Error Display -->
     {#if error}
-        <div class="bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg mb-6 shadow-lg">
-            <div class="flex">
-                <div class="flex-shrink-0 mr-3">
-                    <Icon name="error" iconClass="text-red-400" />
+        <div class="bg-gradient-to-r from-red-900/40 to-red-800/40 border border-red-500/50 text-red-200 p-5 rounded-xl mb-8 shadow-lg backdrop-blur-sm" 
+             in:scale={{ duration: 300, start: 0.95 }}>
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mr-4 p-2 bg-red-500/20 rounded-lg">
+                    <Icon name="error" iconClass="text-red-400 w-5 h-5" />
                 </div>
-                <p>{error}</p>
+                <div>
+                    <h3 class="font-medium text-red-200 mb-1">Something went wrong</h3>
+                    <p class="text-red-300 text-sm">{error}</p>
+                </div>
             </div>
         </div>
     {/if}
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {#each examples as example, i}
-            <button 
-                onclick={() => startWithExample(example.text)}
-                class="bg-[#343541] hover:bg-[#3E3E48] text-white p-5 rounded-lg text-left border border-[#4A4A57]/30 hover:border-[#4A4A57]/80 transition-all shadow-md group"
-                disabled={isProcessing}
-            >
-                <div class="flex items-start">
-                    <div style="background-color: {example.color}" class="p-1.5 rounded-md mr-3 flex-shrink-0 group-hover:scale-110 transition-transform">
-                        <Icon name={example.icon} iconSize="sm" iconClass="text-white" />
+    <!-- Enhanced Example Cards -->
+    <div class="space-y-6">
+        <div class="text-center" in:fade={{ delay: 100 }}>
+            <h2 class="text-2xl font-semibold text-white mb-2">Get started with these examples</h2>
+            <p class="text-gray-400 text-lg">Choose a topic or ask your own question</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" in:scale={{ duration: 300, delay: 200, start: 0.98 }}>
+            {#each examples as example, i}
+                <button 
+                    onclick={() => startWithExample(example.text)}
+                    class="relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 hover:from-gray-700/60 hover:to-gray-800/60 text-white p-6 rounded-2xl text-left border border-gray-700/50 hover:border-gray-600/70 transition-all duration-300 shadow-lg hover:shadow-xl group backdrop-blur-sm overflow-hidden"
+                    disabled={isProcessing}
+                    in:scale={{ duration: 200, delay: i * 50, start: 0.95 }}
+                >
+                    <!-- Gradient overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                         style="background: linear-gradient(135deg, {example.color}20, {example.color}05)"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-4">
+                                <div style="background-color: {example.color}" 
+                                     class="p-3 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                    <Icon name={example.icon} iconSize="sm" iconClass="text-white" />
+                                </div>
+                                <div>
+                                    <div class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">{example.category}</div>
+                                    <div class="w-8 h-0.5 rounded" style="background-color: {example.color}"></div>
+                                </div>
+                            </div>
+                            <div class="text-gray-500 group-hover:text-gray-400 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-200 font-medium leading-relaxed group-hover:text-white transition-colors duration-300">{example.text}</p>
+                        
+                        <!-- Hover effect indicator -->
+                        <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                             style="background-color: {example.color}"></div>
                     </div>
-                    <span class="pt-0.5">{example.text}</span>
-                </div>
-            </button>
-        {/each}
+                </button>
+            {/each}
+        </div>
+        
+        <!-- Additional CTA -->
+        <div class="text-center pt-8" in:fade={{ delay: 300 }}>
+            <div class="inline-flex items-center gap-2 text-gray-500 text-sm">
+                <Icon name="lightbulb" iconClass="w-4 h-4" />
+                <span>Or type your own question in the search box above</span>
+            </div>
+        </div>
     </div>
 </div>
