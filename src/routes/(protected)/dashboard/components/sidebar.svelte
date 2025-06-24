@@ -26,6 +26,10 @@ import { supabase } from '$lib/clients/supabaseClient';
     // Space management
     let navigationEffectHasRunOnceAfterLoading = false; 
     
+    // Custom dropdown state
+    let showSpaceDropdown = $state(false);
+    let dropdownElement: HTMLDivElement;
+    
     onMount(async () => {
         const { data: { session: clientSession } } = await supabase.auth.getSession();
         if (!clientSession) {
@@ -33,6 +37,18 @@ import { supabase } from '$lib/clients/supabaseClient';
         }
         // Fetch collaborations when the sidebar mounts
         await fetchUserCollaborations(); 
+        
+        // Close dropdown when clicking outside
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
+                showSpaceDropdown = false;
+            }
+        };
+        
+        document.addEventListener('click', handleClickOutside);
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
     });
 
     // Use derived state from the store via the new getter
@@ -72,13 +88,22 @@ import { supabase } from '$lib/clients/supabaseClient';
         goto('/dashboard');
     });
 
-    function handleSpaceChange(event: Event) {
-        const select = event.target as HTMLSelectElement;
-        setSpace(select.value);
+    function handleSpaceChange(spaceId: string) {
+        setSpace(spaceId);
+        showSpaceDropdown = false;
     }
 
-    function setSpaceById(spaceId: string) {
-        setSpace(spaceId);
+    function toggleDropdown() {
+        showSpaceDropdown = !showSpaceDropdown;
+    }
+
+    function getCurrentSpaceName(): string {
+        const space = spaces.find(s => s.id === currentSpace);
+        return space?.name || 'Personal';
+    }
+
+    function isPersonalSpace(spaceId: string): boolean {
+        return spaceId === 'personal';
     }
 
     const handleResize = () => {
@@ -143,48 +168,111 @@ import { supabase } from '$lib/clients/supabaseClient';
                 </button>
             </div>
             
-            <!-- Space Selector (Expanded View) -->
-            {#if isLoadingSpaces}
-            <div class="space-selector relative">
-                <select 
-                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded-md py-2 px-3 focus:outline-none appearance-none pr-8"
-                    disabled
-                >
-                    <option>Loading spaces...</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                    <Icon name="expand_more" />
-                </div>
+            <!-- Enhanced Space Selector -->
+            <div class="space-selector relative" bind:this={dropdownElement}>
+                {#if isLoadingSpaces}
+                    <!-- Loading State -->
+                    <div class="w-full bg-gradient-to-r from-gray-800/60 to-gray-700/60 border border-gray-600/50 rounded-xl p-3 cursor-not-allowed">
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-lg bg-gray-600/50 animate-pulse"></div>
+                            <div class="flex-1">
+                                <div class="h-3 bg-gray-600/50 rounded animate-pulse mb-1"></div>
+                                <div class="h-2 bg-gray-700/50 rounded animate-pulse w-20"></div>
+                            </div>
+                            <div class="w-4 h-4 bg-gray-600/50 rounded animate-pulse"></div>
+                        </div>
+                    </div>
+                {:else if spaces.length > 0}
+                    <!-- Active Selector -->
+                    <button 
+                        class="w-full bg-gradient-to-r from-gray-800/60 to-gray-700/60 hover:from-gray-700/70 hover:to-gray-600/70 border border-gray-600/50 hover:border-gray-500/60 rounded-xl p-3 transition-all duration-200 text-left group"
+                        onclick={toggleDropdown}
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <!-- Space Icon -->
+                                <div class="w-6 h-6 rounded-lg flex items-center justify-center {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-blue-500 to-blue-600' : 'bg-gradient-to-r from-purple-500 to-purple-600'} shadow-lg">
+                                    <Icon name={isPersonalSpace(currentSpace) ? 'person' : 'groups'} iconClass="text-white text-sm" />
+                                </div>
+                                
+                                <!-- Space Details -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-white font-medium text-sm truncate">{getCurrentSpaceName()}</div>
+                                    <div class="text-gray-400 text-xs font-medium">
+                                        {isPersonalSpace(currentSpace) ? 'Personal workspace' : 'Team collaboration'}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Dropdown Arrow -->
+                            <div class="text-gray-400 group-hover:text-gray-300 transition-all duration-200 {showSpaceDropdown ? 'rotate-180' : ''}">
+                                <Icon name="expand_more" iconClass="w-4 h-4" />
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    {#if showSpaceDropdown}
+                        <div class="absolute top-full left-0 right-0 mt-2 bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-600/50 rounded-xl shadow-2xl overflow-hidden z-50 backdrop-blur-sm">
+                            <div class="p-2 space-y-1">
+                                {#each spaces as space (space.id)}
+                                    <button 
+                                        class="w-full p-3 rounded-lg text-left hover:bg-gray-700/50 transition-all duration-200 group {currentSpace === space.id ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30' : 'border border-transparent'}"
+                                        onclick={() => handleSpaceChange(space.id)}
+                                    >
+                                        <div class="flex items-center gap-3">
+                                            <!-- Space Icon -->
+                                            <div class="w-5 h-5 rounded-md flex items-center justify-center {isPersonalSpace(space.id) ? 'bg-gradient-to-r from-blue-500 to-blue-600' : 'bg-gradient-to-r from-purple-500 to-purple-600'} shadow-md">
+                                                <Icon name={isPersonalSpace(space.id) ? 'person' : 'groups'} iconClass="text-white text-xs" />
+                                            </div>
+                                            
+                                            <!-- Space Name -->
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-white font-medium text-sm truncate {currentSpace === space.id ? 'text-blue-100' : 'group-hover:text-blue-100'}">{space.name}</div>
+                                                <div class="text-gray-400 text-xs">
+                                                    {isPersonalSpace(space.id) ? 'Personal workspace' : 'Team collaboration'}
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Current Indicator -->
+                                            {#if currentSpace === space.id}
+                                                <div class="text-blue-400">
+                                                    <Icon name="check" iconClass="w-4 h-4" />
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </button>
+                                {/each}
+                            </div>
+                            
+                            <!-- Footer -->
+                            <div class="border-t border-gray-700/50 p-3 bg-gray-800/50">
+                                <a 
+                                    href="/dashboard/collaborations"
+                                    class="flex items-center gap-2 text-gray-400 hover:text-blue-400 text-xs font-medium transition-colors"
+                                    onclick={() => showSpaceDropdown = false}
+                                >
+                                    <Icon name="add" iconClass="w-3 h-3" />
+                                    Create or join workspace
+                                </a>
+                            </div>
+                        </div>
+                    {/if}
+                {:else}
+                    <!-- No Spaces Available -->
+                    <div class="w-full bg-gradient-to-r from-gray-800/60 to-gray-700/60 border border-gray-600/50 rounded-xl p-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-lg bg-gray-600/50 flex items-center justify-center">
+                                <Icon name="warning" iconClass="text-gray-400 text-sm" />
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-gray-300 font-medium text-sm">No workspaces</div>
+                                <div class="text-gray-500 text-xs">Create one to get started</div>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
             </div>
-            {:else if spaces.length > 0}
-            <div class="space-selector relative">
-                <!-- Ensure this reflects the store's current space -->
-                <select 
-                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none pr-8"
-                    value={currentSpace} 
-                    onchange={handleSpaceChange}
-                >
-                    {#each spaces as space (space.id)}
-                        <option value={space.id}>{space.name}</option>
-                    {/each}
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                    <Icon name="expand_more" />
-                </div>
-            </div>
-            {:else}
-            <div class="space-selector relative">
-                <select 
-                    class="w-full bg-[#18181a] text-white border border-[#444654]/50 rounded-md py-2 px-3 focus:outline-none appearance-none pr-8"
-                    disabled
-                >
-                    <option>No spaces available</option>
-                </select>
-                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                    <Icon name="expand_more" />
-                </div>
-            </div>
-            {/if}
         </div>
 
         <div class="flex flex-col gap-1.5 mt-6">
