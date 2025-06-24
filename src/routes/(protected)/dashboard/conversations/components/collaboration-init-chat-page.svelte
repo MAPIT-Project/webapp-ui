@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from "$lib/components/generic/icon.svelte";
-	import ChatSidebar from "../../components/chat-sidebar.svelte";
+	
 	import { user } from '$lib/stores/sessionStore';
 	import { ensureClientExists } from "$lib/clients/clientService";
 	import { createConversation } from "$lib/clients/conversationService";
@@ -139,9 +139,6 @@
 </script>
 
 <div class="w-full min-h-screen h-full flex relative bg-gradient-to-br from-[#2B2A2C] via-[#282729] to-[#252327]">
-    
-    <!-- Chat sidebar -->
-    <ChatSidebar />
     
     <!-- Main content -->
     <div class="flex-1 flex flex-col relative overflow-hidden">

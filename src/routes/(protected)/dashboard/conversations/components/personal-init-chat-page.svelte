@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from "$lib/components/generic/icon.svelte";
 	import Chatbox from "../../components/chatbox.svelte";
-	import ChatSidebar from "../../components/chat-sidebar.svelte";
+	
 	import { user } from '$lib/stores/sessionStore';
 	import { supabase } from '$lib/clients/supabaseClient';
 	import { ensureClientExists } from "$lib/clients/clientService";
@@ -38,9 +38,6 @@
 </script>
 
 <div class="w-full min-h-screen h-full flex relative bg-gradient-to-br from-[#2B2A2C] via-[#282729] to-[#252327]">
-    
-    <!-- Chat sidebar -->
-    <ChatSidebar />
     
     <!-- Main content -->
     <div class="flex-1 flex flex-col relative overflow-hidden">

@@ -5,7 +5,7 @@
     import type { Conversation } from "$lib/types/schema";
     import type { CollaborationMessage } from "$lib/clients/collaborationService";
     import { collaborationRealtimeService } from "$lib/clients/collaborationService";
-    import ChatSidebar from "../../../components/chat-sidebar.svelte";
+    
     import EditableTitle from "$lib/components/generic/editable-title.svelte";
     import { conversationStore } from "$lib/stores/conversationStore";
     import { getCurrentClient } from "$lib/clients/clientService";
@@ -473,10 +473,7 @@
     }
 </script>
 
-<div class="w-full h-screen flex bg-[#2B2A2C] overflow-hidden">
-    <ChatSidebar />
-    
-    <div class="flex-1 flex flex-col relative h-full overflow-hidden">
+<div class="w-full h-screen flex flex-col relative bg-[#2B2A2C] overflow-hidden">
         <!-- Top header with dark glass morphism effect -->
         <div class="absolute top-0 left-0 right-0 h-12 bg-[#2B2A2C]/90 backdrop-blur-xl border-b border-gray-700/50 z-10">
             <div class="flex items-center justify-between h-full px-4">
@@ -727,7 +724,6 @@
             </div>
         </div>
     </div>
-</div>
 
 
 
