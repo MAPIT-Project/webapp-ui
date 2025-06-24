@@ -209,19 +209,19 @@
             {:else}
                 <div class="w-full max-w-4xl flex flex-col items-center" in:fade={{ duration: 400, delay: 100 }}>
                     <!-- Welcome Section -->
-                    <div class="text-center mb-12" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
+                    <div class="text-center mb-8" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
                         <div class="inline-flex items-center gap-3 mb-4">
-                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                <Icon name="add_comment" iconClass="text-white text-xl" />
+                            <div class="size-11 rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+                                <Icon name="add_comment" iconClass="text-white text-lg" />
                             </div>
-                            <h1 class="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                            <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                                 Start a new team chat
                             </h1>
                         </div>
-                        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                        <!-- <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
                             Create a collaborative space for your team in <span class="text-purple-400 font-medium">{currentSpaceName()}</span>. 
                             Work together, share ideas, and get AI assistance.
-                        </p>
+                        </p> -->
                     </div>
                     
                     <!-- Chat Creation Form -->
@@ -274,7 +274,7 @@
                     </div>
                     
                     <!-- Quick Start Templates -->
-                    <div class="w-full max-w-4xl" in:scale={{ duration: 400, delay: 400, start: 0.95 }}>
+                    <!-- <div class="w-full max-w-4xl" in:scale={{ duration: 400, delay: 400, start: 0.95 }}>
                         <div class="text-center mb-8">
                             <h2 class="text-2xl font-semibold text-white mb-2">Quick Start Templates</h2>
                             <p class="text-gray-400">Get started faster with pre-made chat templates</p>
@@ -288,7 +288,6 @@
                                     disabled={isCreatingChat}
                                     in:scale={{ duration: 200, delay: 450 + (i * 50), start: 0.95 }}
                                 >
-                                    <!-- Gradient overlay -->
                                     <div class="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-xl"
                                          style="background: linear-gradient(135deg, {template.color}20, {template.color}05)"></div>
                                     
@@ -309,7 +308,6 @@
                                         <h3 class="text-white font-semibold mb-2 group-hover:text-purple-100 transition-colors">{template.title}</h3>
                                         <p class="text-gray-400 text-sm leading-relaxed">{template.description}</p>
                                         
-                                        <!-- Hover effect indicator -->
                                         <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-xl"
                                              style="background-color: {template.color}"></div>
                                     </div>
@@ -317,14 +315,13 @@
                             {/each}
                         </div>
                         
-                        <!-- Footer info -->
                         <div class="text-center mt-8" in:fade={{ delay: 600 }}>
                             <div class="inline-flex items-center gap-2 text-gray-500 text-sm">
                                 <Icon name="info" iconClass="w-4 h-4" />
                                 <span>Templates help you get started quickly with common collaboration patterns</span>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             {/if}
         </div>
