@@ -4,17 +4,11 @@
     import Icon from "$lib/components/generic/icon.svelte";
     import type { Conversation } from "$lib/types/schema";
     import type { CollaborationMessage } from "$lib/clients/collaborationService";
-    import { 
-        sendCollaborationMessage, 
-        getCollaborationMessages, 
-        CollaborationPolling 
-    } from "$lib/clients/collaborationService";
+    import { collaborationRealtimeService } from "$lib/clients/collaborationService";
     import ChatSidebar from "../../../components/chat-sidebar.svelte";
     import EditableTitle from "$lib/components/generic/editable-title.svelte";
     import { conversationStore } from "$lib/stores/conversationStore";
     import { getCurrentClient } from "$lib/clients/clientService";
-    import { marked } from 'marked';
-    import DOMPurify from 'dompurify';
 
     // State using runes
     let userInput = $state("");
@@ -24,13 +18,10 @@
     let isLoading = $state(false);
     let isSending = $state(false);
     let error = $state<string | null>(null);
-    let onlineUsers = $state<string[]>([]); // For showing who's online
+    let isConnected = $state(false); // Track real-time connection status
 
     // Reference to the messages container for auto-scrolling
     let messagesContainer: HTMLDivElement;
-    
-    // Polling instance
-    let polling: CollaborationPolling | null = null;
     
     // Derived state for conversation name handling
     let conversationName = $derived(conversation?.name || "Untitled Collaboration");
@@ -44,7 +35,7 @@
             loadCurrentUser();
             loadMessages(chatId);
             loadConversationDetails(chatId);
-            startPolling(chatId);
+            setupRealtimeSubscription(chatId);
         }
     });
     
@@ -60,8 +51,8 @@
     
     // Cleanup on destroy
     onDestroy(() => {
-        if (polling) {
-            polling.stop();
+        if (chatId) {
+            collaborationRealtimeService.unsubscribeFromConversation(chatId);
         }
     });
     
@@ -95,7 +86,7 @@
         error = null;
         
         try {
-            messages = await getCollaborationMessages(id);
+            messages = await collaborationRealtimeService.loadConversationMessages(id);
         } catch (err) {
             console.error("Error loading messages:", err);
             error = "Failed to load conversation messages";
@@ -104,20 +95,24 @@
         }
     }
     
-    // Start polling for new messages
-    function startPolling(conversationId: number) {
-        if (polling) {
-            polling.stop();
+    // Setup real-time subscription for new messages
+    async function setupRealtimeSubscription(conversationId: number) {
+        try {
+            await collaborationRealtimeService.subscribeToConversation(
+                conversationId,
+                (newMessage) => {
+                    // Only add message if it's not from current user (to avoid duplicates)
+                    // since we add sent messages immediately after sending
+                    if (!currentUser || newMessage.userId !== currentUser.id) {
+                        messages = [...messages, newMessage];
+                    }
+                }
+            );
+            isConnected = true;
+        } catch (err) {
+            console.error("Error setting up real-time subscription:", err);
+            isConnected = false;
         }
-        
-        polling = new CollaborationPolling(
-            conversationId,
-            (newMessages) => {
-                messages = [...messages, ...newMessages];
-            }
-        );
-        
-        polling.start();
     }
 
     // Function to handle saving conversation name
@@ -145,17 +140,16 @@
             // Clear the input field immediately
             userInput = "";
             
-            // Send the collaboration message
-            const message = await sendCollaborationMessage(chatId, currentInput);
+            // Send the collaboration message using the realtime service
+            const message = await collaborationRealtimeService.sendMessage(chatId, currentInput);
             
             if (message) {
+                // Add message immediately for current user (real-time will handle other users)
                 messages = [...messages, message];
-                // Update polling timestamp to avoid duplicate
-                if (polling) {
-                    polling.updateTimestamp();
-                }
             } else {
                 error = "Failed to send message. Please try again.";
+                // Restore the input if sending failed
+                userInput = currentInput;
             }
             
         } catch (err) {
@@ -206,23 +200,9 @@
     // Function to safely render markdown (for formatted messages)
     function renderMarkdown(text: string): string {
         try {
-            // Configure marked options for better formatting
-            marked.setOptions({
-                gfm: true,
-                breaks: true // Convert \n to <br>
-            });
-            
-            // Parse markdown and sanitize HTML
-            const parsed = marked.parse(text);
-            let sanitized = DOMPurify.sanitize(parsed);
-            
-            // Post-process to add target="_blank" to all links
-            sanitized = sanitized.replace(
-                /<a\s+href="([^"]*)"([^>]*)>/g, 
-                '<a href="$1" target="_blank" rel="noopener noreferrer"$2>'
-            );
-            
-            return sanitized;
+            // For simple text rendering, we'll just return the text
+            // If markdown support is needed later, we can implement it properly
+            return text;
         } catch (error) {
             console.error('Error rendering markdown:', error);
             return text;
@@ -269,17 +249,17 @@
                     </div>
                     <div>
                         <span class="text-gray-100 text-xs font-medium">Collaboration Chat</span>
-                        <span class="text-xs font-semibold ml-1 bg-gradient-to-r from-purple-500 to-pink-600 text-white px-1.5 py-0.5 rounded-full">LIVE</span>
+                        <span class="text-xs font-semibold ml-1 bg-gradient-to-r from-purple-500 to-pink-600 text-white px-1.5 py-0.5 rounded-full">
+                            {isConnected ? 'LIVE' : 'OFFLINE'}
+                        </span>
                     </div>
                 </div>
                 
-                <!-- Online users indicator -->
-                {#if onlineUsers.length > 0}
-                    <div class="flex items-center gap-1 text-xs text-gray-400">
-                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span>{onlineUsers.length} online</span>
-                    </div>
-                {/if}
+                <!-- Connection status indicator -->
+                <div class="flex items-center gap-1 text-xs text-gray-400">
+                    <div class="w-2 h-2 rounded-full {isConnected ? 'bg-green-500' : 'bg-red-500'}"></div>
+                    <span>{isConnected ? 'Real-time connected' : 'Connecting...'}</span>
+                </div>
             </div>
         </div>
     
@@ -297,7 +277,7 @@
                             titleClass="text-xl font-semibold text-gray-100"
                             inputClass="text-xl font-semibold bg-transparent border-b-2 border-purple-500 text-gray-100 outline-none text-center"
                         />
-                        <p class="text-xs text-gray-400">Collaborate in real-time with your team</p>
+                        <p class="text-xs text-gray-400">Real-time collaboration with your team</p>
                     </div>
                 {:else if !isLoading}
                     <div class="space-y-2">
@@ -326,7 +306,7 @@
                                 <Icon name="groups" className="text-white text-xl" />
                             </div>
                             <h3 class="text-xl font-semibold text-gray-200 mb-3">Start collaborating</h3>
-                            <p class="text-gray-400 leading-relaxed">Send a message to begin the collaboration with your team members.</p>
+                            <p class="text-gray-400 leading-relaxed">Send a message to begin real-time collaboration with your team members.</p>
                         </div>
                     </div>
                 {:else}
@@ -418,12 +398,12 @@
                             bind:value={userInput}
                             placeholder="Message your team..."
                             class="w-full px-4 py-4 bg-transparent text-gray-100 focus:outline-none placeholder-gray-400 pr-12 rounded-2xl"
-                            disabled={isSending}
+                            disabled={isSending || !isConnected}
                         />
                         <button
                             type="submit"
-                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2.5 rounded-xl transition-all duration-200 {userInput.trim() && !isSending ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-lg hover:shadow-xl' : 'bg-gray-600 text-gray-400'}"
-                            disabled={isSending || !userInput.trim()}
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2.5 rounded-xl transition-all duration-200 {userInput.trim() && !isSending && isConnected ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-lg hover:shadow-xl' : 'bg-gray-600 text-gray-400'}"
+                            disabled={isSending || !userInput.trim() || !isConnected}
                         >
                             <Icon name="send" className="text-current" />
                         </button>
@@ -432,7 +412,7 @@
                     <!-- Input hint -->
                     <div class="text-center mt-3">
                         <p class="text-xs text-gray-500">
-                            Press Enter to send • Real-time collaboration with your team
+                            Press Enter to send • Real-time collaboration {isConnected ? 'active' : 'connecting...'}
                         </p>
                     </div>
                 </form>

@@ -1,6 +1,9 @@
 import type { Collaboration, Role } from '$lib/types/schema';
 import { getCurrentClient } from './clientService';
 import type { MessageWithUser } from '$lib/types/schema';
+import { supabase } from './supabaseClient';
+import type { Message } from '$lib/types/schema';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /**
  * Create a new collaboration and add the creator as an owner
@@ -78,143 +81,177 @@ export async function deleteCollaboration(collaborationId: string): Promise<bool
     }
 }
 
-export interface CollaborationMessage {
-    id: number;
-    conversationId: number;
-    userId: number;
-    text: string;
-    sender: string;
-    createdAt: Date;
-    updatedAt: Date;
-    user?: {
+export interface CollaborationMessage extends Message {
+    user: {
         id: number;
         firstName: string;
         lastName: string;
         email: string;
-    };
+    } | null;
 }
 
-/**
- * Send a message in a collaboration conversation
- */
-export async function sendCollaborationMessage(conversationId: number, text: string): Promise<CollaborationMessage | null> {
-    try {
-        const response = await fetch('/api/chat/websocket', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                conversationId,
-                text
-            })
-        });
+export class CollaborationRealtimeService {
+    private channels: Map<number, RealtimeChannel> = new Map();
+    private messageCallbacks: Map<number, (message: CollaborationMessage) => void> = new Map();
 
-        const result = await response.json();
+    /**
+     * Subscribe to real-time messages for a collaboration conversation
+     */
+    async subscribeToConversation(
+        conversationId: number,
+        onMessage: (message: CollaborationMessage) => void
+    ): Promise<void> {
+        // Unsubscribe from any existing subscription for this conversation
+        this.unsubscribeFromConversation(conversationId);
 
-        if (!response.ok) {
-            console.error('Error sending collaboration message:', result.error);
+        const channelName = `collaboration-chat-${conversationId}`;
+        
+        const channel = supabase
+            .channel(channelName)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'message',
+                    filter: `conversation_id=eq.${conversationId}`
+                },
+                async (payload) => {
+                    console.log('New message received:', payload);
+                    
+                    // The payload only contains the message data, we need to fetch user info
+                    const messageData = payload.new as any;
+                    
+                    try {
+                        // Fetch the user information for this message
+                        const { data: userInfo, error } = await supabase
+                            .from('client')
+                            .select('id, first_name, last_name, email')
+                            .eq('id', messageData.user_id)
+                            .single();
+
+                        const transformedMessage: CollaborationMessage = {
+                            id: messageData.id,
+                            conversationId: messageData.conversation_id,
+                            userId: messageData.user_id,
+                            text: messageData.text,
+                            sender: messageData.sender,
+                            createdAt: messageData.created_at,
+                            updatedAt: messageData.updated_at,
+                            user: userInfo && !error ? {
+                                id: userInfo.id,
+                                firstName: userInfo.first_name,
+                                lastName: userInfo.last_name,
+                                email: userInfo.email
+                            } : null
+                        };
+
+                        onMessage(transformedMessage);
+                    } catch (error) {
+                        console.error('Error processing real-time message:', error);
+                    }
+                }
+            )
+            .subscribe((status) => {
+                console.log(`Collaboration chat subscription status: ${status} for conversation ${conversationId}`);
+            });
+
+        this.channels.set(conversationId, channel);
+        this.messageCallbacks.set(conversationId, onMessage);
+    }
+
+    /**
+     * Unsubscribe from real-time messages for a conversation
+     */
+    unsubscribeFromConversation(conversationId: number): void {
+        const channel = this.channels.get(conversationId);
+        if (channel) {
+            supabase.removeChannel(channel);
+            this.channels.delete(conversationId);
+            this.messageCallbacks.delete(conversationId);
+            console.log(`Unsubscribed from collaboration chat for conversation ${conversationId}`);
+        }
+    }
+
+    /**
+     * Send a message to a collaboration conversation
+     */
+    async sendMessage(conversationId: number, text: string): Promise<CollaborationMessage | null> {
+        try {
+            const response = await fetch('/api/chat/websocket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    conversationId,
+                    text
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                console.error('Error sending collaboration message:', result.error);
+                return null;
+            }
+
+            return result.message as CollaborationMessage;
+        } catch (error) {
+            console.error('Unexpected error sending collaboration message:', error);
             return null;
         }
-
-        return result.message as CollaborationMessage;
-    } catch (error) {
-        console.error('Unexpected error sending collaboration message:', error);
-        return null;
-    }
-}
-
-/**
- * Get all messages for a collaboration conversation with user info
- */
-export async function getCollaborationMessages(conversationId: number): Promise<CollaborationMessage[]> {
-    try {
-        const response = await fetch(`/api/chat/websocket?conversationId=${conversationId}`, {
-            method: 'GET'
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            console.error('Error fetching collaboration messages:', result.error);
-            return [];
-        }
-
-        return result.messages as CollaborationMessage[];
-    } catch (error) {
-        console.error('Unexpected error fetching collaboration messages:', error);
-        return [];
-    }
-}
-
-/**
- * Get new messages since a timestamp (for polling)
- */
-export async function getNewCollaborationMessages(conversationId: number, since: string): Promise<CollaborationMessage[]> {
-    try {
-        const response = await fetch(`/api/chat/websocket?conversationId=${conversationId}&since=${encodeURIComponent(since)}`, {
-            method: 'GET'
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            console.error('Error fetching new collaboration messages:', result.error);
-            return [];
-        }
-
-        return result.messages as CollaborationMessage[];
-    } catch (error) {
-        console.error('Unexpected error fetching new collaboration messages:', error);
-        return [];
-    }
-}
-
-/**
- * Create a simple polling mechanism for real-time updates
- */
-export class CollaborationPolling {
-    private intervalId: NodeJS.Timeout | null = null;
-    private conversationId: number;
-    private lastTimestamp: string | null = null;
-    private onNewMessages: (messages: CollaborationMessage[]) => void;
-    private pollingInterval: number;
-
-    constructor(
-        conversationId: number, 
-        onNewMessages: (messages: CollaborationMessage[]) => void,
-        pollingInterval = 2000 // 2 seconds
-    ) {
-        this.conversationId = conversationId;
-        this.onNewMessages = onNewMessages;
-        this.pollingInterval = pollingInterval;
     }
 
-    start() {
-        if (this.intervalId) return;
+    /**
+     * Load initial messages for a collaboration conversation
+     */
+    async loadConversationMessages(conversationId: number): Promise<CollaborationMessage[]> {
+        try {
+            const { data, error } = await supabase
+                .from('message')
+                .select(`
+                    *,
+                    user:client(id, first_name, last_name, email)
+                `)
+                .eq('conversation_id', conversationId)
+                .order('created_at', { ascending: true });
 
-        this.intervalId = setInterval(async () => {
-            if (this.lastTimestamp) {
-                const newMessages = await getNewCollaborationMessages(this.conversationId, this.lastTimestamp);
-                if (newMessages.length > 0) {
-                    this.lastTimestamp = new Date().toISOString();
-                    this.onNewMessages(newMessages);
-                }
-            } else {
-                // First poll - just update timestamp
-                this.lastTimestamp = new Date().toISOString();
+            if (error) {
+                console.error('Error loading collaboration messages:', error);
+                return [];
             }
-        }, this.pollingInterval);
-    }
 
-    stop() {
-        if (this.intervalId) {
-            clearInterval(this.intervalId);
-            this.intervalId = null;
+            return (data || []).map(message => ({
+                id: message.id,
+                conversationId: message.conversation_id,
+                userId: message.user_id,
+                text: message.text,
+                sender: message.sender,
+                createdAt: message.created_at,
+                updatedAt: message.updated_at,
+                user: message.user ? {
+                    id: message.user.id,
+                    firstName: message.user.first_name,
+                    lastName: message.user.last_name,
+                    email: message.user.email
+                } : null
+            }));
+        } catch (error) {
+            console.error('Unexpected error loading collaboration messages:', error);
+            return [];
         }
     }
 
-    updateTimestamp() {
-        this.lastTimestamp = new Date().toISOString();
+    /**
+     * Clean up all subscriptions
+     */
+    cleanup(): void {
+        for (const [conversationId] of this.channels) {
+            this.unsubscribeFromConversation(conversationId);
+        }
     }
 }
+
+// Export a singleton instance
+export const collaborationRealtimeService = new CollaborationRealtimeService();
