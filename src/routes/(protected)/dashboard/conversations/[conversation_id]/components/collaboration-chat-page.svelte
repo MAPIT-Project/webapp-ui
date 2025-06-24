@@ -671,7 +671,7 @@
             <!-- Input area -->
             <div class="flex-shrink-0 p-6">
                 <form onsubmit={handleSubmit} class="relative max-w-4xl mx-auto">
-                    <div class="relative bg-[#3A3A3C] rounded-2xl shadow-lg border border-gray-600 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500 transition-all">
+                    <div class="relative bg-[#3A3A3C] rounded-2xl shadow-lg border border-gray-600 transition-all">
                         <!-- Autocomplete popup -->
                         {#if showAutocomplete}
                             <div class="absolute bottom-full left-4 right-4 mb-2 bg-[#2B2A2C] border border-gray-600 rounded-lg shadow-xl z-50">
