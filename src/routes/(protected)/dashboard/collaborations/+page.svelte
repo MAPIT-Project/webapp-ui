@@ -223,7 +223,7 @@ function clearError() {
                         aria-label="Create new workspace"
                     >
                         <div class="w-16 h-16 rounded-2xl bg-gradient-to-r from-purple-500/20 to-purple-600/20 border border-purple-500/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <Icon name="add" iconClass="text-purple-400 w-8 h-8" />
+                            <Icon name="add" iconClass="text-purple-400 w-5.5 h-4" />
                         </div>
                         <span class="text-gray-400 font-medium group-hover:text-purple-400 transition-colors">Create Workspace</span>
                         <span class="text-gray-500 text-sm mt-1">Start collaborating with your team</span>
