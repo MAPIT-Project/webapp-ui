@@ -9,17 +9,27 @@
     import EditableTitle from "$lib/components/generic/editable-title.svelte";
     import { conversationStore } from "$lib/stores/conversationStore";
     import { getCurrentClient } from "$lib/clients/clientService";
+    import { goto } from "$app/navigation";
+    import { getSpace } from '$lib/stores/collaborationStore.svelte';
+    import Modal from "$lib/components/generic/modal.svelte";
+
+    interface Props {
+        conversationId: number;
+    }
+    
+    let { conversationId }: Props = $props();
+    
+    let conversation = $state<any>(null);
+    let isLoading = $state(true);
+    let error = $state<string | null>(null);
+    let currentUser = $state<any>(null);
 
     // State using runes
     let userInput = $state("");
     let messages = $state<CollaborationMessage[]>([]);
-    let conversation = $state<Conversation | null>(null);
-    let currentUser = $state<any>(null);
-    let isLoading = $state(false);
-    let isSending = $state(false);
-    let error = $state<string | null>(null);
     let isConnected = $state(false); // Track real-time connection status
-
+    let isSending = $state(false);
+    
     // Reference to the messages container for auto-scrolling
     let messagesContainer: HTMLDivElement;
     
@@ -38,6 +48,9 @@
             setupRealtimeSubscription(chatId);
         }
     });
+    
+    // Separate effect to check ownership when both conversation and currentUser are loaded
+
     
     // Effect to scroll to bottom when messages change
     $effect(() => {
@@ -75,6 +88,8 @@
             console.error("Error loading conversation details:", err);
         }
     }
+
+
     
     async function loadMessages(id: number) {
         if (isNaN(id)) {
@@ -127,7 +142,10 @@
         return success;
     }
 
-    async function handleSubmit() {
+
+
+    async function handleSubmit(event: Event) {
+        event.preventDefault();
         if (!userInput.trim()) return;
         
         isSending = true;
@@ -255,10 +273,12 @@
                     </div>
                 </div>
                 
-                <!-- Connection status indicator -->
-                <div class="flex items-center gap-1 text-xs text-gray-400">
-                    <div class="w-2 h-2 rounded-full {isConnected ? 'bg-green-500' : 'bg-red-500'}"></div>
-                    <span>{isConnected ? 'Real-time connected' : 'Connecting...'}</span>
+                <div class="flex items-center gap-4">
+                    <!-- Connection status indicator -->
+                    <div class="flex items-center gap-1 text-xs text-gray-400">
+                        <div class="w-2 h-2 rounded-full {isConnected ? 'bg-green-500' : 'bg-red-500'}"></div>
+                        <span>{isConnected ? 'Real-time connected' : 'Connecting...'}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -391,7 +411,7 @@
             
             <!-- Input area -->
             <div class="flex-shrink-0 p-6">
-                <form on:submit|preventDefault={handleSubmit} class="relative max-w-4xl mx-auto">
+                <form onsubmit={handleSubmit} class="relative max-w-4xl mx-auto">
                     <div class="relative bg-[#3A3A3C] rounded-2xl shadow-lg border border-gray-600 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500 transition-all">
                         <input
                             type="text"
@@ -420,6 +440,8 @@
         </div>
     </div>
 </div>
+
+
 
 <style>
     /* Dark scrollbar */

@@ -3,12 +3,12 @@ import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 
-export const GET: RequestHandler = async ({ params, cookies, locals }) => {
+export const GET: RequestHandler = async ({ params, cookies }) => {
     try {
-        const conversationId = params.conversation_id;
+        const conversationId = parseInt(params.conversation_id || '');
         
-        if (!conversationId) {
-            return json({ error: 'Conversation ID is required' }, { status: 400 });
+        if (!conversationId || isNaN(conversationId)) {
+            return json({ error: 'Invalid conversation ID' }, { status: 400 });
         }
 
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -24,9 +24,8 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
         });
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
         if (userError || !user) {
-            return json({ error: 'No authenticated user found or error fetching user' }, { status: 401 });
+            return json({ error: 'Unauthorized' }, { status: 401 });
         }
         const authUserId = user.id; // UUID
 
@@ -38,11 +37,10 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
             .single();
 
         if (clientError || !clientRecord) {
-            console.error('Error fetching client record for conversation access or client not found:', clientError);
-            return json({ error: 'User profile not found for accessing conversation.' }, { status: 404 });
+            console.error('Error fetching client record for GET or client not found:', clientError);
+            return json({ error: 'User profile not found.' }, { status: 404 });
         }
         const localClientId = clientRecord.id; // Integer client ID
-
 
         const { data: conversation, error } = await supabase
             .from('conversation')
@@ -50,26 +48,14 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
             .eq('id', conversationId)
             .single();
 
-        if (error) {
-            console.error('Error fetching conversation:', error);
-            // If error is due to no rows found, it might be a valid 404
-            if (error.code === 'PGRST116') { // PostgREST error code for " exactamente uma linha esperada" / "exactly one row expected"
-                 return json({ error: 'Conversation not found' }, { status: 404 });
-            }
-            return json({ error: error.message }, { status: 500 });
-        }
-
-        if (!conversation) {
+        if (error || !conversation) {
             return json({ error: 'Conversation not found' }, { status: 404 });
         }
 
-        // Authorization check:
-        // 1. If it's a personal conversation (collaboration_id is null), user_id must match.
-        // 2. If it's a collaboration conversation, the user must be part of that collaboration.
-        //    (This part needs a proper check against your collaboration membership table/logic)
+        // Authorization check
         if (conversation.collaboration_id === null) { // Personal conversation
             if (conversation.user_id !== localClientId) { // Compare with integer localClientId
-                return json({ error: 'Forbidden: You do not have access to this conversation' }, { status: 403 });
+                return json({ error: 'Forbidden: You do not have permission to access this conversation' }, { status: 403 });
             }
         } else { // Collaboration conversation
             // TODO: Implement robust check to ensure localClientId is a member of conversation.collaboration_id
@@ -107,10 +93,10 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
 
 export const PUT: RequestHandler = async ({ params, request, cookies }) => {
     try {
-        const conversationId = params.conversation_id;
+        const conversationId = parseInt(params.conversation_id || '');
         
-        if (!conversationId) {
-            return json({ error: 'Conversation ID is required' }, { status: 400 });
+        if (!conversationId || isNaN(conversationId)) {
+            return json({ error: 'Invalid conversation ID' }, { status: 400 });
         }
 
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -126,9 +112,8 @@ export const PUT: RequestHandler = async ({ params, request, cookies }) => {
         });
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
         if (userError || !user) {
-            return json({ error: 'No authenticated user found or error fetching user' }, { status: 401 });
+            return json({ error: 'Unauthorized' }, { status: 401 });
         }
         const authUserId = user.id; // UUID
 
@@ -140,7 +125,7 @@ export const PUT: RequestHandler = async ({ params, request, cookies }) => {
             .single();
 
         if (clientError || !clientRecord) {
-            console.error('Error fetching client record for conversation update or client not found:', clientError);
+            console.error('Error fetching client record for PUT or client not found:', clientError);
             return json({ error: 'User profile not found for updating conversation.' }, { status: 404 });
         }
         const localClientId = clientRecord.id; // Integer client ID
@@ -149,6 +134,10 @@ export const PUT: RequestHandler = async ({ params, request, cookies }) => {
 
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
             return json({ error: 'Valid conversation name is required' }, { status: 400 });
+        }
+
+        if (name.trim().length > 255) {
+            return json({ error: 'Conversation name is too long (max 255 characters)' }, { status: 400 });
         }
 
         // First check if conversation exists and user has permission
@@ -194,7 +183,118 @@ export const PUT: RequestHandler = async ({ params, request, cookies }) => {
         return json({ conversation: updatedConversation });
 
     } catch (error) {
-        console.error('Server error updating conversation:', error);
+        console.error('Server error:', error);
+        return json({ 
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
+    }
+};
+
+export const DELETE: RequestHandler = async ({ params, cookies }) => {
+    try {
+        const conversationId = parseInt(params.conversation_id || '');
+        
+        if (!conversationId || isNaN(conversationId)) {
+            return json({ error: 'Invalid conversation ID' }, { status: 400 });
+        }
+
+        const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+            cookies: {
+                get: (key: string) => cookies.get(key),
+                set: (key: string, value: string, options: any) => {
+                    cookies.set(key, value, { ...options, path: '/' });
+                },
+                remove: (key: string, options: any) => {
+                    cookies.delete(key, { ...options, path: '/' });
+                }
+            }
+        });
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            return json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const authUserId = user.id; // UUID
+
+        // Fetch the local client ID (integer) using the authUserId (UUID)
+        const { data: clientRecord, error: clientError } = await supabase
+            .from('client')
+            .select('id')
+            .eq('auth_id', authUserId)
+            .single();
+
+        if (clientError || !clientRecord) {
+            console.error('Error fetching client record for DELETE or client not found:', clientError);
+            return json({ error: 'User profile not found.' }, { status: 404 });
+        }
+        const localClientId = clientRecord.id; // Integer client ID
+
+        // Get conversation details and check if it exists
+        const { data: conversation, error: fetchError } = await supabase
+            .from('conversation')
+            .select('*')
+            .eq('id', conversationId)
+            .single();
+
+        if (fetchError || !conversation) {
+            return json({ error: 'Conversation not found' }, { status: 404 });
+        }
+
+        // Authorization check
+        if (conversation.collaboration_id === null) {
+            // Personal conversation - only the creator can delete
+            if (conversation.user_id !== localClientId) {
+                return json({ error: 'Forbidden: You do not have permission to delete this conversation' }, { status: 403 });
+            }
+        } else {
+            // Collaboration conversation - only collaboration owners can delete
+            const { data: membership, error: membershipError } = await supabase
+                .from('client_collaboration')
+                .select('role')
+                .eq('collaboration_id', conversation.collaboration_id)
+                .eq('client_id', localClientId)
+                .single();
+
+            if (membershipError || !membership) {
+                return json({ error: 'Forbidden: You are not a member of this collaboration' }, { status: 403 });
+            }
+
+            if (membership.role !== 'owner') {
+                return json({ error: 'Forbidden: Only collaboration owners can delete conversations' }, { status: 403 });
+            }
+        }
+
+        // Delete the conversation (this should cascade to delete messages)
+        // First delete all messages in the conversation to avoid foreign key constraint
+        const { error: deleteMessagesError } = await supabase
+            .from('message')
+            .delete()
+            .eq('conversation_id', conversationId);
+
+        if (deleteMessagesError) {
+            console.error('Error deleting messages:', deleteMessagesError);
+            return json({ error: 'Failed to delete conversation messages' }, { status: 500 });
+        }
+
+        // Now delete the conversation
+        const { error: deleteError } = await supabase
+            .from('conversation')
+            .delete()
+            .eq('id', conversationId);
+
+        if (deleteError) {
+            console.error('Error deleting conversation:', deleteError);
+            return json({ error: 'Failed to delete conversation' }, { status: 500 });
+        }
+
+        return json({ 
+            success: true,
+            message: 'Conversation deleted successfully' 
+        });
+
+    } catch (error) {
+        console.error('Server error:', error);
         return json({ 
             error: 'Internal server error',
             details: error instanceof Error ? error.message : String(error)

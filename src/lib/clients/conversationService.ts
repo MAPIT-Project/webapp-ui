@@ -53,6 +53,30 @@ export async function createConversation(firstMessage: string, spaceId: string |
 }
 
 /**
+ * Delete a conversation by ID
+ * Only allows deletion if user has permission (personal conv creator or collaboration owner)
+ */
+export async function deleteConversation(conversationId: number): Promise<boolean> {
+    try {
+        const response = await fetch(`/api/conversations/${conversationId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error deleting conversation:', result.error);
+            return false;
+        }
+
+        return result.success;
+    } catch (error) {
+        console.error('Unexpected error deleting conversation:', error);
+        return false;
+    }
+}
+
+/**
  * Add a user message to a conversation
  */
 export async function addUserMessage(conversationId: number, text: string): Promise<Message | null> {

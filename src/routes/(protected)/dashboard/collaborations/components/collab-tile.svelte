@@ -74,7 +74,6 @@
     {#if showDeleteConfirm}
         <div class="absolute inset-0 bg-[#2A292D]/95 rounded-lg flex flex-col items-center justify-center p-4 z-10">
             <h4 class="text-white font-medium text-center mb-3">Delete this collaboration?</h4>
-            <p class="text-gray-300 text-sm text-center mb-4">This action cannot be undone.</p>
             <div class="flex gap-3">
                 <button 
                     type="button"

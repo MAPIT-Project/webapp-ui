@@ -1,6 +1,6 @@
 import { writable, get } from 'svelte/store';
 import type { Conversation } from '$lib/types/schema'; // MODIFIED
-import { getUserConversations, updateConversationName } from '$lib/clients/conversationService';
+import { getUserConversations, updateConversationName, deleteConversation } from '$lib/clients/conversationService';
 import { getSpace } from '$lib/stores/collaborationStore.svelte';
 
 interface ConversationStore {
@@ -80,6 +80,22 @@ function createConversationStore() {
                 ...state,
                 conversations: state.conversations.filter(conv => conv.id !== id)
             }));
+        },
+        deleteConversationById: async (id: number): Promise<boolean> => {
+            try {
+                const success = await deleteConversation(id);
+                if (success) {
+                    update(state => ({
+                        ...state,
+                        conversations: state.conversations.filter(conv => conv.id !== id)
+                    }));
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error deleting conversation from store:', error);
+                return false;
+            }
         },
         updateConversationName: async (id: number, newName: string): Promise<boolean> => {
             try {
