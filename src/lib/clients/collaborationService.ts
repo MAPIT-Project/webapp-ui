@@ -1,4 +1,4 @@
-import type { Collaboration, Role } from '$lib/types/schema';
+import type { Collaboration, CollaborationWithDetails, Role } from '$lib/types/schema';
 import { getCurrentClient } from './clientService';
 import type { MessageWithUser } from '$lib/types/schema';
 import { supabase } from './supabaseClient';
@@ -38,7 +38,7 @@ export async function createCollaboration(name: string, description: string | nu
 /**
  * Get all collaborations for the current user
  */
-export async function getUserCollaborations(): Promise<Collaboration[]> {
+export async function getUserCollaborations(): Promise<CollaborationWithDetails[]> {
     try {
         const response = await fetch('/api/collaborations', {
             method: 'GET'
@@ -51,7 +51,7 @@ export async function getUserCollaborations(): Promise<Collaboration[]> {
             return [];
         }
 
-        return result.collaborations as Collaboration[];
+        return result.collaborations as CollaborationWithDetails[];
     } catch (error) {
         console.error('Error in getUserCollaborations:', error);
         return [];

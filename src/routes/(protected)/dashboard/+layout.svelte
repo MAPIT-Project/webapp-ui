@@ -7,6 +7,7 @@
 	import { supabase } from '$lib/clients/supabaseClient';
 	import { ensureClientExists, getClientByAuthId } from "$lib/clients/clientService";
 	import Icon from "$lib/components/generic/icon.svelte";
+	import { page } from '$app/stores';
 
 	let { children } = $props();
 	let sidebarWidth: number = $state(250);
@@ -78,12 +79,14 @@
 <Sidebar onUpdateWidth={updateWidth} />
 <div style="margin-left: {sidebarWidth}px" class="h-screen overflow-hidden flex flex-col transition-[margin] duration-150 ease-in-out bg-[#2B2A2C]">
 	<!-- User menu -->
-    <div class="absolute right-4 top-4 z-10">
-        <button class="text-[#CACACA] text-sm flex items-center gap-2 hover:text-white" onclick={handleSignOut}>
-            <span>{$user?.email}</span>
-            <Icon name="logout" iconSize="sm" />
-        </button>
-    </div>
+	{#if $page.url.pathname === '/dashboard'}
+		<div class="absolute right-4 top-4 z-10">
+			<button class="text-[#CACACA] text-sm flex items-center gap-2 hover:text-white" onclick={handleSignOut}>
+				<span>{$user?.email}</span>
+				<Icon name="logout" iconSize="sm" />
+			</button>
+		</div>
+	{/if}
 	
 	<!-- Main content area that scrolls -->
 	<div class="flex-1 overflow-y-auto">

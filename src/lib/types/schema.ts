@@ -9,6 +9,12 @@ export type Message = InferSelectModel<typeof message>;
 
 export type Role = 'owner' | 'admin' | 'member';
 
+// Extended collaboration type for UI components
+export interface CollaborationWithDetails extends Collaboration {
+  collaboratorsCount?: number;
+  client_collaboration?: Array<{ role: Role }>;
+}
+
 // Extended message type for collaboration chats with user info
 export interface MessageWithUser extends Message {
   user?: {

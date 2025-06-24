@@ -16,7 +16,7 @@
     // Get current space to determine if we're in a collaboration
     const currentSpace = $derived(getSpace());
     const isCollaboration = $derived(currentSpace && currentSpace !== 'personal');
-    const sidebarTitle = $derived(isCollaboration ? 'Shared chats' : 'Chats');
+    const sidebarTitle = $derived(isCollaboration ? 'Team Chats' : 'Chats');
     
     let loadAttempts = $state(0);
     const MAX_RETRIES = 3;

@@ -70,7 +70,22 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
                 return json({ error: error.message }, { status: 500 });
             }
 
-            return json({ collaborations });
+            // Get member counts for each collaboration
+            const collaborationsWithCount = await Promise.all(
+                (collaborations || []).map(async (collab) => {
+                    const { count } = await supabase
+                        .from('client_collaboration')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('collaboration_id', collab.id);
+
+                    return {
+                        ...collab,
+                        collaboratorsCount: count || 1
+                    };
+                })
+            );
+
+            return json({ collaborations: collaborationsWithCount });
         }
 
     } catch (error) {
