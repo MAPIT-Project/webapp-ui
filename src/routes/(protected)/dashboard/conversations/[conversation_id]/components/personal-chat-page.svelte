@@ -54,6 +54,21 @@
         }
     });
     
+    // Effect to check for autostart parameter and trigger AI response
+    $effect(() => {
+        const autostartQuestion = $page.url.searchParams.get('autostart');
+        if (autostartQuestion && chatId && messages.length > 0 && !isStreaming && !isSending) {
+            // Only autostart if we have messages loaded and we're not already processing
+            // This means the user message is already in the conversation
+            startAIResponse(autostartQuestion);
+            
+            // Remove the autostart parameter from URL to prevent re-triggering
+            const url = new URL($page.url);
+            url.searchParams.delete('autostart');
+            window.history.replaceState({}, '', url.toString());
+        }
+    });
+    
     // Effect to scroll to bottom when messages change
     $effect(() => {
         if (messagesContainer && (messages.length > 0 || isSending || isStreaming)) {
@@ -129,30 +144,14 @@
         return success;
     }
 
-    async function handleSubmit() {
-        if (!userInput.trim() || isStreaming) return;
+    async function startAIResponse(question: string) {
+        if (isStreaming || isSending) return;
         
-        isSending = true;
-        isStreaming = false;
+        isStreaming = true;
         streamingProgress = "";
         error = null;
         
         try {
-            // Store the current input before clearing it
-            const currentInput = userInput;
-            
-            // Add the user message
-            const userMessage = await addUserMessage(chatId, currentInput);
-            
-            if (userMessage) {
-                messages = [...messages, userMessage];
-            }
-            
-            // Clear the input field
-            userInput = "";
-            isSending = false;
-            isStreaming = true;
-            
             // Create initial AI message for streaming
             const { message: aiMessage, updateMessage } = await addStreamingAIMessage(chatId, "");
             
@@ -179,7 +178,7 @@
                 };
                 
                 // Start streaming
-                currentStreamingService = getStreamingAIResponse(currentInput, {
+                currentStreamingService = getStreamingAIResponse(question, {
                     onMetadata: (data) => {
                         console.log('Streaming metadata:', data);
                         lastResponseProvider = data.ai_provider || null;
@@ -277,6 +276,38 @@
                     }
                 });
             }
+            
+        } catch (err) {
+            error = err instanceof Error ? err.message : "An error occurred";
+            isStreaming = false;
+            streamingProgress = "";
+            console.error("AI response error:", err);
+        }
+    }
+
+    async function handleSubmit() {
+        if (!userInput.trim() || isStreaming || isSending) return;
+        
+        isSending = true;
+        error = null;
+        
+        try {
+            // Store the current input before clearing it
+            const currentInput = userInput;
+            
+            // Add the user message
+            const userMessage = await addUserMessage(chatId, currentInput);
+            
+            if (userMessage) {
+                messages = [...messages, userMessage];
+            }
+            
+            // Clear the input field
+            userInput = "";
+            isSending = false;
+            
+            // Start the AI response
+            await startAIResponse(currentInput);
             
         } catch (err) {
             error = err instanceof Error ? err.message : "An error occurred";
