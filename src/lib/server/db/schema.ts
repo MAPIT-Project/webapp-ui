@@ -67,6 +67,25 @@ export const message = pgTable('message', {
   userId: integer('user_id').references(() => client.id),
   text: text('text').notNull(),
   sender: varchar('sender', { length: 50 }).notNull(),
+  
+  // AI response tracking fields (V6+)
+  aiProvider: varchar('ai_provider', { length: 50 }),
+  aiVersion: varchar('ai_version', { length: 20 }),
+  modelUsed: varchar('model_used', { length: 100 }),
+  dataSource: varchar('data_source', { length: 100 }),
+  processingTime: decimal('processing_time'),
+  projectsFound: integer('projects_found'),
+  
+  // Logs data
+  logsQuestion: text('logs_question'),
+  logsModelUsed: varchar('logs_model_used', { length: 100 }),
+  logsPhases: text('logs_phases'), // Store as JSON string
+  logsTotalProcessingTimeMs: integer('logs_total_processing_time_ms'),
+  logsProjectsRetrieved: integer('logs_projects_retrieved'),
+  logsProjectsProcessed: integer('logs_projects_processed'),
+  logsSuccess: boolean('logs_success'),
+  logsAverageRelevanceScore: decimal('logs_average_relevance_score'),
+  
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

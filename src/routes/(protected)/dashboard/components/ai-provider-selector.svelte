@@ -50,7 +50,7 @@
     </div>
   {:else if $availableProviders}
     <div class="flex items-center gap-2">
-      <Icon name="smart_toy" class="text-gray-400 text-xs" />
+      <Icon name="smart_toy" className="text-gray-400 text-xs" />
       
       <!-- Version Selector -->
       <div class="relative">
@@ -65,7 +65,7 @@
           {/each}
         </select>
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-0.5 text-gray-400">
-          <Icon name="expand_more" class="text-xs" />
+          <Icon name="expand_more" className="text-xs" />
         </div>
       </div>
 
@@ -82,7 +82,7 @@
           {/each}
         </select>
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-400">
-          <Icon name="expand_more" class="text-xs" />
+          <Icon name="expand_more" className="text-xs" />
         </div>
       </div>
 

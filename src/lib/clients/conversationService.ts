@@ -3,17 +3,30 @@ import { getCurrentClient } from './clientService';
 import { get } from 'svelte/store';
 import { useDemo } from '$lib/stores/apiModeStore'; 
 import { currentProvider, selectedVersion, useLocalDb, isVersionV5OrHigher } from '$lib/stores/aiProviderStore';
+import { StreamingQueryService, type StreamingOptions } from './streamingService';
 
 // Define interface for AI response
+export interface LogsData {
+    question: string;
+    model_used: string;
+    phases: string[];
+    total_processing_time_ms: number;
+    projects_retrieved: number;
+    projects_processed: number;
+    success: boolean;
+    average_relevance_score: number;
+}
+
 export interface AIResponseData {
-  answer: string;
-  ai_provider?: string;
-  model_used?: string;
-  ai_version?: string;
-  data_source?: string;
-  processing_time?: number;
-  projects_found?: number;
-  demo?: boolean;
+    answer: string;
+    ai_provider?: string;
+    model_used?: string;
+    ai_version?: string;
+    data_source?: string;
+    processing_time?: number;
+    projects_found?: number;
+    logs?: LogsData;
+    demo?: boolean;
 }
 
 /**
@@ -110,7 +123,7 @@ export async function addUserMessage(conversationId: number, text: string): Prom
 /**
  * Add an AI response message to a conversation
  */
-export async function addAIMessage(conversationId: number, text: string): Promise<Message | null> {
+export async function addAIMessage(conversationId: number, text: string, aiData?: Partial<AIResponseData>): Promise<Message | null> {
     try {
         const response = await fetch('/api/messages', {
             method: 'POST',
@@ -120,7 +133,15 @@ export async function addAIMessage(conversationId: number, text: string): Promis
             body: JSON.stringify({
                 conversationId,
                 text,
-                sender: 'ai'
+                sender: 'ai',
+                // Include AI tracking data if available (V6+)
+                aiProvider: aiData?.ai_provider,
+                aiVersion: aiData?.ai_version,
+                modelUsed: aiData?.model_used,
+                dataSource: aiData?.data_source,
+                processingTime: aiData?.processing_time,
+                projectsFound: aiData?.projects_found,
+                logs: aiData?.logs
             })
         });
 
@@ -194,6 +215,7 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
                 data_source: data.data_source,
                 processing_time: data.processing_time,
                 projects_found: data.projects_found,
+                logs: data.logs,
                 demo: data.demo
             };
         }
@@ -206,6 +228,7 @@ export async function getAIResponse(question: string): Promise<AIResponseData> {
             data_source: data.data_source,
             processing_time: data.processing_time,
             projects_found: data.projects_found,
+            logs: data.logs,
             demo: data.demo
         };
     } catch (error) {
@@ -294,5 +317,110 @@ export async function getUserConversations(spaceId: string): Promise<Conversatio
     } catch (error) {
         console.error('Unexpected error fetching conversations:', error);
         return [];
+    }
+}
+
+/**
+ * Get streaming AI response from the API
+ */
+export function getStreamingAIResponse(question: string, callbacks: {
+    onMetadata?: (data: any) => void;
+    onProgress?: (data: any) => void;
+    onToken?: (token: string, fullAnswer: string) => void;
+    onComplete?: (data: any) => void;
+    onError?: (error: any) => void;
+}): StreamingQueryService {
+    const streamingService = new StreamingQueryService();
+    
+    // Get the current selected provider and version
+    const provider = get(currentProvider);
+    const version = get(selectedVersion);
+    
+    const options: StreamingOptions = {
+        maxResults: 5,
+        aiProvider: provider || 'gemini',
+        aiVersion: version || 'V6',
+        useLocalDb: isVersionV5OrHigher(version || 'V6') ? get(useLocalDb) : undefined,
+        ...callbacks
+    };
+
+    // Start the streaming (fire and forget, callbacks handle the results)
+    streamingService.streamQuery(question, options).catch(error => {
+        console.error('Streaming query failed:', error);
+        // Don't call onError here - it was already called by the streaming service with the proper error data
+        // callbacks.onError?.(error); 
+    });
+
+    return streamingService;
+}
+
+/**
+ * Add a streaming AI message to a conversation as it's being generated
+ */
+export async function addStreamingAIMessage(
+    conversationId: number, 
+    initialText: string = '',
+    aiData?: Partial<AIResponseData>
+): Promise<{message: Message | null, updateMessage: (text: string, finalData?: Partial<AIResponseData>) => Promise<void>}> {
+    try {
+        // Create initial message
+        const response = await fetch('/api/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                conversationId,
+                text: initialText,
+                sender: 'ai',
+                // Include initial AI tracking data if available
+                aiProvider: aiData?.ai_provider,
+                aiVersion: aiData?.ai_version,
+                modelUsed: aiData?.model_used,
+                dataSource: aiData?.data_source,
+                processingTime: aiData?.processing_time,
+                projectsFound: aiData?.projects_found,
+                logs: aiData?.logs
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error adding streaming AI message:', result.error);
+            return { message: null, updateMessage: async () => {} };
+        }
+
+        const message = result.message as Message;
+
+        // Return the message and an update function
+        const updateMessage = async (text: string, finalData?: Partial<AIResponseData>) => {
+            try {
+                await fetch(`/api/messages/${message.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text,
+                        // Include final AI tracking data if available
+                        aiProvider: finalData?.ai_provider || aiData?.ai_provider,
+                        aiVersion: finalData?.ai_version || aiData?.ai_version,
+                        modelUsed: finalData?.model_used || aiData?.model_used,
+                        dataSource: finalData?.data_source || aiData?.data_source,
+                        processingTime: finalData?.processing_time || aiData?.processing_time,
+                        projectsFound: finalData?.projects_found || aiData?.projects_found,
+                        logs: finalData?.logs || aiData?.logs
+                    })
+                });
+            } catch (error) {
+                console.error('Error updating streaming message:', error);
+            }
+        };
+
+        return { message, updateMessage };
+    } catch (error) {
+        console.error('Unexpected error adding streaming AI message:', error);
+        return { message: null, updateMessage: async () => {} };
     }
 }

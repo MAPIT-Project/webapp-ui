@@ -9,10 +9,26 @@ interface QueryRequest {
   ai_provider?: 'openai' | 'gemini';
 }
 
+interface LogsData {
+  question: string;
+  model_used: string;
+  phases: string[];
+  total_processing_time_ms: number;
+  projects_retrieved: number;
+  projects_processed: number;
+  success: boolean;
+  average_relevance_score: number;
+}
+
 interface QueryResponse {
   answer: string;
   ai_provider: string;
+  ai_version?: string;
   model_used: string;
+  data_source?: string;
+  processing_time?: number;
+  projects_found?: number;
+  logs?: LogsData;
 }
 
 interface ErrorResponse {
@@ -96,11 +112,16 @@ export const POST: RequestHandler = async ({ request }) => {
     // Parse successful response
     const data: QueryResponse = await apiResponse.json();
     
-    // Return the response to the client
+    // Return the response to the client with all tracking data
     return json({
       answer: data.answer,
       ai_provider: data.ai_provider,
-      model_used: data.model_used
+      ai_version: data.ai_version,
+      model_used: data.model_used,
+      data_source: data.data_source,
+      processing_time: data.processing_time,
+      projects_found: data.projects_found,
+      logs: data.logs
     });
 
   } catch (error) {

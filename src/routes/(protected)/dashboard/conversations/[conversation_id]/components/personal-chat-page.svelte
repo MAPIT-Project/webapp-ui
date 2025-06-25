@@ -6,7 +6,9 @@
         getConversationMessages,
         addUserMessage,
         addAIMessage,
-        getAIResponse
+        getAIResponse,
+        getStreamingAIResponse,
+        addStreamingAIMessage
     } from "$lib/clients/conversationService";
     import type { Message, Conversation } from "$lib/types/schema";
     
@@ -24,7 +26,10 @@
     let conversation = $state<Conversation | null>(null);
     let isLoading = $state(false);
     let isSending = $state(false);
+    let isStreaming = $state(false);
+    let streamingProgress = $state("");
     let error = $state<string | null>(null);
+    let currentStreamingService: any = null;
     let lastResponseProvider = $state<string | null>(null);
     let lastResponseModel = $state<string | null>(null);
     let lastResponseVersion = $state<string | null>(null);
@@ -51,12 +56,21 @@
     
     // Effect to scroll to bottom when messages change
     $effect(() => {
-        if (messagesContainer && (messages.length > 0 || isSending)) {
+        if (messagesContainer && (messages.length > 0 || isSending || isStreaming)) {
             // Use setTimeout to ensure DOM has updated
             setTimeout(() => {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }, 10);
         }
+    });
+
+    // Cleanup effect for streaming service
+    $effect(() => {
+        return () => {
+            if (currentStreamingService) {
+                currentStreamingService.destroy();
+            }
+        };
     });
     
     // Load conversation details using API endpoint
@@ -116,9 +130,11 @@
     }
 
     async function handleSubmit() {
-        if (!userInput.trim()) return;
+        if (!userInput.trim() || isStreaming) return;
         
         isSending = true;
+        isStreaming = false;
+        streamingProgress = "";
         error = null;
         
         try {
@@ -134,40 +150,152 @@
             
             // Clear the input field
             userInput = "";
+            isSending = false;
+            isStreaming = true;
             
-            // Get AI response from the API
-            try {
-                const aiResponseData = await getAIResponse(currentInput);
+            // Create initial AI message for streaming
+            const { message: aiMessage, updateMessage } = await addStreamingAIMessage(chatId, "");
+            
+            if (aiMessage) {
+                messages = [...messages, aiMessage];
                 
-                // Store provider and model info
-                lastResponseProvider = aiResponseData.ai_provider || null;
-                lastResponseModel = aiResponseData.model_used || null;
-                lastResponseVersion = aiResponseData.ai_version || null;
-                lastResponseDataSource = aiResponseData.data_source || null;
-                lastResponseProcessingTime = aiResponseData.processing_time || null;
-                lastResponseProjectsFound = aiResponseData.projects_found || null;
+                let currentAnswer = "";
+                let finalData: any = null;
+                let lastSaveTime = Date.now();
+                let lastSavedLength = 0;
+                const SAVE_INTERVAL_MS = 3000; // Save every 3 seconds
+                const MIN_SAVE_TOKENS = 50; // Or every 50 tokens, whichever comes first
                 
-                // Add the AI response to the conversation (including errors)
-                const aiResponse = await addAIMessage(
-                    chatId, 
-                    aiResponseData.answer
-                );
+                // Periodic save function
+                const saveProgress = async (text: string, trackingData?: any) => {
+                    try {
+                        await updateMessage(text, trackingData || {});
+                        lastSaveTime = Date.now();
+                        lastSavedLength = text.length;
+                        console.log('Saved streaming progress:', text.length, 'characters');
+                    } catch (error) {
+                        console.error('Error saving streaming progress:', error);
+                    }
+                };
                 
-                if (aiResponse) {
-                    messages = [...messages, aiResponse];
-                }
-            } catch (aiError) {
-                console.error("Error getting AI response:", aiError);
-                error = "Failed to get AI response. Please try again.";
-            } finally {
-                isSending = false;
+                // Start streaming
+                currentStreamingService = getStreamingAIResponse(currentInput, {
+                    onMetadata: (data) => {
+                        console.log('Streaming metadata:', data);
+                        lastResponseProvider = data.ai_provider || null;
+                        lastResponseVersion = data.ai_version || null;
+                    },
+                    
+                    onProgress: (data) => {
+                        console.log('Streaming progress:', data);
+                        streamingProgress = data.message;
+                    },
+                    
+                    onToken: (token, fullAnswer) => {
+                        currentAnswer = fullAnswer;
+                        // Update the message in the UI immediately
+                        const messageIndex = messages.findIndex(m => m.id === aiMessage.id);
+                        if (messageIndex !== -1) {
+                            const updatedMessages = [...messages];
+                            updatedMessages[messageIndex] = { ...updatedMessages[messageIndex], text: fullAnswer };
+                            messages = updatedMessages;
+                        }
+                        
+                        // Check if we should save progress to database
+                        const now = Date.now();
+                        const timeSinceLastSave = now - lastSaveTime;
+                        const tokensSinceLastSave = fullAnswer.length - lastSavedLength;
+                        
+                        if (timeSinceLastSave >= SAVE_INTERVAL_MS || tokensSinceLastSave >= MIN_SAVE_TOKENS) {
+                            saveProgress(fullAnswer);
+                        }
+                    },
+                    
+                    onComplete: async (data) => {
+                        console.log('Streaming complete:', data);
+                        finalData = data;
+                        
+                        // Store final response metadata
+                        lastResponseProvider = data.ai_provider || null;
+                        lastResponseModel = data.logs?.model_used || null;
+                        lastResponseVersion = data.ai_version || null;
+                        lastResponseDataSource = data.data_source || null;
+                        lastResponseProcessingTime = data.processing_time || null;
+                        lastResponseProjectsFound = data.projects_found || null;
+                        
+                        // Final save with complete tracking data
+                        await saveProgress(currentAnswer || data.answer, {
+                            ai_provider: data.ai_provider,
+                            ai_version: data.ai_version,
+                            model_used: data.logs?.model_used,
+                            data_source: data.data_source,
+                            processing_time: data.processing_time,
+                            projects_found: data.projects_found,
+                            logs: data.logs
+                        });
+                        
+                        isStreaming = false;
+                        streamingProgress = "";
+                        currentStreamingService = null;
+                    },
+                    
+                    onError: async (errorEvent) => {
+                        console.error('Streaming error:', errorEvent);
+                        
+                        // Construct the error message
+                        const errorTitle = errorEvent.error || 'Streaming error';
+                        const errorDetails = errorEvent.details || 'No additional details available';
+                        const fullErrorMessage = `Error: ${errorTitle}\n\nDetails: ${errorDetails}`;
+                        
+                        // Always save the error message to the database
+                        if (currentAnswer) {
+                            // If we have partial content, append the error
+                            await saveProgress(currentAnswer + `\n\n${fullErrorMessage}`);
+                        } else {
+                            // If no content yet, save just the error message
+                            await saveProgress(fullErrorMessage);
+                        }
+                        
+                        isStreaming = false;
+                        streamingProgress = "";
+                        
+                        // Set error for UI display
+                        error = `${errorTitle}\n\nDetails: ${errorDetails}`;
+                        
+                        currentStreamingService = null;
+                        
+                        // Update the message in UI with error
+                        const messageIndex = messages.findIndex(m => m.id === aiMessage.id);
+                        if (messageIndex !== -1) {
+                            const updatedMessages = [...messages];
+                            updatedMessages[messageIndex] = { 
+                                ...updatedMessages[messageIndex], 
+                                text: fullErrorMessage
+                            };
+                            messages = updatedMessages;
+                        }
+                    }
+                });
             }
             
         } catch (err) {
             error = err instanceof Error ? err.message : "An error occurred";
             isSending = false;
+            isStreaming = false;
+            streamingProgress = "";
             console.error("Chat error:", err);
         }
+    }
+
+    function stopStreaming() {
+        if (currentStreamingService) {
+            currentStreamingService.stopStreaming();
+            currentStreamingService = null;
+        }
+        isStreaming = false;
+        streamingProgress = "";
+        
+        // Note: currentAnswer will be saved by the onError callback when streaming stops
     }
     
     // Helper functions
@@ -483,23 +611,55 @@
                         <input
                             type="text"
                             bind:value={userInput}
-                            placeholder="Message AI Assistant..."
+                            placeholder={isStreaming ? "AI is generating response..." : "Message AI Assistant..."}
                             class="w-full px-4 py-4 bg-transparent text-gray-100 focus:outline-none placeholder-gray-400 pr-12 rounded-2xl {hasMapitInput(userInput) ? 'mapit-input-active' : ''}"
-                            disabled={isSending}
+                            disabled={isSending || isStreaming}
                         />
-                        <button
-                            type="submit"
-                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2.5 rounded-xl transition-all duration-200 {userInput.trim() && !isSending ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg hover:shadow-xl' : 'bg-gray-600 text-gray-400'}"
-                            disabled={isSending || !userInput.trim()}
-                        >
-                            <Icon name="send" className="text-current" />
-                        </button>
+                        
+                        {#if isStreaming}
+                            <button
+                                type="button"
+                                on:click={stopStreaming}
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                            >
+                                <Icon name="stop" className="text-current" />
+                            </button>
+                        {:else}
+                            <button
+                                type="submit"
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2.5 rounded-xl transition-all duration-200 {userInput.trim() && !isSending ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg hover:shadow-xl' : 'bg-gray-600 text-gray-400'}"
+                                disabled={isSending || !userInput.trim()}
+                            >
+                                <Icon name="send" className="text-current" />
+                            </button>
+                        {/if}
                     </div>
                     
+                    <!-- Streaming progress indicator -->
+                    {#if isStreaming && streamingProgress}
+                        <div class="mt-4 bg-gradient-to-r from-emerald-900/20 to-blue-900/20 backdrop-blur-sm rounded-xl p-4 border border-emerald-500/30">
+                            <div class="flex items-center gap-3">
+                                <div class="flex space-x-1">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce"></div>
+                                    <div class="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style="animation-delay: 0.1s"></div>
+                                    <div class="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style="animation-delay: 0.2s"></div>
+                                </div>
+                                <span class="text-emerald-300 font-medium text-sm">{streamingProgress}</span>
+                            </div>
+                            <div class="mt-2 w-full bg-gray-700/50 rounded-full h-1 overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500 animate-pulse"></div>
+                            </div>
+                        </div>
+                    {/if}
+
                     <!-- Input hint -->
                     <div class="text-center mt-3">
                         <p class="text-xs text-gray-500">
-                            Press Enter to send • AI can make mistakes, verify important information
+                            {#if isStreaming}
+                                Real-time AI response streaming • Click stop to cancel
+                            {:else}
+                                Press Enter to send • AI can make mistakes, verify important information
+                            {/if}
                         </p>
                     </div>
                 </form>

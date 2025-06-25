@@ -8,6 +8,13 @@
       "when": 1750753594260,
       "tag": "0000_calm_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750876465692,
+      "tag": "0001_tricky_giant_girl",
+      "breakpoints": true
     }
   ]
 }

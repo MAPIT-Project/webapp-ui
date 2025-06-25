@@ -53,10 +53,27 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
     try {
-        const { conversationId, text, sender } = await request.json();
+        const { 
+            conversationId, 
+            text, 
+            sender,
+            // AI tracking data (V6+)
+            aiProvider,
+            aiVersion,
+            modelUsed,
+            dataSource,
+            processingTime,
+            projectsFound,
+            logs
+        } = await request.json();
 
-        if (!conversationId || !text || !sender) {
-            return json({ error: 'conversationId, text, and sender are required' }, { status: 400 });
+        if (!conversationId || !sender) {
+            return json({ error: 'conversationId and sender are required' }, { status: 400 });
+        }
+
+        // Allow empty text for AI messages (streaming use case)
+        if (!text && sender !== 'ai') {
+            return json({ error: 'text is required for non-AI messages' }, { status: 400 });
         }
 
         const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -77,13 +94,36 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             return json({ error: 'No authenticated user found' }, { status: 401 });
         }
 
+        // Prepare message data with optional AI tracking fields
+        const messageData: any = {
+            conversation_id: conversationId, 
+            text: text || '', // Handle empty text for streaming AI messages
+            sender
+        };
+
+        // Add AI tracking data if available (V6+)
+        if (aiProvider) messageData.ai_provider = aiProvider;
+        if (aiVersion) messageData.ai_version = aiVersion;
+        if (modelUsed) messageData.model_used = modelUsed;
+        if (dataSource) messageData.data_source = dataSource;
+        if (processingTime !== undefined) messageData.processing_time = processingTime;
+        if (projectsFound !== undefined) messageData.projects_found = projectsFound;
+        
+        // Add logs data if available
+        if (logs) {
+            messageData.logs_question = logs.question;
+            messageData.logs_model_used = logs.model_used;
+            messageData.logs_phases = JSON.stringify(logs.phases);
+            messageData.logs_total_processing_time_ms = logs.total_processing_time_ms;
+            messageData.logs_projects_retrieved = logs.projects_retrieved;
+            messageData.logs_projects_processed = logs.projects_processed;
+            messageData.logs_success = logs.success;
+            messageData.logs_average_relevance_score = logs.average_relevance_score;
+        }
+
         const { data, error } = await supabase
             .from('message')
-            .insert([{ 
-                conversation_id: conversationId, 
-                text, 
-                sender 
-            }])
+            .insert([messageData])
             .select()
             .single();
 
