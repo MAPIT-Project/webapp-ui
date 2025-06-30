@@ -252,17 +252,12 @@
                 })
             });
 
-            if (aiResponse.ok) {
-                const aiResult = await aiResponse.json();
-                const aiMessage = aiResult.message;
-                if (aiMessage) {
-                    messages = [...messages, aiMessage];
-                }
-            } else {
+            if (!aiResponse.ok) {
                 const errorData = await aiResponse.json();
                 console.error('Error sending AI message:', errorData);
                 error = 'Failed to send AI response';
             }
+            // Note: AI message will be added via real-time subscription, no need to add manually
             
         } catch (err) {
             console.error("AI query error:", err);
@@ -282,12 +277,9 @@
                     })
                 });
 
-                if (errorResponse.ok) {
-                    const errorResult = await errorResponse.json();
-                    const errorMessage = errorResult.message;
-                    if (errorMessage) {
-                        messages = [...messages, errorMessage];
-                    }
+                // Error message will be added via real-time subscription
+                if (!errorResponse.ok) {
+                    console.error('Failed to send AI error message via API');
                 }
             } catch (sendError) {
                 console.error('Failed to send AI error message:', sendError);

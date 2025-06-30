@@ -1,16 +1,16 @@
 <script lang="ts">
-import Icon from "$lib/components/generic/icon.svelte";
-import { goto } from "$app/navigation";
-import { page } from "$app/stores";
-import { 
-    getSpace, 
-    setSpace, 
-    getAllAvailableSpaces, // MODIFIED: Use the new getter function
-    fetchUserCollaborations, 
-    getIsLoadingUserCollaborations
-} from "$lib/stores/collaborationStore.svelte";
-import { onMount } from 'svelte';
-import { supabase } from '$lib/clients/supabaseClient';
+    import Icon from "$lib/components/generic/icon.svelte";
+    import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
+    import { 
+        getSpace, 
+        setSpace, 
+        getAllAvailableSpaces, // MODIFIED: Use the new getter function
+        fetchUserCollaborations, 
+        getIsLoadingUserCollaborations
+    } from "$lib/stores/collaborationStore.svelte";
+    import { onMount } from 'svelte';
+    import { supabase } from '$lib/clients/supabaseClient';
 
     interface Props {
         onUpdateWidth: (width: number) => void;
