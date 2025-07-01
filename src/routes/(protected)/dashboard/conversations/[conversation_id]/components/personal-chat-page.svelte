@@ -46,6 +46,34 @@
     // Derive chatId from URL params
     let chatId = $derived(parseInt($page.params.conversation_id));
     
+    // Function to check if a message should be grouped with the previous one
+    function shouldGroupMessage(currentMessage: Message, previousMessage: Message | undefined): boolean {
+        if (!previousMessage) return false;
+        
+        // Group if same sender and within 5 minutes
+        const currentTime = new Date(currentMessage.createdAt).getTime();
+        const previousTime = new Date(previousMessage.createdAt).getTime();
+        const timeDiff = currentTime - previousTime;
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        return currentMessage.sender === previousMessage.sender && timeDiff <= fiveMinutes;
+    }
+
+    // Function to check if this is the last message in a group (WhatsApp style)
+    function isLastInGroup(currentMessage: Message, nextMessage: Message | undefined): boolean {
+        if (!nextMessage) return true; // Last message overall
+        
+        // Check if next message is from different sender or outside time window
+        const currentTime = new Date(currentMessage.createdAt).getTime();
+        const nextTime = new Date(nextMessage.createdAt).getTime();
+        const timeDiff = nextTime - currentTime;
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        return currentMessage.sender !== nextMessage.sender || timeDiff > fiveMinutes;
+    }
+    
+
+    
     // Effect to load messages and conversation details when chatId changes
     $effect(() => {
         if (chatId) {
@@ -513,12 +541,14 @@
                         </div>
                     </div>
                 {:else}
-                    <div class="space-y-6 pb-6">
+                    <div class="space-y-1 pb-6">
                         {#each messages as message, index}
-                            <div class="group relative">
+                            {@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
+                            {@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
+                            <div class="group relative {isGrouped ? 'mt-0.5' : 'mt-4'}">
                                 <div class="flex items-start gap-4 {message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}">
-                                    <!-- Avatar -->
-                                    <div class="flex-shrink-0">
+                                    <!-- Avatar - only show for first message in group -->
+                                    <div class="flex-shrink-0 {isGrouped ? 'invisible' : ''}">
                                         {#if message.sender === 'user'}
                                             <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center shadow-lg">
                                                 <Icon name="person" className="text-white text-sm" />
@@ -534,42 +564,53 @@
                                     <div class="flex-1 max-w-[80%] {message.sender === 'user' ? 'text-right' : 'text-left'}">
                                         <div class="inline-block">
                                             {#if message.sender === 'user'}
-                                                <div class="bg-gray-600 text-white px-4 py-3 rounded-2xl rounded-tr-md shadow-lg">
+                                                <div class="bg-gray-600 text-white px-3 py-2 rounded-lg {isGrouped ? 'rounded-tr-lg' : 'rounded-tr-sm'} shadow-sm">
                                                     <div class="prose prose-sm max-w-none">
-                                                        <p class="whitespace-pre-wrap leading-relaxed m-0">
+                                                        <p class="whitespace-pre-wrap leading-relaxed m-0 text-sm">
                                                             {@html highlightMapitInMessage(message.text)}
                                                         </p>
                                                     </div>
+                                                    {#if isLastInGroupFlag}
+                                                        <div class="text-xs text-gray-300/60 mt-1 text-right leading-none">
+                                                            {formatMessageTime(message.createdAt)}
+                                                        </div>
+                                                    {/if}
                                                 </div>
                                             {:else}
                                                 {#if isErrorMessage(message.text)}
                                                     <!-- Error message styling -->
-                                                    <div class="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded-2xl rounded-tl-md shadow-lg">
+                                                    <div class="bg-red-900/20 border border-red-800 text-red-300 px-3 py-2 rounded-lg {isGrouped ? 'rounded-tl-lg' : 'rounded-tl-sm'} shadow-sm">
                                                         <div class="flex items-start gap-3">
                                                             <div class="flex-shrink-0 pt-1">
                                                                 <Icon name="error" className="text-red-400 text-sm" />
                                                             </div>
                                                             <div class="flex-1">
                                                                 <div class="prose prose-sm max-w-none">
-                                                                    <p class="whitespace-pre-wrap leading-relaxed m-0 text-red-300">{message.text}</p>
+                                                                    <p class="whitespace-pre-wrap leading-relaxed m-0 text-red-300 text-sm">{message.text}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        {#if isLastInGroupFlag}
+                                                            <div class="text-xs text-red-400/60 mt-1 text-right leading-none">
+                                                                {formatMessageTime(message.createdAt)}
+                                                            </div>
+                                                        {/if}
                                                     </div>
                                                 {:else}
                                                     <!-- Normal AI response -->
-                                                    <div class="bg-[#3A3A3C] text-gray-100 px-4 py-3 rounded-2xl rounded-tl-md shadow-lg border border-gray-600">
+                                                    <div class="bg-[#3A3A3C] text-gray-100 px-3 py-2 rounded-lg {isGrouped ? 'rounded-tl-lg' : 'rounded-tl-sm'} shadow-sm border border-gray-600/50">
                                                         <div class="prose prose-sm prose-invert max-w-none">
                                                             {@html renderMarkdown(message.text)}
                                                         </div>
+                                                        {#if isLastInGroupFlag}
+                                                            <div class="text-xs text-gray-400/60 mt-1 text-right leading-none">
+                                                                {formatMessageTime(message.createdAt)}
+                                                            </div>
+                                                        {/if}
                                                     </div>
                                                 {/if}
                                             {/if}
-                                            
-                                            <!-- Timestamp -->
-                                            <div class="text-xs text-gray-500 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {formatMessageTime(message.createdAt)}
-                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -952,5 +993,5 @@
     :global(.focus\:ring-2:focus) {
         ring-offset-width: 2px;
         ring-offset-color: transparent;
-    }
+          }
 </style>

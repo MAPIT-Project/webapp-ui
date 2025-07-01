@@ -83,7 +83,7 @@
     </div>
     
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" in:scale={{ duration: 300, delay: 100, start: 0.95 }}>
+    <!-- <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" in:scale={{ duration: 300, delay: 100, start: 0.95 }}>
       <div class="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 rounded-lg p-4 hover:scale-105 transition-transform">
         <div class="flex items-center justify-between">
           <div>
@@ -139,7 +139,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
     
     <!-- Main Action Cards -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" in:scale={{ duration: 300, delay: 150, start: 0.95 }}>
