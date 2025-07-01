@@ -575,7 +575,7 @@
                             {@const isAI = isAIMessage(message)}
                             {@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
                             {@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
-                            <div class="group relative {isGrouped ? 'mt-0.5' : 'mt-4'}">
+                                                            <div class="group relative {isGrouped ? 'mt-0.5' : 'mt-8'}">
                                 <div class="flex items-start gap-4 {isOwnMessage && !isAI ? 'flex-row-reverse' : 'flex-row'}">
                                     <!-- Avatar with user initials - only show for first message in group -->
                                     <div class="flex-shrink-0 {isGrouped ? 'invisible' : ''}">
