@@ -138,9 +138,10 @@ export const clientCollaborationRelations = relations(clientCollaboration, ({ on
 
 // Organizations
 export const organizations = pgTable('organizations', {
+  id: serial('id').primaryKey(),
   projectID: integer('projectID').notNull(),
   projectAcronym: text('projectAcronym'),
-  organisationID: text('organisationID').notNull().primaryKey(),
+  organisationID: text('organisationID').notNull(),
   vatNumber: text('vatNumber'),
   name: text('name'),
   shortName: text('shortName'),
