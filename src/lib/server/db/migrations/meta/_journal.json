@@ -15,6 +15,13 @@
       "when": 1750876465692,
       "tag": "0001_tricky_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1752072425828,
+      "tag": "0002_next_boomerang",
+      "breakpoints": true
     }
   ]
 }

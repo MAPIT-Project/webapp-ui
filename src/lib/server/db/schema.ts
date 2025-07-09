@@ -75,6 +75,7 @@ export const message = pgTable('message', {
   dataSource: varchar('data_source', { length: 100 }),
   processingTime: decimal('processing_time'),
   projectsFound: integer('projects_found'),
+  context: text('context'),
   
   // Logs data
   logsQuestion: text('logs_question'),

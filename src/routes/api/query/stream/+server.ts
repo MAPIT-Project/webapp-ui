@@ -139,7 +139,7 @@ export const GET: RequestHandler = async ({ url }) => {
     const question = url.searchParams.get('question');
     const maxResults = url.searchParams.get('max_results') || '5';
     const aiProvider = url.searchParams.get('ai_provider') || 'gemini';
-    const aiVersion = url.searchParams.get('ai_version') || 'V6';
+    const aiVersion = url.searchParams.get('ai_version') || 'V8';
     const useLocalDb = url.searchParams.get('use_local_db');
     
     if (!question) {
