@@ -80,18 +80,31 @@
         }
     });
     
+    // Track if autostart has been processed to prevent loops
+    let autostartProcessed = $state(false);
+    
     // Effect to check for autostart parameter and trigger AI response
     $effect(() => {
         const autostartQuestion = $page.url.searchParams.get('autostart');
-        if (autostartQuestion && chatId && messages.length > 0 && !isStreaming && !isSending) {
+        if (autostartQuestion && chatId && messages.length > 0 && !isStreaming && !isSending && !autostartProcessed) {
             // Only autostart if we have messages loaded and we're not already processing
             // This means the user message is already in the conversation
-            startAIResponse(autostartQuestion);
+            autostartProcessed = true; // Set flag immediately to prevent re-triggering
             
             // Remove the autostart parameter from URL to prevent re-triggering
             const url = new URL($page.url);
             url.searchParams.delete('autostart');
             window.history.replaceState({}, '', url.toString());
+            
+            // Start the AI response
+            startAIResponse(autostartQuestion);
+        }
+    });
+    
+    // Reset autostart flag when navigating to a different conversation
+    $effect(() => {
+        if (chatId) {
+            autostartProcessed = false;
         }
     });
     
@@ -256,13 +269,13 @@
                             updatedMessages[messageIndex] = { 
                                 ...updatedMessages[messageIndex], 
                                 text: currentAnswer || data.answer,
-                                // Add metadata fields using snake_case to match database
-                                ai_provider: data.ai_provider,
-                                ai_version: data.ai_version,
-                                model_used: data.logs?.model_used,
-                                data_source: data.data_source,
-                                processing_time: data.processing_time,
-                                projects_found: data.projects_found
+                                // Add metadata fields using camelCase to match TypeScript types
+                                aiProvider: data.ai_provider,
+                                aiVersion: data.ai_version,
+                                modelUsed: data.logs?.model_used,
+                                dataSource: data.data_source,
+                                processingTime: data.processing_time,
+                                projectsFound: data.projects_found
                             };
                             messages = updatedMessages;
                         }
