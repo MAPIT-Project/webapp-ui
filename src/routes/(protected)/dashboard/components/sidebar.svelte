@@ -30,13 +30,16 @@
     let showSpaceDropdown = $state(false);
     let dropdownElement: HTMLDivElement;
     
-    onMount(async () => {
-        const { data: { session: clientSession } } = await supabase.auth.getSession();
-        if (!clientSession) {
-            console.error('[Sidebar onMount] No active client-side session.');
-        }
-        // Fetch collaborations when the sidebar mounts
-        await fetchUserCollaborations(); 
+    onMount(() => {
+        // Handle async initialization
+        (async () => {
+            const { data: { session: clientSession } } = await supabase.auth.getSession();
+            if (!clientSession) {
+                console.error('[Sidebar onMount] No active client-side session.');
+            }
+            // Fetch collaborations when the sidebar mounts
+            await fetchUserCollaborations(); 
+        })();
         
         // Close dropdown when clicking outside
         const handleClickOutside = (event: MouseEvent) => {
@@ -156,12 +159,12 @@
     };
 </script>
 
-<div style="width: {width}px;" class="fixed top-0 left-0 transition-all h-screen bg-[#252527] {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-md z-20">
+<div style="width: {width}px;" class="fixed top-0 left-0 transition-all h-screen {isPersonalSpace(currentSpace) ? 'bg-gradient-to-b from-[#1E1E22] via-[#1A1A20] to-[#181820]' : 'bg-gradient-to-b from-[#201E22] via-[#1C1A20] to-[#1A1820]'} {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-xl z-20">
     {#if !open}
         <div class="flex flex-col gap-5">
-            <div class="flex justify-between items-center">
-                <h1 class="text-4xl font-bold tracking-[0.17em]">MAPIT</h1>
-                <button onclick={handleResize} class="p-1 text-[#F5F5F5] h-8 w-8 flex items-center justify-center rounded hover:bg-[#3a3a3c]">
+            <div class="flex justify-between items-center p-4 rounded-xl {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-gray-800/30 to-gray-800/20 border border-gray-600/15' : 'bg-gradient-to-r from-gray-800/30 to-gray-800/20 border border-gray-600/15'} backdrop-blur-sm">
+                <h1 class="text-4xl font-bold tracking-[0.17em] {isPersonalSpace(currentSpace) ? 'text-gray-100' : 'text-gray-100'}">MAPIT</h1>
+                <button onclick={handleResize} class="p-1 text-[#F5F5F5] h-8 w-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors">
                     <Icon 
                         name="first_page"
                     />
@@ -185,7 +188,7 @@
                 {:else if spaces.length > 0}
                     <!-- Active Selector -->
                     <button 
-                        class="w-full bg-gradient-to-r from-gray-800/60 to-gray-700/60 hover:from-gray-700/70 hover:to-gray-600/70 border border-gray-600/50 hover:border-gray-500/60 rounded-xl p-3 transition-all duration-200 text-left group"
+                        class="w-full {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-gray-800/50 to-gray-700/40 hover:from-gray-700/60 hover:to-gray-600/50 border border-gray-600/30 hover:border-blue-500/20' : 'bg-gradient-to-r from-gray-800/50 to-gray-700/40 hover:from-gray-700/60 hover:to-gray-600/50 border border-gray-600/30 hover:border-purple-500/20'} rounded-xl p-3 transition-all duration-200 text-left group backdrop-blur-sm"
                         onclick={toggleDropdown}
                     >
                         <div class="flex items-center justify-between">
@@ -213,7 +216,7 @@
                     
                     <!-- Dropdown Menu -->
                     {#if showSpaceDropdown}
-                        <div class="absolute top-full left-0 right-0 mt-2 bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-600/50 rounded-xl shadow-2xl overflow-hidden z-50 backdrop-blur-sm">
+                        <div class="absolute top-full left-0 right-0 mt-2 {isPersonalSpace(currentSpace) ? 'bg-gradient-to-b from-gray-800/95 to-gray-900/95 border border-gray-600/40' : 'bg-gradient-to-b from-gray-800/95 to-gray-900/95 border border-gray-600/40'} rounded-xl shadow-2xl overflow-hidden z-50 backdrop-blur-sm">
                             <div class="p-2 space-y-1">
                                 {#each spaces as space (space.id)}
                                     <button 
@@ -277,7 +280,10 @@
 
         <div class="flex flex-col gap-1.5 mt-6">
             {#each sideBarItems as item}
-                <div class="w-full rounded-md {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#333335]'} transition-colors duration-150">
+                <div class="w-full rounded-xl {isActive(item.url) 
+                    ? (isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-gray-800/50 to-gray-700/40 border border-blue-500/15' : 'bg-gradient-to-r from-gray-800/50 to-gray-700/40 border border-purple-500/15')
+                    : (isPersonalSpace(currentSpace) ? 'hover:bg-gray-800/30 border border-transparent hover:border-blue-500/10' : 'hover:bg-gray-800/30 border border-transparent hover:border-purple-500/10')
+                } transition-all duration-200 backdrop-blur-sm">
                     <a href={item.url} onclick={handleNavigation(item.url)} class="py-2.5 px-3.5 h-auto text-[#F5F5F5] flex gap-3.5 items-center no-underline">
                         <Icon 
                             name={item.icon} className="text-xl"
@@ -291,7 +297,7 @@
     {:else}
         <img src="/images/mapit_logo_no_bg.png" class="size-8 object-contain" alt="MAPIT Logo">
         
-        <button onclick={handleResize} class="p-1 text-[#F5F5F5] h-8 w-8 flex items-center justify-center rounded hover:bg-[#3a3a3c]">
+        <button onclick={handleResize} class="p-1 text-[#F5F5F5] h-8 w-8 flex items-center justify-center rounded-lg {isPersonalSpace(currentSpace) ? 'hover:bg-gray-700/40 border border-blue-500/10' : 'hover:bg-gray-700/40 border border-purple-500/10'} transition-all backdrop-blur-sm">
             <Icon 
                 name="last_page"
             />
@@ -301,7 +307,10 @@
             {#each sideBarItems as item}
                 <a href={item.url} onclick={handleNavigation(item.url)} 
                    title={item.name}
-                   class="p-2 h-auto text-[#F5F5F5] rounded-md flex items-center justify-center w-full no-underline {isActive(item.url) ? 'bg-[#18181a]' : 'hover:bg-[#333335]'} transition-colors duration-150">
+                   class="p-2 h-auto text-[#F5F5F5] rounded-xl flex items-center justify-center w-full no-underline {isActive(item.url) 
+                    ? (isPersonalSpace(currentSpace) ? 'bg-gray-800/50 border border-blue-500/15' : 'bg-gray-800/50 border border-purple-500/15')
+                    : (isPersonalSpace(currentSpace) ? 'hover:bg-gray-700/30 border border-transparent hover:border-blue-500/10' : 'hover:bg-gray-700/30 border border-transparent hover:border-purple-500/10')
+                } transition-all duration-200 backdrop-blur-sm">
                     <Icon name={item.icon} className="text-xl" />
                 </a>
             {/each}
