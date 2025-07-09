@@ -1,7 +1,7 @@
 import { writable, get } from 'svelte/store';
 import type { Conversation } from '$lib/types/schema'; // MODIFIED
 import { getUserConversations, updateConversationName, deleteConversation } from '$lib/clients/conversationService';
-import { getSpace } from '$lib/stores/collaborationStore.svelte';
+import { getSpace, registerSpaceChangeCallback } from '$lib/stores/collaborationStore.svelte';
 
 interface ConversationStore {
     conversations: Conversation[]; // MODIFIED
@@ -119,3 +119,8 @@ function createConversationStore() {
 }
 
 export const conversationStore = createConversationStore();
+
+// Register callback to reload conversations when space changes
+registerSpaceChangeCallback(() => {
+    conversationStore.loadConversations(true);
+});

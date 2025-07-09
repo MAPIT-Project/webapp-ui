@@ -25,7 +25,7 @@ export const selectedProvider = writable<AIProvider | null>(null);
 export const selectedVersion = writable<AIVersion>('V4'); // Will be updated dynamically
 export const availableProviders = writable<ProvidersResponse | null>(null);
 export const isLoadingProviders = writable<boolean>(false);
-export const useLocalDb = writable<boolean>(true); // Default to using local DB
+export const useLocalDb = writable<boolean>(false); // Default to using CORDIS API
 
 // Helper function to check if version is V5 or higher
 export function isVersionV5OrHigher(versionString: AIVersion | string | null): boolean {

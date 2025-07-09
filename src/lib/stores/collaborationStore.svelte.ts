@@ -1,5 +1,3 @@
-import { conversationStore } from '$lib/stores/conversationStore';
-
 // Type for a collaboration space item in the sidebar
 interface CollaborationSpace {
   id: string;
@@ -9,6 +7,9 @@ interface CollaborationSpace {
 // --- State for the currently selected space ---
 let currentSelectedSpaceId: string = $state('personal');
 
+// Callback to notify when space changes
+let onSpaceChangeCallback: ((spaceId: string) => void) | null = null;
+
 export function getSpace() {
   return currentSelectedSpaceId;
 }
@@ -16,8 +17,14 @@ export function getSpace() {
 export function setSpace(newSpaceId: string) {
   if (currentSelectedSpaceId === newSpaceId) return;
   currentSelectedSpaceId = newSpaceId;
-  // When space changes, reload conversations with forceReload = true
-  conversationStore.loadConversations(true);
+  // Notify callback when space changes
+  if (onSpaceChangeCallback) {
+    onSpaceChangeCallback(newSpaceId);
+  }
+}
+
+export function registerSpaceChangeCallback(callback: (spaceId: string) => void) {
+  onSpaceChangeCallback = callback;
 }
 
 // --- State for managing the list of user collaborations ---
