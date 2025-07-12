@@ -2,12 +2,12 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
-import { aiQueryRateLimit, getClientIP } from '$lib/server/rateLimit';
+import { aiQueryRateLimit, extractClientIP } from '$lib/server/rateLimit';
 
 // This endpoint handles adding AI messages to collaboration chats
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
     // Apply rate limiting for AI operations
-    const ip = getClientIP({ request, getClientAddress } as any);
+    const ip = extractClientIP(request, getClientAddress);
     
     try {
         await aiQueryRateLimit.check(ip);

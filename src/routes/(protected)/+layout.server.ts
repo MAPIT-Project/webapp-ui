@@ -5,10 +5,10 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
     try {
         console.log(`[(protected)/+layout.server.ts] Checking access to ${url.pathname}`);
         
-        const session = await locals.getSession();
+        const session = locals.session;
 
         console.log(`[(protected)/+layout.server.ts] Session check for ${url.pathname}:`, 
-            session ? `Session found for user ${session.user?.email}, expires: ${new Date(session.expires_at * 1000).toISOString()}` : 'No session found');
+            session ? `Session found for user ${session.user?.email}, expires: ${new Date((session.expires_at || 0) * 1000).toISOString()}` : 'No session found');
 
         if (!session) {
             const redirectTo = `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`;
@@ -18,7 +18,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
         // Check if session is expired
         const now = Date.now();
-        const expiryTime = session.expires_at * 1000;
+        const expiryTime = (session.expires_at || 0) * 1000;
         
         console.log(`[(protected)/+layout.server.ts] Session expiry check - Now: ${now}, Expires: ${expiryTime}, Valid: ${now < expiryTime}`);
 

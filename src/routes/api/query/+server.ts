@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { aiQueryRateLimit, getClientIP } from '$lib/server/rateLimit';
+import { aiQueryRateLimit, extractClientIP } from '$lib/server/rateLimit';
 
 const CORDIS_API_BASE_URL = 'http://localhost:8000';
 
@@ -38,7 +38,7 @@ interface ErrorResponse {
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   // Apply rate limiting for AI queries
-  const ip = getClientIP({ request, getClientAddress } as any);
+  const ip = extractClientIP(request, getClientAddress);
   
   try {
     await aiQueryRateLimit.check(ip);

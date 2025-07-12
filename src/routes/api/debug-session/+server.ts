@@ -3,7 +3,7 @@ import { json } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ locals, cookies }) => {
     try {
-        const session = await locals.getSession();
+        const session = locals.session;
         
         // Get all cookies for debugging
         const allCookies = cookies.getAll();

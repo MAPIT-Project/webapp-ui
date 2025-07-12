@@ -36,6 +36,30 @@ function getClientIP(event: RequestEvent): string {
     return event.getClientAddress() || 'unknown';
 }
 
+// Simple IP extraction for endpoint handlers
+function extractClientIP(request: Request, getClientAddress: () => string): string {
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const cfConnectingIp = request.headers.get('cf-connecting-ip');
+    
+    if (forwarded) {
+        return forwarded.split(',')[0].trim();
+    }
+    if (realIp) {
+        return realIp;
+    }
+    if (cfConnectingIp) {
+        return cfConnectingIp;
+    }
+    
+    // Fallback to connection info
+    try {
+        return getClientAddress() || 'unknown';
+    } catch {
+        return 'unknown';
+    }
+}
+
 export function createRateLimiter(options: RateLimitOptions) {
     const store: RateLimitStore = {};
     const message = options.message || 'Too many requests, please try again later';
@@ -44,8 +68,11 @@ export function createRateLimiter(options: RateLimitOptions) {
         async check(ip: string) {
             // Skip rate limiting in development if specified
             if (dev && options.skipInDevelopment) {
+                console.log(`[RATE_LIMIT] Skipping rate limit in development mode for IP: ${ip}`);
                 return true;
             }
+            
+            console.log(`[RATE_LIMIT] Checking rate limit for IP: ${ip}, dev: ${dev}, skipInDevelopment: ${options.skipInDevelopment}`);
 
             const now = Date.now();
             const windowStart = now - options.windowMs;
@@ -242,4 +269,4 @@ export async function applyRateLimit(
     }
 }
 
-export { getClientIP };
+export { getClientIP, extractClientIP };

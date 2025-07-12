@@ -7,37 +7,40 @@ import { json } from '@sveltejs/kit';
 
 // Global rate limiting middleware
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
-  // Apply rate limiting to all API routes
-  if (event.url.pathname.startsWith('/api/')) {
-    const ip = getClientIP(event);
-    
-    try {
-      await apiRateLimit.check(ip);
-    } catch (error) {
-      if (error instanceof Error) {
-        try {
-          const errorData = JSON.parse(error.message);
-          return json(errorData, { 
-            status: 429,
-            headers: {
-              'X-RateLimit-Limit': '100',
-              'X-RateLimit-Remaining': '0',
-              'Retry-After': errorData.retryAfter.toString()
-            }
-          });
-        } catch {
-          return json(
-            { error: 'Too many API requests. Please slow down.' },
-            { status: 429 }
-          );
-        }
-      }
-      return json(
-        { error: 'Too many API requests. Please slow down.' },
-        { status: 429 }
-      );
-    }
-  }
+  // Temporarily disable global rate limiting to avoid conflicts with endpoint-specific rate limiting
+  // TODO: Re-enable after debugging login issues
+  
+  // Apply rate limiting to all API routes (DISABLED)
+  // if (event.url.pathname.startsWith('/api/')) {
+  //   const ip = getClientIP(event);
+  //   
+  //   try {
+  //     await apiRateLimit.check(ip);
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       try {
+  //         const errorData = JSON.parse(error.message);
+  //         return json(errorData, { 
+  //           status: 429,
+  //           headers: {
+  //             'X-RateLimit-Limit': '100',
+  //             'X-RateLimit-Remaining': '0',
+  //             'Retry-After': errorData.retryAfter.toString()
+  //           }
+  //         });
+  //       } catch {
+  //         return json(
+  //           { error: 'Too many API requests. Please slow down.' },
+  //           { status: 429 }
+  //         );
+  //       }
+  //     }
+  //     return json(
+  //       { error: 'Too many API requests. Please slow down.' },
+  //       { status: 429 }
+  //     );
+  //   }
+  // }
 
   return resolve(event);
 };
