@@ -1,56 +1,73 @@
+import { sequence } from '@sveltejs/kit/hooks';
+import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
+import { apiRateLimit, getClientIP } from '$lib/server/rateLimit';
+import { json } from '@sveltejs/kit';
 
-export const handle: Handle = async ({ event, resolve }) => {
-  // Log all incoming requests and their cookies
-  // console.log(`[HOOKS] Request path: ${event.url.pathname}`);
-  const cookies = event.request.headers.get('cookie');
-  // console.log(`[HOOKS] Cookies for ${event.url.pathname}:`, cookies || 'No cookies sent');
-
-  event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-    cookies: {
-      get: (key: string) => event.cookies.get(key),
-      set: (key: string, value: string, options: CookieOptions) => {
-        event.cookies.set(key, value, { 
-          ...options, 
-          path: '/',
-          httpOnly: false,  // Allow client access for auth cookies
-          secure: false,    // For localhost development
-          sameSite: 'lax'   // Allow cross-site requests
-        });
-      },
-      remove: (key: string, options: CookieOptions) => {
-        event.cookies.delete(key, { 
-          ...options, 
-          path: '/',
-          httpOnly: false,
-          secure: false,
-          sameSite: 'lax'
-        });
-      },
-    },
-  });
-
-  event.locals.getSession = async () => {
-    const {
-      data: { session },
-    } = await event.locals.supabase.auth.getSession();
-    // Log session status when getSession is called
-    if (event.url.pathname.startsWith('/api/') || event.url.pathname.startsWith('/(protected)')) {
-        console.log(`[HOOKS] getSession() called for ${event.url.pathname}. Session present: ${!!session}, User: ${session?.user?.email || 'none'}`);
+// Global rate limiting middleware
+const rateLimitHandle: Handle = async ({ event, resolve }) => {
+  // Apply rate limiting to all API routes
+  if (event.url.pathname.startsWith('/api/')) {
+    const ip = getClientIP(event);
+    
+    try {
+      await apiRateLimit.check(ip);
+    } catch (error) {
+      if (error instanceof Error) {
+        try {
+          const errorData = JSON.parse(error.message);
+          return json(errorData, { 
+            status: 429,
+            headers: {
+              'X-RateLimit-Limit': '100',
+              'X-RateLimit-Remaining': '0',
+              'Retry-After': errorData.retryAfter.toString()
+            }
+          });
+        } catch {
+          return json(
+            { error: 'Too many API requests. Please slow down.' },
+            { status: 429 }
+          );
+        }
+      }
+      return json(
+        { error: 'Too many API requests. Please slow down.' },
+        { status: 429 }
+      );
     }
-    return session;
-  };
+  }
 
-  // Ensure session is loaded and any potential cookie-setting side effects from Supabase auth
-  // (like token refresh) are attempted before resolving the main request.
-  await event.locals.supabase.auth.getSession();
-
-  return resolve(event, {
-    filterSerializedResponseHeaders(name) {
-      // Add 'x-supabase-api-version' if required by @supabase/ssr, content-range is usually for Supabase storage or PostgREST
-      return name === 'content-range' || name === 'x-supabase-api-version';
-    },
-  });
+  return resolve(event);
 };
+
+// Supabase authentication middleware
+const supabaseHandle: Handle = async ({ event, resolve }) => {
+  const supabase = createServerClient(
+    PUBLIC_SUPABASE_URL,
+    PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        get: (key) => event.cookies.get(key),
+        set: (key, value, options) => {
+          event.cookies.set(key, value, { ...options, path: '/' });
+        },
+        remove: (key, options) => {
+          event.cookies.delete(key, { ...options, path: '/' });
+        }
+      }
+    }
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  event.locals.supabase = supabase;
+  event.locals.session = session;
+  event.locals.user = session?.user ?? null;
+
+  return resolve(event);
+};
+
+// Combine middlewares with rate limiting first
+export const handle = sequence(rateLimitHandle, supabaseHandle);

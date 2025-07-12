@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
+import { aiQueryRateLimit, getClientIP } from '$lib/server/rateLimit';
 
 const CORDIS_API_BASE_URL = 'http://localhost:8000';
 
@@ -35,7 +36,37 @@ interface ErrorResponse {
   detail: string;
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
+  // Apply rate limiting for AI queries
+  const ip = getClientIP({ request, getClientAddress } as any);
+  
+  try {
+    await aiQueryRateLimit.check(ip);
+  } catch (error) {
+    if (error instanceof Error) {
+      try {
+        const errorData = JSON.parse(error.message);
+        return json(errorData, { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '10',
+            'X-RateLimit-Remaining': '0',
+            'Retry-After': errorData.retryAfter.toString()
+          }
+        });
+      } catch {
+        return json(
+          { error: 'Too many AI queries. Please wait before making another request.' },
+          { status: 429 }
+        );
+      }
+    }
+    return json(
+      { error: 'Too many AI queries. Please wait before making another request.' },
+      { status: 429 }
+    );
+  }
+
   try {
     // Parse the request body
     const body: QueryRequest = await request.json();
@@ -112,6 +143,9 @@ export const POST: RequestHandler = async ({ request }) => {
     // Parse successful response
     const data: QueryResponse = await apiResponse.json();
     
+    // Add rate limit headers to successful response
+    const rateLimitInfo = aiQueryRateLimit.info(ip);
+    
     // Return the response to the client with all tracking data
     return json({
       answer: data.answer,
@@ -122,6 +156,12 @@ export const POST: RequestHandler = async ({ request }) => {
       processing_time: data.processing_time,
       projects_found: data.projects_found,
       logs: data.logs
+    }, {
+      headers: {
+        'X-RateLimit-Limit': rateLimitInfo.limit.toString(),
+        'X-RateLimit-Remaining': rateLimitInfo.remaining.toString(),
+        'X-RateLimit-Reset': Math.ceil(rateLimitInfo.resetTime / 1000).toString()
+      }
     });
 
   } catch (error) {

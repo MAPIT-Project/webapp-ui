@@ -2,8 +2,39 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
+import { authRateLimit, getClientIP } from '$lib/server/rateLimit';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
+    // Apply rate limiting
+    const ip = getClientIP({ request, getClientAddress } as any);
+    
+    try {
+        await authRateLimit.check(ip);
+    } catch (error) {
+        if (error instanceof Error) {
+            try {
+                const errorData = JSON.parse(error.message);
+                return json(errorData, { 
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Limit': '5',
+                        'X-RateLimit-Remaining': '0',
+                        'Retry-After': errorData.retryAfter.toString()
+                    }
+                });
+            } catch {
+                return json(
+                    { error: 'Too many login attempts. Please try again later.' },
+                    { status: 429 }
+                );
+            }
+        }
+        return json(
+            { error: 'Too many login attempts. Please try again later.' },
+            { status: 429 }
+        );
+    }
+
     try {
         const { email, password } = await request.json();
 
@@ -48,8 +79,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
         }
 
         console.log(`[LOGIN] Successfully authenticated user: ${data.user.email}`);
-        console.log(`[LOGIN] Session expires at: ${new Date(data.session.expires_at * 1000).toISOString()}`);
+        console.log(`[LOGIN] Session expires at: ${new Date((data.session.expires_at || 0) * 1000).toISOString()}`);
 
+        // Add rate limit headers to successful response
+        const rateLimitInfo = authRateLimit.info(ip);
+        
         // Return success response with user data
         return json({
             success: true,
@@ -60,7 +94,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             },
             session: {
                 access_token: data.session.access_token,
-                expires_at: data.session.expires_at
+                expires_at: data.session.expires_at as number
+            }
+        }, {
+            headers: {
+                'X-RateLimit-Limit': rateLimitInfo.limit.toString(),
+                'X-RateLimit-Remaining': rateLimitInfo.remaining.toString(),
+                'X-RateLimit-Reset': Math.ceil(rateLimitInfo.resetTime / 1000).toString()
             }
         });
 
