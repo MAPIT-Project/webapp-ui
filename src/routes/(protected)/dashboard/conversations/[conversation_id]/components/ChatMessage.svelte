@@ -80,8 +80,9 @@
                     <Icon name="person" className="text-white text-sm" />
                 </div>
             {:else}
-                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                    <Icon name="smart_toy" className="text-white text-sm" />
+                <div class="size-8 rounded-full bg-white/5 flex items-center justify-center shadow-lg border border-white/10">
+                    <!-- <Icon name="smart_toy" className="text-white text-sm" /> -->
+                    <img src="/images/mapit_logo_no_bg.png" class="size-4 object-contain" alt="MAPIT Logo">
                 </div>
             {/if}
         </div>

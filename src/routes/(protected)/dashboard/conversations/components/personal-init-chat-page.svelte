@@ -37,20 +37,22 @@
 	});
 </script>
 
-<div class="w-full min-h-screen h-full flex relative bg-gradient-to-br from-[#2B2A2C] via-[#282729] to-[#252327]">
+<div class="w-full min-h-screen h-full flex relative bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414]">
+    <!-- Subtle pattern overlay for texture -->
+    <div class="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] pointer-events-none"></div>
     
     <!-- Main content -->
     <div class="flex-1 flex flex-col relative overflow-hidden">
         <!-- Header Bar -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-700/30 bg-gradient-to-r from-gray-800/30 to-gray-900/30 backdrop-blur-sm">
+        <div class="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414]">
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
                         <Icon name="smart_toy" iconClass="text-white text-sm" />
                     </div>
                     <div>
                         <span class="text-white font-medium">MAPIT AI</span>
-                        <span class="text-xs text-blue-400 font-bold ml-2 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-500/30">BETA</span>
+                        <span class="text-xs text-white font-bold ml-2 bg-gradient-to-tr from-sky-900 to-sky-700 px-2 py-0.5 rounded-full border border-sky-600/30">BETA</span>
                     </div>
                 </div>
             </div>
@@ -74,12 +76,12 @@
                 <div class="flex flex-col items-center gap-6" in:fade={{ duration: 300 }}>
                     <!-- Enhanced loading animation -->
                     <div class="relative">
-                        <div class="w-16 h-16 rounded-full border-4 border-gray-700/30 border-t-blue-500 animate-spin"></div>
-                        <div class="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-r-purple-500 animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                        <div class="w-16 h-16 rounded-full border-4 border-white/10 border-t-blue-500 animate-spin"></div>
+                        <div class="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-r-cyan-500 animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
                     </div>
                     <div class="text-center">
                         <h3 class="text-xl font-semibold text-white mb-2">Setting up your workspace</h3>
-                        <p class="text-gray-400">Initializing AI services and user data...</p>
+                        <p class="text-white/60">Initializing AI services and user data...</p>
                     </div>
                 </div>
             {:else if clientError}
@@ -110,10 +112,10 @@
                     <!-- Welcome Section -->
                     <div class="text-center mb-12" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
                         <div class="inline-flex items-center gap-3 mb-4">
-                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                            <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-lg">
                                 <Icon name="psychology" iconClass="text-white text-xl" />
                             </div>
-                            <h1 class="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                            <h1 class="text-4xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
                                 How can I help you today?
                             </h1>
                         </div>
