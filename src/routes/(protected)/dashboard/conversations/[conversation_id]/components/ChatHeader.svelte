@@ -25,8 +25,8 @@
         <!-- Right side - Compact controls -->
         <div class="flex items-center gap-2">
             <AIProviderSelector />
-            <div class="w-px h-4 bg-white/20"></div>
-            <ApiModeToggle />
+            <!-- <div class="w-px h-4 bg-white/20"></div> -->
+            <!-- <ApiModeToggle /> -->
         </div>
     </div>
 </div> 
