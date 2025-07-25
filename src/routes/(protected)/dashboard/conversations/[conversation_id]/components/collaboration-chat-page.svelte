@@ -763,7 +763,7 @@
 
 
 <style>
-    /* Dark scrollbar */
+    /* Dark gray scrollbar */
     :global(*::-webkit-scrollbar) {
         width: 6px;
     }
@@ -773,12 +773,13 @@
     }
     
     :global(*::-webkit-scrollbar-thumb) {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(64, 64, 64, 0.4);
         border-radius: 3px;
+        transition: background-color 0.2s ease;
     }
     
     :global(*::-webkit-scrollbar-thumb:hover) {
-        background: rgba(255, 255, 255, 0.3);
+        background: rgba(80, 80, 80, 0.7);
     }
     
     /* Enhanced prose styles for AI responses */

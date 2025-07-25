@@ -165,9 +165,9 @@
     }
 </script>
 
-<div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-gradient-to-b from-[#1E1E20] to-[#1A1A1C] border-r border-[#4A4A57]/20 flex-shrink-0 overflow-hidden shadow-xl">
+<div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-gradient-to-b from-[#1A1A1A] to-[#161616] border-r border-[#404040]/20 flex-shrink-0 overflow-hidden shadow-xl">
     <!-- Header Section -->
-    <div class="p-4 border-b border-[#4A4A57]/20 bg-gradient-to-r from-gray-800/30 to-gray-900/30 backdrop-blur-sm">
+    <div class="p-4 border-b border-[#404040]/20 bg-gradient-to-r from-[#2A2A2A]/30 to-[#202020]/30 backdrop-blur-sm">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -325,7 +325,7 @@
     </div>
     
     <!-- Footer -->
-    <div class="p-3 border-t border-[#4A4A57]/20 bg-gradient-to-r from-gray-800/20 to-gray-900/20">
+    <div class="p-3 border-t border-[#404040]/20 bg-gradient-to-r from-[#2A2A2A]/20 to-[#202020]/20">
         <div class="flex items-center justify-center">
             <div class="text-xs text-gray-500 flex items-center gap-1">
                 <Icon name="info" iconClass="w-3 h-3" />

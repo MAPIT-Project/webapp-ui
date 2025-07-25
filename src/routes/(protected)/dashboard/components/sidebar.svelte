@@ -159,10 +159,10 @@
     };
 </script>
 
-<div style="width: {width}px;" class="fixed top-0 left-0 transition-all h-screen {isPersonalSpace(currentSpace) ? 'bg-gradient-to-b from-[#1E1E22] via-[#1A1A20] to-[#181820]' : 'bg-gradient-to-b from-[#201E22] via-[#1C1A20] to-[#1A1820]'} {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-xl z-20">
+<div style="width: {width}px;" class="fixed top-0 left-0 transition-all h-screen {isPersonalSpace(currentSpace) ? 'bg-gradient-to-b from-[#1A1A1A] via-[#161616] to-[#141414]' : 'bg-gradient-to-b from-[#1C1C1C] via-[#181818] to-[#161616]'} {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-xl z-20">
     {#if !open}
         <div class="flex flex-col gap-5">
-            <div class="flex justify-between items-center p-4 rounded-xl {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-gray-800/30 to-gray-800/20 border border-gray-600/15' : 'bg-gradient-to-r from-gray-800/30 to-gray-800/20 border border-gray-600/15'} backdrop-blur-sm">
+            <div class="flex justify-between items-center p-4 rounded-xl {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-[#2A2A2A]/30 to-[#2A2A2A]/20 border border-[#404040]/15' : 'bg-gradient-to-r from-[#2A2A2A]/30 to-[#2A2A2A]/20 border border-[#404040]/15'} backdrop-blur-sm">
                 <h1 class="text-4xl font-bold tracking-[0.17em] {isPersonalSpace(currentSpace) ? 'text-gray-100' : 'text-gray-100'}">MAPIT</h1>
                 <button onclick={handleResize} class="p-1 text-[#F5F5F5] h-8 w-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors">
                     <Icon 
@@ -175,7 +175,7 @@
             <div class="space-selector relative" bind:this={dropdownElement}>
                 {#if isLoadingSpaces}
                     <!-- Loading State -->
-                    <div class="w-full bg-gradient-to-r from-gray-800/60 to-gray-700/60 border border-gray-600/50 rounded-xl p-3 cursor-not-allowed">
+                    <div class="w-full bg-gradient-to-r from-[#2A2A2A]/60 to-[#2A2A2A]/60 border border-[#404040]/50 rounded-xl p-3 cursor-not-allowed">
                         <div class="flex items-center gap-3">
                             <div class="w-6 h-6 rounded-lg bg-gray-600/50 animate-pulse"></div>
                             <div class="flex-1">
@@ -188,7 +188,7 @@
                 {:else if spaces.length > 0}
                     <!-- Active Selector -->
                     <button 
-                        class="w-full {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-gray-800/50 to-gray-700/40 hover:from-gray-700/60 hover:to-gray-600/50 border border-gray-600/30 hover:border-blue-500/20' : 'bg-gradient-to-r from-gray-800/50 to-gray-700/40 hover:from-gray-700/60 hover:to-gray-600/50 border border-gray-600/30 hover:border-purple-500/20'} rounded-xl p-3 transition-all duration-200 text-left group backdrop-blur-sm"
+                        class="w-full {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-[#2A2A2A]/50 to-[#2A2A2A]/40 hover:from-[#303030]/60 hover:to-[#303030]/50 border border-[#404040]/30 hover:border-blue-500/20' : 'bg-gradient-to-r from-[#2A2A2A]/50 to-[#2A2A2A]/40 hover:from-[#303030]/60 hover:to-[#303030]/50 border border-[#404040]/30 hover:border-purple-500/20'} rounded-xl p-3 transition-all duration-200 text-left group backdrop-blur-sm"
                         onclick={toggleDropdown}
                     >
                         <div class="flex items-center justify-between">

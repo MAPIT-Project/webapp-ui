@@ -38,7 +38,7 @@
 
 <div class="flex-shrink-0 p-4">
     <form on:submit|preventDefault={handleSubmit} class="relative max-w-4xl mx-auto">
-        <div class="relative bg-[#3A3A3C] rounded-2xl shadow-lg border border-gray-600 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-all">
+        <div class="relative bg-[#2A2A2A]/50 rounded-2xl border border-gray-500/30 focus-within:ring-2 focus-within:ring-emerald-500/50 focus-within:border-emerald-500/50 transition-all backdrop-blur-sm">
             <input
                 type="text"
                 value={userInput}
@@ -59,7 +59,7 @@
             {:else}
                 <button
                     type="submit"
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1.5 rounded-xl transition-all duration-200 {userInput.trim() && !isSending ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg hover:shadow-xl' : 'bg-gray-600 text-gray-400'}"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1.5 rounded-xl transition-all duration-200 border {userInput.trim() && !isSending ? 'border-emerald-500/50 text-emerald-400 hover:border-emerald-400 hover:text-emerald-300' : 'border-[#404040]/50 text-[#888888]'}"
                     disabled={isSending || !userInput.trim()}
                 >
                     <Icon name="send" className="text-current" />

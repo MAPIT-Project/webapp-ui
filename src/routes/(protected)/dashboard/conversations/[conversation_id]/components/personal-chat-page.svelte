@@ -7,7 +7,7 @@
         addAIMessage,
         getAIResponse,
         getStreamingAIResponse,
-        addStreamingAIMessage
+    addStreamingAIMessage
     } from "$lib/clients/conversationService";
     import type { Message, Conversation } from "$lib/types/schema";
     
@@ -390,11 +390,18 @@
     }
 </script>
 
-<div class="w-full h-screen flex flex-col relative bg-[#2B2A2C] overflow-hidden scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
-    <!-- Top header -->
-    <ChatHeader />
+<!-- Modern dark grey gradient background -->
+<div class="w-full h-screen flex flex-col relative bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414] overflow-hidden">
+    <!-- Subtle pattern overlay for texture -->
+    <div class="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px]"></div>
     
-    <div class="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto overflow-hidden pt-12">
+    <!-- Top header with modern backdrop -->
+    <div class="relative z-10">
+        <ChatHeader />
+    </div>
+    
+    <!-- Main chat container with modern styling -->
+    <div class="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto overflow-hidden pt-12 relative z-10">
         <!-- Chat title area -->
         <ChatTitle
             {conversation}
@@ -403,34 +410,47 @@
             onSave={handleSaveConversationName}
         />
         
-        <!-- Chat messages area -->
-        <div class="flex-1 overflow-y-auto min-h-0 px-4 pb-4 scroll-smooth" bind:this={messagesContainer}>
+        <!-- Chat messages area with modern scrollbar -->
+        <div 
+            class="flex-1 overflow-y-auto min-h-0 px-6 pb-6 scroll-smooth scrollbar-thin" 
+            bind:this={messagesContainer}
+        >
             {#if isLoading}
-                <LoadingState />
+                <div class="mt-8">
+                    <LoadingState />
+                </div>
             {:else if messages.length === 0}
-                <EmptyState />
+                <div class="mt-8">
+                    <EmptyState />
+                </div>
             {:else}
-                <div class="space-y-1 pb-6">
+                <div class="space-y-1 pt-6 pb-8">
                     {#each messages as message, index}
                         {@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
                         {@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
-                        <ChatMessage
-                            {message}
-                            isGrouped={isGrouped}
-                            isLastInGroup={isLastInGroupFlag}
-                        />
+                        <div class="animate-fadeInUp">
+                            <ChatMessage
+                                {message}
+                                isGrouped={isGrouped}
+                                isLastInGroup={isLastInGroupFlag}
+                            />
+                        </div>
                     {/each}
                     
-                    <!-- Typing indicator -->
+                    <!-- Typing indicator with modern styling -->
                     {#if isSending}
-                        <TypingIndicator />
+                        <div class="animate-fadeInUp">
+                            <TypingIndicator />
+                        </div>
                     {/if}
                 </div>
             {/if}
             
-            <!-- Error message -->
+            <!-- Error message with modern styling -->
             {#if error}
-                <ErrorMessage {error} />
+                <div class="mt-4 animate-fadeInUp">
+                    <ErrorMessage {error} />
+                </div>
             {/if}
         </div>
         
@@ -445,18 +465,55 @@
             onStopStreaming={handleStopStreaming}
         />
     </div>
+    
+    <!-- Subtle bottom gradient overlay -->
+    <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#141414]/80 to-transparent pointer-events-none"></div>
 </div>
 
 <style>
-    /* Animation for fade in effect */
+    /* Modern animations */
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(10px);
+            transform: translateY(20px);
         }
         to {
             opacity: 1;
             transform: translateY(0);
         }
+    }
+
+    .animate-fadeInUp {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    /* Custom scrollbar styling */
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: rgba(64, 64, 64, 0.4);
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(80, 80, 80, 0.7);
+    }
+
+    /* Modern glass effect */
+    .backdrop-blur-md {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .backdrop-blur-sm {
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
     }
 </style>
