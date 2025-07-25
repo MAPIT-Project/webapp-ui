@@ -167,13 +167,13 @@
 
 <div class="w-64 min-h-screen max-h-screen h-full flex flex-col bg-gradient-to-b from-[#1A1A1A] to-[#161616] border-r border-[#404040]/20 flex-shrink-0 overflow-hidden shadow-xl">
     <!-- Header Section -->
-    <div class="p-4 border-b border-[#404040]/20 bg-gradient-to-r from-[#2A2A2A]/30 to-[#202020]/30 backdrop-blur-sm">
+    <div class="px-4 py-2 border-b border-[#404040]/20 bg-gradient-to-r from-[#2A2A2A]/30 to-[#202020]/30 backdrop-blur-sm">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                    <Icon name="chat" iconClass="text-white text-sm" />
+                <div class="size-6 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <Icon name="chat" iconClass="text-white" iconSize="xs" />
                 </div>
-                <h2 class="text-lg font-semibold text-white">{sidebarTitle}</h2>
+                <h2 class="text-md font-semibold text-white">{sidebarTitle}</h2>
             </div>
             <div class="flex gap-1">
                 <button 
@@ -181,14 +181,14 @@
                     title="Refresh conversations"
                     onclick={() => conversationStore.loadConversations(true)}
                 >
-                    <Icon name="refresh" iconClass="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
+                    <Icon name="refresh" iconClass="group-hover:rotate-180 transition-transform duration-300" iconSize="base" />
                 </button>
                 <a 
                     href="/dashboard/conversations" 
                     class="p-2 rounded-lg hover:bg-blue-500/20 text-gray-400 hover:text-blue-400 transition-all duration-200 group"
                     title="New chat"
                 >
-                    <Icon name="add_comment" iconClass="w-4 h-4 group-hover:scale-110 transition-transform"/>
+                    <Icon name="add_comment" iconClass="group-hover:scale-110 transition-transform" iconSize="base"/>
                 </a>
             </div>
         </div>

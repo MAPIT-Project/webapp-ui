@@ -3,8 +3,11 @@
     import Icon from "$lib/components/generic/icon.svelte";
 </script>
 
-<div class="flex items-center gap-2 text-xs text-gray-400 rounded px-2 py-1 bg-gray-800 border border-gray-700">
-    <div class="flex items-center">
+<div class="flex items-center gap-1.5 px-2 py-1">
+    <div class="flex items-center gap-1">
+        <Icon name={$useDemo ? "science" : "database"} 
+              className="text-xs {$useDemo ? 'text-blue-400' : 'text-green-400'}" />
+        
         <label for="apiModeToggle" class="cursor-pointer select-none flex items-center gap-1.5">
             <div class="relative">
                 <input 
@@ -13,33 +16,33 @@
                     class="sr-only" 
                     bind:checked={$useDemo}
                 />
-                <div class="block w-7 h-3.5 rounded-full transition-colors duration-300"
-                    class:bg-blue-600={$useDemo}
-                    class:bg-gray-600={!$useDemo}></div>
-                <div class="dot absolute left-0.5 top-0.5 bg-white w-2.5 h-2.5 rounded-full transition" 
-                    class:translate-x-3.5={$useDemo}></div>
+                <div class="block w-6 h-3 rounded-full transition-all duration-300 border border-white/20 {$useDemo ? 'bg-blue-500' : 'bg-green-500'}"></div>
+                <div class="absolute left-0.5 top-0.5 bg-white w-2 h-2 rounded-full transition-all duration-300" 
+                    class:translate-x-3={$useDemo}></div>
             </div>
-            <span class="text-xs">
-                {$useDemo ? 'Demo' : 'Production'}
+            <span class="text-xs text-white/90">
+                {$useDemo ? 'Demo' : 'Prod'}
             </span>
         </label>
     </div>
+    
+    <!-- Compact info icon -->
     <div class="relative group">
-        <Icon name="info" class="h-3 w-3 cursor-help text-gray-500" />
-        <div class="tooltip opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 
-                  absolute mt-2 -right-2 bg-gray-900 border border-gray-700 rounded p-2 text-xs w-48 z-50 pointer-events-none shadow-lg">
-            <p class="mb-1">Demo mode uses simulated responses.</p>
-            <p>Production mode queries CORDIS database.</p>
+        <Icon name="info" className="h-3 w-3 text-white/50 hover:text-white/80 transition-colors cursor-help" />
+                 <div class="tooltip opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 
+                  absolute mt-2 -right-2 bg-gray-900/95 backdrop-blur-lg border border-white/20 rounded-lg p-2 text-xs w-44 z-[100] pointer-events-none shadow-xl">
+            <div class="space-y-1">
+                <p class="text-white font-medium text-xs">API Mode</p>
+                <div class="space-y-0.5 text-[10px] text-white/70 leading-relaxed">
+                    <p><span class="text-blue-400 font-medium">Demo:</span> Simulated responses</p>
+                    <p><span class="text-green-400 font-medium">Prod:</span> Live CORDIS data</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .dot {
-        transition: transform 0.3s ease-in-out;
-    }
-    
-    /* Make sure group has position to anchor the tooltip */
     .group {
         position: relative;
     }

@@ -30,5 +30,5 @@
 <div class="min-h-screen bg-[#2B2A2C] overflow-x-hidden">
     {@render children()}
     <Toast position="top-right" />
-    <ShortcutsHelp />
+    <!-- <ShortcutsHelp /> -->
 </div>

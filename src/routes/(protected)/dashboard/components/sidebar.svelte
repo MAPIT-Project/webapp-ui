@@ -159,7 +159,7 @@
     };
 </script>
 
-<div style="width: {width}px;" class="fixed top-0 left-0 transition-all h-screen {isPersonalSpace(currentSpace) ? 'bg-gradient-to-b from-[#1A1A1A] via-[#161616] to-[#141414]' : 'bg-gradient-to-b from-[#1C1C1C] via-[#181818] to-[#161616]'} {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-xl z-20">
+<div style="width: {width}px;" class="fixed top-0 left-0 transition-all h-screen {isPersonalSpace(currentSpace) ? 'bg-gradient-to-b from-[#1A1A1A] via-[#161616] to-[#141414]' : 'bg-gradient-to-b from-[#1C1C1C] via-[#181818] to-[#161616]'} {open ? 'p-3 flex flex-col items-center gap-10 pt-4' : 'p-5'} shadow-xl z-20 border-r border-gray-600/20">
     {#if !open}
         <div class="flex flex-col gap-5">
             <div class="flex justify-between items-center p-4 rounded-xl {isPersonalSpace(currentSpace) ? 'bg-gradient-to-r from-[#2A2A2A]/30 to-[#2A2A2A]/20 border border-[#404040]/15' : 'bg-gradient-to-r from-[#2A2A2A]/30 to-[#2A2A2A]/20 border border-[#404040]/15'} backdrop-blur-sm">

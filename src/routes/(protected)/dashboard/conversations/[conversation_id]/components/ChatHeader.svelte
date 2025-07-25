@@ -4,22 +4,28 @@
     import AIProviderSelector from "../../../components/ai-provider-selector.svelte";
 </script>
 
-<div class="absolute top-0 left-0 right-0 h-16 my-[1px] z-10 border-b border-gray-600/20">
-    <div class="flex items-center justify-between h-full px-4">
+<!-- Compact modern header -->
+<div class="absolute top-0 left-0 right-0 h-14 my-px z-40 bg-gradient-to-l from-[#2A2A2A]/30 to-[#202020]/30 backdrop-blur-sm border-b border-[#404040]/20">
+    <!-- Same pattern overlay as main page -->
+    <div class="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] pointer-events-none"></div>
+    <div class="relative flex items-center justify-between h-full px-4">
+        <!-- Left side - Compact logo and branding -->
         <div class="flex items-center gap-2">
-            <div class="size-6 pt-[2px] rounded-lg flex items-center justify-center shadow-lg">
-                <!-- <Icon name="smart_toy" className="text-white text-xs" /> -->
-                <img src="/images/mapit_logo_no_bg.png" class="size-8 object-contain" alt="MAPIT Logo">
+            <div class="p-1 rounded-lg bg-white/5 border border-white/10">
+                <img src="/images/mapit_logo_no_bg.png" class="size-5 object-contain" alt="MAPIT Logo">
             </div>
-            <div>
-                <span class="text-gray-100 text-xs font-medium">AI Assistant</span>
-                <span class="text-xs font-semibold ml-1 bg-gradient-to-r from-sky-600 to-sky-800 text-white px-1.5 py-0.5 rounded-full shadow-md">BETA</span>
+            <div class="flex items-center gap-1.5">
+                <span class="text-white font-semibold text-sm">AI Assistant</span>
+                <span class="text-[8px] font-semibold bg-gradient-to-tr from-sky-900 to-sky-700 text-white px-[6px] py-[1px] rounded-full">
+                    BETA
+                </span>
             </div>
         </div>
         
-        <!-- API Controls -->
+        <!-- Right side - Compact controls -->
         <div class="flex items-center gap-2">
             <AIProviderSelector />
+            <div class="w-px h-4 bg-white/20"></div>
             <ApiModeToggle />
         </div>
     </div>

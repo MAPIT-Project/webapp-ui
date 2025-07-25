@@ -393,24 +393,24 @@
 <!-- Modern dark grey gradient background -->
 <div class="w-full h-screen flex flex-col relative bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414] overflow-hidden">
     <!-- Subtle pattern overlay for texture -->
-    <div class="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px]"></div>
+    <div class="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] pointer-events-none"></div>
     
     <!-- Top header with modern backdrop -->
-    <div class="relative z-10">
+    <div class="relative z-30">
         <ChatHeader />
     </div>
     
     <!-- Main chat container with full-width scrollable area -->
-    <div class="flex-1 flex flex-col h-full w-full overflow-hidden pt-12 relative z-10">
+    <div class="flex-1 flex flex-col h-full w-full overflow-hidden pt-8 relative z-10">
         <!-- Chat title area - centered content -->
-        <div class="w-full max-w-4xl mx-auto px-6">
+        <!-- <div class="w-full max-w-4xl mx-auto px-6">
             <ChatTitle
                 {conversation}
                 {isLoading}
                 {conversationName}
                 onSave={handleSaveConversationName}
             />
-        </div>
+        </div> -->
         
         <!-- Chat messages area with full-width scrollbar -->
         <div 
