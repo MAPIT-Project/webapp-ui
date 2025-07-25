@@ -80,7 +80,7 @@ export const POST: RequestHandler = async ({ request }) => {
                 break;
               }
 
-              // Forward the chunk directly from FastAPI
+              // Forward the chunk
               controller.enqueue(value);
             }
           } finally {
@@ -215,7 +215,7 @@ export const GET: RequestHandler = async ({ url }) => {
                 break;
               }
 
-              // Forward the chunk directly from FastAPI
+              // Forward the chunk
               controller.enqueue(value);
             }
           } finally {

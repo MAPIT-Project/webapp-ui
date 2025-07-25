@@ -143,12 +143,44 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     // Parse successful response
     const data: QueryResponse = await apiResponse.json();
     
+    // Handle the case where the answer field contains a stringified object
+    let cleanAnswer = data.answer;
+    try {
+      // Check if the answer is a stringified Python dictionary/object
+      if (typeof data.answer === 'string' && data.answer.startsWith('{') && data.answer.includes("'answer':")) {
+        // Simple extraction: find the answer content between 'answer': " and ", 'logs':
+        const startMarker = "'answer': \"";
+        const endMarker = "\", 'logs':";
+        
+        const startIndex = data.answer.indexOf(startMarker);
+        const endIndex = data.answer.indexOf(endMarker);
+        
+        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+          const extractedContent = data.answer.substring(
+            startIndex + startMarker.length,
+            endIndex
+          );
+          
+          // Unescape the extracted content
+          cleanAnswer = extractedContent
+            .replace(/\\"/g, '"')
+            .replace(/\\n/g, '\n')
+            .replace(/\\t/g, '\t')
+            .replace(/\\r/g, '\r')
+            .replace(/\\\\/g, '\\');
+        }
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse stringified answer, using original:', parseError);
+      // Keep the original answer if parsing fails
+    }
+    
     // Add rate limit headers to successful response
     const rateLimitInfo = aiQueryRateLimit.info(ip);
     
     // Return the response to the client with all tracking data
     return json({
-      answer: data.answer,
+      answer: cleanAnswer,
       ai_provider: data.ai_provider,
       ai_version: data.ai_version,
       model_used: data.model_used,
