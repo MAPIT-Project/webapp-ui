@@ -400,70 +400,77 @@
         <ChatHeader />
     </div>
     
-    <!-- Main chat container with modern styling -->
-    <div class="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto overflow-hidden pt-12 relative z-10">
-        <!-- Chat title area -->
-        <ChatTitle
-            {conversation}
-            {isLoading}
-            {conversationName}
-            onSave={handleSaveConversationName}
-        />
-        
-        <!-- Chat messages area with modern scrollbar -->
-        <div 
-            class="flex-1 overflow-y-auto min-h-0 px-6 pb-6 scroll-smooth scrollbar-thin" 
-            bind:this={messagesContainer}
-        >
-            {#if isLoading}
-                <div class="mt-8">
-                    <LoadingState />
-                </div>
-            {:else if messages.length === 0}
-                <div class="mt-8">
-                    <EmptyState />
-                </div>
-            {:else}
-                <div class="space-y-1 pt-6 pb-8">
-                    {#each messages as message, index}
-                        {@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
-                        {@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
-                        <div class="animate-fadeInUp">
-                            <ChatMessage
-                                {message}
-                                isGrouped={isGrouped}
-                                isLastInGroup={isLastInGroupFlag}
-                            />
-                        </div>
-                    {/each}
-                    
-                    <!-- Typing indicator with modern styling -->
-                    {#if isSending}
-                        <div class="animate-fadeInUp">
-                            <TypingIndicator />
-                        </div>
-                    {/if}
-                </div>
-            {/if}
-            
-            <!-- Error message with modern styling -->
-            {#if error}
-                <div class="mt-4 animate-fadeInUp">
-                    <ErrorMessage {error} />
-                </div>
-            {/if}
+    <!-- Main chat container with full-width scrollable area -->
+    <div class="flex-1 flex flex-col h-full w-full overflow-hidden pt-12 relative z-10">
+        <!-- Chat title area - centered content -->
+        <div class="w-full max-w-4xl mx-auto px-6">
+            <ChatTitle
+                {conversation}
+                {isLoading}
+                {conversationName}
+                onSave={handleSaveConversationName}
+            />
         </div>
         
-        <!-- Input area -->
-        <ChatInput
-            {userInput}
-            {isStreaming}
-            {isSending}
-            {streamingProgress}
-            onInputChange={handleUserInputChange}
-            onSubmit={handleChatInputSubmit}
-            onStopStreaming={handleStopStreaming}
-        />
+        <!-- Chat messages area with full-width scrollbar -->
+        <div 
+            class="flex-1 overflow-y-auto min-h-0 pb-6 scroll-smooth scrollbar-thin" 
+            bind:this={messagesContainer}
+        >
+            <!-- Centered content container -->
+            <div class="w-full max-w-4xl mx-auto px-6">
+                {#if isLoading}
+                    <div class="mt-8">
+                        <LoadingState />
+                    </div>
+                {:else if messages.length === 0}
+                    <div class="mt-8">
+                        <EmptyState />
+                    </div>
+                {:else}
+                    <div class="space-y-1 pt-6 pb-8">
+                        {#each messages as message, index}
+                            {@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
+                            {@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
+                            <div class="animate-fadeInUp">
+                                <ChatMessage
+                                    {message}
+                                    isGrouped={isGrouped}
+                                    isLastInGroup={isLastInGroupFlag}
+                                />
+                            </div>
+                        {/each}
+                        
+                        <!-- Typing indicator with modern styling -->
+                        {#if isSending}
+                            <div class="animate-fadeInUp">
+                                <TypingIndicator />
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+                
+                <!-- Error message with modern styling -->
+                {#if error}
+                    <div class="mt-4 animate-fadeInUp">
+                        <ErrorMessage {error} />
+                    </div>
+                {/if}
+            </div>
+        </div>
+        
+        <!-- Input area - centered content -->
+        <div class="w-full max-w-4xl mx-auto px-6">
+            <ChatInput
+                {userInput}
+                {isStreaming}
+                {isSending}
+                {streamingProgress}
+                onInputChange={handleUserInputChange}
+                onSubmit={handleChatInputSubmit}
+                onStopStreaming={handleStopStreaming}
+            />
+        </div>
     </div>
     
     <!-- Subtle bottom gradient overlay -->
