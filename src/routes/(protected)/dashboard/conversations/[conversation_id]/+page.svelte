@@ -45,7 +45,7 @@
 </script>
 
 {#if isLoading}
-	<div class="flex h-screen items-center justify-center bg-[#2B2A2C]">
+	<div class="flex h-screen items-center justify-center">
 		<div class="flex flex-col items-center gap-4">
 			<div class="relative">
 				<div class="h-12 w-12 rounded-full border-4 border-gray-700"></div>

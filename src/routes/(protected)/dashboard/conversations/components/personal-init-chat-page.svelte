@@ -46,28 +46,33 @@
 	<!-- Main content -->
 	<div class="relative flex flex-1 flex-col overflow-hidden">
 		<!-- Header Bar -->
-		<div class="flex items-center justify-between border-b border-[#2C2C2C] bg-[#1E1E1E] p-4">
-			<div class="flex items-center gap-3">
+		<div
+			class="absolute left-0 right-0 top-0 z-40 my-px h-14 border-b border-[#404040]/20 bg-gradient-to-l from-[#2A2A2A]/30 to-[#202020]/30 backdrop-blur-sm"
+		>
+			<div
+				class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] opacity-[0.02]"
+			></div>
+			<div class="relative flex h-full items-center justify-between px-4">
 				<div class="flex items-center gap-2">
-					<div
-						class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 bg-white/10"
-					>
-						<Icon name="smart_toy" iconClass="text-white text-sm" />
+					<div class="rounded-lg border border-white/10 bg-white/5 p-1">
+						<img
+							src="/images/mapit_logo_no_bg.png"
+							class="size-5 object-contain"
+							alt="MAPIT Logo"
+						/>
 					</div>
-					<div>
-						<span class="font-medium text-[#E0E0E0]">MAPIT AI</span>
+					<div class="flex items-center gap-1.5">
+						<span class="text-sm font-semibold text-white">AI Assistant</span>
 						<span
-							class="ml-2 rounded-full border border-[#4F4F4F] bg-[#3A3A3A] px-2 py-0.5 text-xs font-bold text-[#FFFFFF]"
+							class="rounded-full bg-gradient-to-tr from-sky-900 to-sky-700 px-[6px] py-[1px] text-[8px] font-semibold text-white"
 							>BETA</span
 						>
 					</div>
 				</div>
-			</div>
-
-			<!-- API Controls -->
-			<div class="flex items-center gap-3">
-				<AIProviderSelector />
-				<ApiModeToggle />
+				<div class="flex items-center gap-2">
+					<AIProviderSelector />
+					<!-- <ApiModeToggle /> -->
+				</div>
 			</div>
 		</div>
 
@@ -134,7 +139,11 @@
 							<div
 								class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 shadow-lg"
 							>
-								<Icon name="psychology" iconClass="text-white text-xl" />
+								<img
+									src="/images/mapit_logo_no_bg.png"
+									alt="MAPIT Logo"
+									class="h-7 w-7 object-contain"
+								/>
 							</div>
 							<h1 class="text-4xl font-bold text-[#E0E0E0]">How can I help you today?</h1>
 						</div>

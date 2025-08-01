@@ -138,7 +138,7 @@
 				<div
 					class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg"
 				>
-					<Icon name="groups" iconClass="text-white text-xl" />
+					<Icon name="groups" iconClass="text-[#E0E0E0] text-xl" />
 				</div>
 				<div>
 					<h1
@@ -171,7 +171,7 @@
 
 				<button
 					onclick={openModal}
-					class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3 font-medium text-white shadow-lg transition-all hover:scale-105 hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25"
+					class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3 font-medium text-[#E0E0E0] shadow-lg transition-all hover:scale-105 hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25"
 				>
 					<Icon name="add" iconClass="w-5 h-5" />
 					New Workspace
@@ -204,7 +204,7 @@
 				<!-- Loading Skeletons -->
 				{#each Array(6) as _, i}
 					<div
-						class="h-64 animate-pulse rounded-2xl border border-gray-700/50 bg-gradient-to-br from-gray-800/40 to-gray-900/40 p-6"
+						class="h-64 animate-pulse rounded-2xl border border-[#2C2C2C] bg-gradient-to-br from-gray-800/40 to-gray-900/40 p-6"
 						in:scale={{ duration: 200, delay: i * 50, start: 0.95 }}
 					>
 						<div class="space-y-4">
@@ -266,13 +266,13 @@
 				>
 					<Icon name="groups" iconClass="text-purple-400 w-12 h-12" />
 				</div>
-				<h2 class="mb-2 text-2xl font-semibold text-white">No workspaces yet</h2>
+				<h2 class="mb-2 text-2xl font-semibold text-[#E0E0E0]">No workspaces yet</h2>
 				<p class="mb-8 max-w-md text-center text-lg text-gray-400">
 					Create your first workspace to start collaborating with your team on shared projects.
 				</p>
 				<button
 					onclick={openModal}
-					class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-8 py-4 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25"
+					class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-8 py-4 font-semibold text-[#E0E0E0] shadow-lg transition-all hover:scale-105 hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25"
 				>
 					<Icon name="add" iconClass="w-5 h-5" />
 					Create Your First Workspace
@@ -289,19 +289,22 @@
 	subtitle="Set up a collaborative space for your team"
 	on:cancel={closeModal}
 	closeOnEscape={true}
-	background="bg-gradient-to-br from-gray-900 to-gray-800"
+	background="bg-[#1E1E1E]"
 >
 	<div slot="content" class="flex w-full flex-col gap-6 p-6">
 		<!-- Workspace Name -->
 		<div class="flex flex-col gap-3">
-			<label for="collab-title" class="flex items-center gap-2 text-sm font-semibold text-white">
+			<label
+				for="collab-title"
+				class="flex items-center gap-2 text-sm font-semibold text-[#E0E0E0]"
+			>
 				<Icon name="edit" iconClass="text-purple-400 w-4 h-4" />
 				Workspace Name
 			</label>
 			<div class="relative">
 				<input
 					id="collab-title"
-					class="w-full rounded-xl border border-gray-600/50 bg-gray-800/50 px-4 py-3 text-white placeholder-gray-400 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+					class="w-full rounded-xl border border-gray-600/50 bg-gray-800/50 px-4 py-3 text-[#E0E0E0] placeholder-gray-400 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
 					placeholder="Enter a descriptive workspace name"
 					bind:value={newTitle}
 					maxlength={50}
@@ -319,14 +322,14 @@
 
 		<!-- Workspace Description -->
 		<div class="flex flex-col gap-3">
-			<label for="collab-desc" class="flex items-center gap-2 text-sm font-semibold text-white">
+			<label for="collab-desc" class="flex items-center gap-2 text-sm font-semibold text-[#E0E0E0]">
 				<Icon name="description" iconClass="text-purple-400 w-4 h-4" />
 				Description
 			</label>
 			<div class="relative">
 				<textarea
 					id="collab-desc"
-					class="w-full resize-none rounded-xl border border-gray-600/50 bg-gray-800/50 px-4 py-3 text-white placeholder-gray-400 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+					class="w-full resize-none rounded-xl border border-gray-600/50 bg-gray-800/50 px-4 py-3 text-[#E0E0E0] placeholder-gray-400 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
 					placeholder="Describe what this workspace is for and what your team will work on"
 					bind:value={newDescription}
 					maxlength={200}
@@ -360,7 +363,7 @@
 		</div>
 	</div>
 
-	<div slot="footer" class="flex justify-end gap-3 border-t border-gray-700/50 p-6">
+	<div slot="footer" class="flex justify-end gap-3 border-t border-[#2C2C2C] p-6">
 		<button
 			onclick={closeModal}
 			class="rounded-xl border border-gray-600/50 px-6 py-2.5 font-medium text-gray-300 transition-all hover:border-gray-500/50 hover:bg-gray-700/30"
@@ -371,7 +374,7 @@
 		<button
 			onclick={addCollaboration}
 			disabled={!newTitle.trim() || isCreating}
-			class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-2.5 font-medium text-white shadow-lg transition-all hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+			class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-2.5 font-medium text-[#E0E0E0] shadow-lg transition-all hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25 disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			{#if isCreating}
 				<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>

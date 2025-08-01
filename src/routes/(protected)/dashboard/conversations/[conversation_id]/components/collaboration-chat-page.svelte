@@ -487,10 +487,10 @@
 	}
 </script>
 
-<div class="relative flex h-screen w-full flex-col overflow-hidden bg-[#2B2A2C]">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
 	<!-- Top header with dark glass morphism effect -->
 	<div
-		class="absolute left-0 right-0 top-0 z-10 h-12 border-b border-gray-700/50 bg-[#2B2A2C]/90 backdrop-blur-xl"
+		class="absolute left-0 right-0 top-0 z-10 h-12 border-b border-gray-700/50 backdrop-blur-xl"
 	>
 		<div class="flex h-full items-center justify-between px-4">
 			<div class="flex items-center gap-2">
@@ -764,7 +764,7 @@
 					<!-- Autocomplete popup -->
 					{#if showAutocomplete}
 						<div
-							class="absolute bottom-full left-4 right-4 z-50 mb-2 rounded-lg border border-gray-600 bg-[#2B2A2C] shadow-xl"
+							class="absolute bottom-full left-4 right-4 z-50 mb-2 rounded-lg border border-gray-600 shadow-xl"
 						>
 							<button
 								type="button"

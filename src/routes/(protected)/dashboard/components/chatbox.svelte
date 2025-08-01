@@ -187,85 +187,26 @@
 		</div>
 	{/if}
 
-	<!-- Enhanced Example Cards -->
-	<div class="space-y-6 pt-8">
-		<!-- <div class="text-center" in:fade={{ delay: 100 }}>
-            <h2 class="text-2xl font-semibold text-white mb-2">Get started with these examples</h2>
-            <p class="text-gray-400 ">Choose a topic or ask your own question</p>
-        </div> -->
-
-		<div
-			class="grid grid-cols-1 gap-6 lg:grid-cols-2"
-			in:scale={{ duration: 300, delay: 200, start: 0.98 }}
-		>
+	<!-- Example chips redesigned -->
+	<div class="space-y-4 pt-6">
+		<div class="flex flex-wrap gap-2" in:scale={{ duration: 250, delay: 150, start: 0.98 }}>
 			{#each examples as example, i}
 				<button
 					onclick={() => startWithExample(example.text)}
-					class="group relative overflow-hidden rounded-2xl border border-gray-700/50 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-6 text-left text-white shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-gray-600/70 hover:from-gray-700/60 hover:to-gray-800/60 hover:shadow-xl"
+					class="inline-flex items-center gap-2 rounded-3xl border border-[#2C2C2C] bg-[#1E1E1E] px-3 py-2 text-sm text-[#E0E0E0] transition-colors hover:border-[#4F4F4F] hover:bg-[#2C2C2C] disabled:opacity-60"
 					disabled={isProcessing}
-					in:scale={{ duration: 200, delay: i * 50, start: 0.95 }}
+					in:scale={{ duration: 180, delay: i * 40, start: 0.98 }}
 				>
-					<!-- Gradient overlay -->
-					<div
-						class="absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-10"
-						style="background: linear-gradient(135deg, {example.color}20, {example.color}05)"
-					></div>
-
-					<div class="relative z-10">
-						<div class="mb-4 flex items-start justify-between">
-							<div class="flex items-center gap-4">
-								<div
-									style="background-color: {example.color}"
-									class="rounded-xl p-3 shadow-lg transition-transform duration-300 group-hover:scale-110"
-								>
-									<Icon name={example.icon} iconSize="sm" iconClass="text-white" />
-								</div>
-								<div>
-									<div class="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
-										{example.category}
-									</div>
-									<div class="h-0.5 w-8 rounded" style="background-color: {example.color}"></div>
-								</div>
-							</div>
-							<div class="text-gray-500 transition-colors group-hover:text-gray-400">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-5 w-5"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M13 7l5 5m0 0l-5 5m5-5H6"
-									/>
-								</svg>
-							</div>
-						</div>
-
-						<p
-							class="font-medium leading-relaxed text-gray-200 transition-colors duration-300 group-hover:text-white"
-						>
-							{example.text}
-						</p>
-
-						<!-- Hover effect indicator -->
-						<div
-							class="absolute bottom-0 left-0 h-1 w-full origin-left scale-x-0 transform transition-transform duration-300 group-hover:scale-x-100"
-							style="background-color: {example.color}"
-						></div>
-					</div>
+					<span class="inline-block size-2.5 rounded-full" style="background-color: {example.color}"
+					></span>
+					<span class="opacity-80">{example.text}</span>
 				</button>
 			{/each}
 		</div>
-
-		<!-- Additional CTA -->
-		<div class="pt-8 text-center" in:fade={{ delay: 300 }}>
-			<div class="inline-flex items-center gap-2 text-sm text-gray-500">
+		<div class="pt-2 text-center" in:fade={{ delay: 250 }}>
+			<div class="inline-flex items-center gap-2 text-xs text-[#757575]">
 				<Icon name="lightbulb" iconClass="w-4 h-4" />
-				<span>Or type your own question in the search box above</span>
+				<span>Or type your own question above</span>
 			</div>
 		</div>
 	</div>

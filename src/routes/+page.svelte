@@ -18,7 +18,7 @@
 <!-- Main Container -->
 <div class="bg-[#1E1E20]">
 	<!-- Navigation -->
-	<header class="w-full border-b border-[#4A4A57] bg-[#2B2A2C] shadow">
+	<header class="w-full border-b border-[#4A4A57] shadow">
 		<div class="container mx-auto flex items-center justify-between px-4 py-4">
 			<a href="/" class="flex items-center text-xl font-bold text-[#F9F9FA]">
 				<img src="/images/mapit_logo_no_bg.png" alt="Mapit AI Logo" class="mr-2 h-8" />
@@ -81,7 +81,7 @@
 
 		<!-- Mobile Navigation -->
 		{#if mobileMenuOpen}
-			<div class="border-t border-[#4A4A57] bg-[#2B2A2C] md:hidden">
+			<div class="border-t border-[#4A4A57] md:hidden">
 				<ul class="space-y-3 px-4 py-3">
 					<li>
 						<a href="/" class="block text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]">Home</a>
@@ -171,7 +171,7 @@
 	</section>
 
 	<!-- Footer -->
-	<footer class="w-full border-t border-[#4A4A57] bg-[#2B2A2C] py-6 text-[#A0A0A8]">
+	<footer class="w-full border-t border-[#4A4A57] py-6 text-[#A0A0A8]">
 		<div class="container mx-auto flex flex-col items-center justify-between px-4 md:flex-row">
 			<p class="mb-4 md:mb-0">
 				&copy; {new Date().getFullYear()} Mapit AI Expert. All rights reserved.
