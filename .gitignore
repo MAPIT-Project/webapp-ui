@@ -28,3 +28,6 @@ vite.config.ts.timestamp-*
 csv_data_extractor/venv/**/*
 *.log
 *.csv#
+
+# Crush agent directory
+.crush
