@@ -5,10 +5,25 @@
 	import { getSpace } from '$lib/stores/collaborationStore.svelte';
 	import { conversationStore } from '$lib/stores/conversationStore';
 	import { scale, fade } from 'svelte/transition';
+	import { onMount, tick } from 'svelte';
 
 	let userInput = $state('');
 	let isProcessing = $state(false);
 	let error = $state<string | null>(null);
+	let scroller: HTMLDivElement;
+	let canPrev = $state(false);
+	let canNext = $state(false);
+
+	function updateArrows() {
+		if (!scroller) return;
+		canPrev = scroller.scrollLeft > 0;
+		canNext = scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 1;
+	}
+
+	function scrollByAmount(amount: number) {
+		if (!scroller) return;
+		scroller.scrollBy({ left: amount, behavior: 'smooth' });
+	}
 
 	async function handleSubmit() {
 		if (!userInput.trim() || isProcessing) return;
@@ -86,6 +101,10 @@
 		userInput = text;
 		handleSubmit();
 	}
+
+	onMount(() => {
+		Promise.resolve().then(updateArrows);
+	});
 </script>
 
 <div class="mx-auto w-full max-w-4xl" in:scale={{ duration: 300, start: 0.98 }}>
@@ -188,22 +207,55 @@
 	{/if}
 
 	<!-- Example chips redesigned -->
-	<div class="space-y-4 pt-6">
-		<div class="flex flex-wrap gap-2" in:scale={{ duration: 250, delay: 150, start: 0.98 }}>
-			{#each examples as example, i}
-				<button
-					onclick={() => startWithExample(example.text)}
-					class="inline-flex items-center gap-2 rounded-3xl border border-[#2C2C2C] bg-[#1E1E1E] px-3 py-2 text-sm text-[#E0E0E0] transition-colors hover:border-[#4F4F4F] hover:bg-[#2C2C2C] disabled:opacity-60"
-					disabled={isProcessing}
-					in:scale={{ duration: 180, delay: i * 40, start: 0.98 }}
-				>
-					<span class="inline-block size-2.5 rounded-full" style="background-color: {example.color}"
-					></span>
-					<span class="opacity-80">{example.text}</span>
-				</button>
-			{/each}
+	<div class="space-y-2 pt-6">
+		<div class="relative overflow-hidden" in:scale={{ duration: 200, delay: 120, start: 0.98 }}>
+			<button
+				aria-label="Previous"
+				class="absolute left-1 top-1/2 z-50 -translate-y-1/2 rounded-full border border-[#2C2C2C] bg-[#1E1E1E]/90 p-2 text-[#E0E0E0] hover:bg-[#2C2C2C] disabled:pointer-events-none disabled:opacity-0"
+				onclick={() => scrollByAmount(-600)}
+				disabled={!canPrev}
+			>
+				<Icon name="chevron_left" iconClass="w-5 h-5" />
+			</button>
+			<div
+				class="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-[#1C1C1C] to-transparent"
+			></div>
+			<div
+				class="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-[#1C1C1C] to-transparent"
+			></div>
+			<div
+				bind:this={scroller}
+				onscroll={updateArrows}
+				class="scrollbar-thin -mx-12 overflow-x-auto px-12 [mask-image:linear-gradient(to_right,transparent_0,black_40px,black_calc(100%-40px),transparent_100%)]"
+				style="scrollbar-width: none; -ms-overflow-style: none;"
+			>
+				<div class="flex w-max min-w-full gap-2">
+					{#each examples as example, i}
+						<button
+							onclick={() => startWithExample(example.text)}
+							class="inline-flex items-center gap-2 rounded-3xl border border-[#2C2C2C] bg-[#1E1E1E] px-3 py-2 text-sm text-[#E0E0E0] transition-colors hover:border-[#4F4F4F] hover:bg-[#2C2C2C] disabled:opacity-60"
+							disabled={isProcessing}
+							in:scale={{ duration: 150, delay: i * 30, start: 0.98 }}
+						>
+							<span
+								class="inline-block size-2.5 rounded-full"
+								style="background-color: {example.color}"
+							></span>
+							<span class="whitespace-nowrap opacity-80">{example.text}</span>
+						</button>
+					{/each}
+				</div>
+			</div>
+			<button
+				aria-label="Next"
+				class="absolute right-1 top-1/2 z-50 -translate-y-1/2 rounded-full border border-[#2C2C2C] bg-[#1E1E1E]/90 p-2 text-[#E0E0E0] hover:bg-[#2C2C2C] disabled:pointer-events-none disabled:opacity-0"
+				onclick={() => scrollByAmount(600)}
+				disabled={!canNext}
+			>
+				<Icon name="chevron_right" iconClass="w-5 h-5" />
+			</button>
 		</div>
-		<div class="pt-2 text-center" in:fade={{ delay: 250 }}>
+		<div class="pt-2 text-center" in:fade={{ delay: 220 }}>
 			<div class="inline-flex items-center gap-2 text-xs text-[#757575]">
 				<Icon name="lightbulb" iconClass="w-4 h-4" />
 				<span>Or type your own question above</span>
@@ -211,3 +263,9 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.scrollbar-thin::-webkit-scrollbar {
+		display: none;
+	}
+</style>
