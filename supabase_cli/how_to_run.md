@@ -4,7 +4,5 @@ Then inside this location run `supabase start`
 
 further instructions on how to setup the schema will follow...
 
-
 For self hosting with docker:
 https://supabase.com/docs/guides/self-hosting/docker
-

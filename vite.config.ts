@@ -4,6 +4,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [sveltekit()],
 	optimizeDeps: {
-		include: ['@supabase/auth-helpers-sveltekit'],
+		include: ['@supabase/auth-helpers-sveltekit']
 	}
 });

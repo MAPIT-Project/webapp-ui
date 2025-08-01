@@ -36,18 +36,22 @@
 	</div>
 {/if} -->
 
-{#if loading && !data.session} 
-	// Show loading indicator only if session is not yet available from server
-	// and still in the process of client-side initialization.
-	<div class="w-full h-screen flex items-center justify-center bg-gray-900">
-		<div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+{#if loading && !data.session}
+	// Show loading indicator only if session is not yet available from server // and still in the
+	process of client-side initialization.
+	<div
+		class="flex h-screen w-full items-center justify-center bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#121212]"
+	>
+		<div class="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
 	</div>
 {:else if !data.session && !loading}
-    <!-- This case should ideally be handled by the server redirect, but as a fallback -->
-    <div class="w-full h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
-        <p>Session expired or not found.</p>
-        <a href="/login" class="text-blue-400 hover:text-blue-300 mt-2">Go to Login</a>
-    </div>
+	<!-- This case should ideally be handled by the server redirect, but as a fallback -->
+	<div
+		class="flex h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#121212] text-[#E0E0E0]"
+	>
+		<p>Session expired or not found.</p>
+		<a href="/login" class="mt-2 text-blue-400 hover:text-blue-300">Go to Login</a>
+	</div>
 {:else}
 	<slot />
 {/if}

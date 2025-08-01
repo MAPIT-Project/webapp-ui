@@ -26,10 +26,10 @@ Since Realtime subscriptions respect RLS policies, make sure your `message` tabl
 CREATE POLICY "Users can read messages from accessible conversations" ON message
 FOR SELECT USING (
   conversation_id IN (
-    SELECT id FROM conversation 
-    WHERE user_id = auth.uid() 
+    SELECT id FROM conversation
+    WHERE user_id = auth.uid()
     OR collaboration_id IN (
-      SELECT collaboration_id FROM client_collaboration 
+      SELECT collaboration_id FROM client_collaboration
       WHERE client_id = (SELECT id FROM client WHERE auth_id = auth.uid())
     )
   )
@@ -39,10 +39,10 @@ FOR SELECT USING (
 CREATE POLICY "Users can insert messages to accessible conversations" ON message
 FOR INSERT WITH CHECK (
   conversation_id IN (
-    SELECT id FROM conversation 
-    WHERE user_id = auth.uid() 
+    SELECT id FROM conversation
+    WHERE user_id = auth.uid()
     OR collaboration_id IN (
-      SELECT collaboration_id FROM client_collaboration 
+      SELECT collaboration_id FROM client_collaboration
       WHERE client_id = (SELECT id FROM client WHERE auth_id = auth.uid())
     )
   )
@@ -59,6 +59,7 @@ FOR INSERT WITH CHECK (
 ## How It Works
 
 ### Real-time Flow:
+
 1. User sends a message via the input form
 2. Message is saved to the database via `/api/chat/websocket` POST endpoint
 3. Supabase Realtime automatically notifies all subscribers of the new message
@@ -66,6 +67,7 @@ FOR INSERT WITH CHECK (
 5. UI updates in real-time without page refresh
 
 ### Key Features:
+
 - **True WebSocket connections** via Supabase Realtime
 - **Automatic reconnection** if connection is lost
 - **Connection status indicator** shows "LIVE" or "OFFLINE"
@@ -86,6 +88,7 @@ FOR INSERT WITH CHECK (
    ```
 
 ### Connection Status:
+
 - **Green dot + "LIVE"**: Real-time connected and working
 - **Red dot + "OFFLINE"**: Connection failed or lost
 
@@ -96,4 +99,4 @@ FOR INSERT WITH CHECK (
 - **Better UX**: Messages appear immediately
 - **Automatic scaling**: Supabase handles WebSocket connections
 
-Your collaboration chat system is now powered by true WebSocket technology! 🚀 
+Your collaboration chat system is now powered by true WebSocket technology! 🚀

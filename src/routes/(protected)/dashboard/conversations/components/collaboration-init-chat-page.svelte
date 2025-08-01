@@ -1,92 +1,91 @@
 <script lang="ts">
-	import Icon from "$lib/components/generic/icon.svelte";
-	
+	import Icon from '$lib/components/generic/icon.svelte';
+
 	import { user } from '$lib/stores/sessionStore';
-	import { ensureClientExists } from "$lib/clients/clientService";
-	import { createConversation } from "$lib/clients/conversationService";
-	import { conversationStore } from "$lib/stores/conversationStore";
+	import { ensureClientExists } from '$lib/clients/clientService';
+	import { createConversation } from '$lib/clients/conversationService';
+	import { conversationStore } from '$lib/stores/conversationStore';
 	import { getSpace, getAllAvailableSpaces } from '$lib/stores/collaborationStore.svelte';
-	import { onMount } from "svelte";
-	import { goto } from "$app/navigation";
-	import { scale, fade } from "svelte/transition";
-	import ApiModeToggle from "../../components/api-mode-toggle.svelte";
-	import AIProviderSelector from "../../components/ai-provider-selector.svelte";
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { scale, fade } from 'svelte/transition';
+	import ApiModeToggle from '../../components/api-mode-toggle.svelte';
+	import AIProviderSelector from '../../components/ai-provider-selector.svelte';
 	import { fetchAvailableProviders } from '$lib/stores/aiProviderStore';
 
-	
 	let clientLoading: boolean = $state(true);
 	let clientError: string | null = $state(null);
 	let chatTitle: string = $state('');
 	let isCreatingChat: boolean = $state(false);
 	let titleError: string | null = $state(null);
-	
+
 	// Get current collaboration info
 	let currentSpaceName = $derived(() => {
 		const spaces = getAllAvailableSpaces();
 		const currentSpace = getSpace();
-		const space = spaces.find(s => s.id === currentSpace);
+		const space = spaces.find((s) => s.id === currentSpace);
 		return space?.name || 'Team Workspace';
 	});
-	
+
 	// Quick start templates
 	const chatTemplates = [
 		{
-			title: "Project Planning",
-			description: "Organize project tasks and timelines",
-			icon: "assignment",
-			color: "#3B82F6"
+			title: 'Project Planning',
+			description: 'Organize project tasks and timelines',
+			icon: 'assignment',
+			color: '#3B82F6'
 		},
 		{
-			title: "Brainstorming Session",
-			description: "Collaborate on new ideas and concepts",
-			icon: "lightbulb",
-			color: "#8B5CF6"
+			title: 'Brainstorming Session',
+			description: 'Collaborate on new ideas and concepts',
+			icon: 'lightbulb',
+			color: '#8B5CF6'
 		},
 		{
-			title: "Research Discussion", 
-			description: "Share findings and analyze data",
-			icon: "science",
-			color: "#10B981"
+			title: 'Research Discussion',
+			description: 'Share findings and analyze data',
+			icon: 'science',
+			color: '#10B981'
 		},
 		{
-			title: "Design Review",
-			description: "Review and iterate on designs",
-			icon: "palette",
-			color: "#F59E0B"
+			title: 'Design Review',
+			description: 'Review and iterate on designs',
+			icon: 'palette',
+			color: '#F59E0B'
 		}
 	];
-	
+
 	// Create client record if one doesn't exist
 	onMount(async () => {
-	    if ($user) {
-	        try {
-	            const client = await ensureClientExists($user.email?.split('@')[0]);
-	            if (!client) {
-	                console.error("Failed to create or find client record");
-	                clientError = "Failed to initialize user data";
-	            }
-	            // Fetch available AI providers
-	            await fetchAvailableProviders();
-	        } catch (err) {
-	            console.error("Error during client initialization:", err);
-	            clientError = "Error setting up user account";
-	        } finally {
-	            clientLoading = false;
-	        }
-	    }
+		if ($user) {
+			try {
+				const client = await ensureClientExists($user.email?.split('@')[0]);
+				if (!client) {
+					console.error('Failed to create or find client record');
+					clientError = 'Failed to initialize user data';
+				}
+				// Fetch available AI providers
+				await fetchAvailableProviders();
+			} catch (err) {
+				console.error('Error during client initialization:', err);
+				clientError = 'Error setting up user account';
+			} finally {
+				clientLoading = false;
+			}
+		}
 	});
 
 	async function handleCreateChat(customTitle?: string) {
 		const title = customTitle || chatTitle;
-		
+
 		// Validate title
 		if (!title.trim()) {
-			titleError = "Chat title is required";
+			titleError = 'Chat title is required';
 			return;
 		}
 
 		if (title.length > 30) {
-			titleError = "Chat title must be 30 characters or less";
+			titleError = 'Chat title must be 30 characters or less';
 			return;
 		}
 
@@ -95,17 +94,17 @@
 
 		try {
 			const currentSpace = getSpace();
-			
+
 			// Create conversation with a placeholder message that won't trigger AI
 			const conversation = await createConversation(
-				"Chat initialized", // This won't be shown to user, just used internally
+				'Chat initialized', // This won't be shown to user, just used internally
 				currentSpace === 'personal' ? null : currentSpace
 			);
 
 			if (conversation) {
 				// Update the conversation name to the user's title
 				await conversationStore.updateConversationName(conversation.id, title.trim());
-				
+
 				// Add to store
 				conversationStore.addConversation({
 					...conversation,
@@ -115,11 +114,11 @@
 				// Navigate to the new conversation
 				goto(`/dashboard/conversations/${conversation.id}`);
 			} else {
-				titleError = "Failed to create chat. Please try again.";
+				titleError = 'Failed to create chat. Please try again.';
 			}
 		} catch (error) {
 			console.error('Error creating chat:', error);
-			titleError = "An error occurred while creating the chat";
+			titleError = 'An error occurred while creating the chat';
 		} finally {
 			isCreatingChat = false;
 		}
@@ -138,146 +137,175 @@
 	}
 </script>
 
-<div class="w-full min-h-screen h-full flex relative bg-gradient-to-br from-[#2B2A2C] via-[#282729] to-[#252327]">
-    
-    <!-- Main content -->
-    <div class="flex-1 flex flex-col relative overflow-hidden">
-        <!-- Header Bar -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-700/30 bg-gradient-to-r from-gray-800/30 to-gray-900/30 backdrop-blur-sm">
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
-                        <Icon name="groups" iconClass="text-white text-sm" />
-                    </div>
-                    <div>
-                        <span class="text-white font-medium">Team Collaboration</span>
-                        <span class="text-xs text-purple-400 font-bold ml-2 bg-purple-500/20 px-2 py-0.5 rounded-full border border-purple-500/30">NEW CHAT</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- API Controls -->
-            <div class="flex items-center gap-3">
-                <AIProviderSelector />
-                <ApiModeToggle />
-            </div>
-        </div>
-    
-        <!-- Main Content Area -->
-        <div class="flex-1 flex items-center justify-center p-6 relative">
-            <!-- Background decoration -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                <div class="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-purple-500/5 blur-3xl"></div>
-                <div class="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-blue-500/5 blur-3xl"></div>
-            </div>
-            
-            {#if clientLoading}
-                <div class="flex flex-col items-center gap-6" in:fade={{ duration: 300 }}>
-                    <!-- Enhanced loading animation -->
-                    <div class="relative">
-                        <div class="w-16 h-16 rounded-full border-4 border-gray-700/30 border-t-purple-500 animate-spin"></div>
-                        <div class="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-500 animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
-                    </div>
-                    <div class="text-center">
-                        <h3 class="text-xl font-semibold text-white mb-2">Setting up team workspace</h3>
-                        <p class="text-gray-400">Initializing collaboration tools...</p>
-                    </div>
-                </div>
-            {:else if clientError}
-                <div class="w-full max-w-md" in:scale={{ duration: 300, start: 0.95 }}>
-                    <div class="bg-gradient-to-r from-red-900/40 to-red-800/40 border border-red-500/50 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
-                        <div class="flex items-start gap-4">
-                            <div class="p-3 bg-red-500/20 rounded-xl">
-                                <Icon name="error" iconClass="text-red-400 w-6 h-6" />
-                            </div>
-                            <div class="flex-1">
-                                <h3 class="text-lg font-semibold text-red-200 mb-2">Setup Error</h3>
-                                <p class="text-red-300 mb-4 text-sm leading-relaxed">{clientError}</p>
-                                <button 
-                                    class="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-medium shadow-lg hover:shadow-red-500/25"
-                                    onclick={() => window.location.reload()}
-                                >
-                                    <div class="flex items-center justify-center gap-2">
-                                        <Icon name="refresh" iconClass="w-4 h-4" />
-                                        Try Again
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {:else}
-                <div class="w-full max-w-4xl flex flex-col items-center" in:fade={{ duration: 400, delay: 100 }}>
-                    <!-- Welcome Section -->
-                    <div class="text-center mb-8" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
-                        <div class="inline-flex items-center gap-3 mb-4">
-                            <div class="size-11 rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                <Icon name="add_comment" iconClass="text-white text-lg" />
-                            </div>
-                            <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                                Start a new team chat
-                            </h1>
-                        </div>
-                        <!-- <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+<div
+	class="relative flex h-full min-h-screen w-full bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#121212]"
+>
+	<!-- Main content -->
+	<div class="relative flex flex-1 flex-col overflow-hidden">
+		<!-- Header Bar -->
+		<div class="flex items-center justify-between border-b border-[#2C2C2C] bg-[#1E1E1E] p-4">
+			<div class="flex items-center gap-3">
+				<div class="flex items-center gap-2">
+					<div
+						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-purple-600"
+					>
+						<Icon name="groups" iconClass="text-white text-sm" />
+					</div>
+					<div>
+						<span class="font-medium text-[#E0E0E0]">Team Collaboration</span>
+						<span
+							class="ml-2 rounded-full border border-[#4F4F4F] bg-[#3A3A3A] px-2 py-0.5 text-xs font-bold text-[#FFFFFF]"
+							>NEW CHAT</span
+						>
+					</div>
+				</div>
+			</div>
+
+			<!-- API Controls -->
+			<div class="flex items-center gap-3">
+				<AIProviderSelector />
+				<ApiModeToggle />
+			</div>
+		</div>
+
+		<!-- Main Content Area -->
+		<div class="relative flex flex-1 items-center justify-center p-6">
+			<!-- Background decoration -->
+			<div class="pointer-events-none absolute inset-0 overflow-hidden">
+				<div
+					class="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-purple-500/5 blur-3xl"
+				></div>
+				<div
+					class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-500/5 blur-3xl"
+				></div>
+			</div>
+
+			{#if clientLoading}
+				<div class="flex flex-col items-center gap-6" in:fade={{ duration: 300 }}>
+					<!-- Enhanced loading animation -->
+					<div class="relative">
+						<div
+							class="h-16 w-16 animate-spin rounded-full border-4 border-gray-700/30 border-t-purple-500"
+						></div>
+						<div
+							class="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-r-blue-500"
+							style="animation-direction: reverse; animation-duration: 1.5s;"
+						></div>
+					</div>
+					<div class="text-center">
+						<h3 class="mb-2 text-xl font-semibold text-[#E0E0E0]">Setting up team workspace</h3>
+						<p class="text-[#B0B0B0]">Initializing collaboration tools...</p>
+					</div>
+				</div>
+			{:else if clientError}
+				<div class="w-full max-w-md" in:scale={{ duration: 300, start: 0.95 }}>
+					<div
+						class="rounded-2xl border border-[#F44336]/50 bg-[#1E1E1E] p-6 shadow-xl backdrop-blur-sm"
+					>
+						<div class="flex items-start gap-4">
+							<div class="rounded-xl bg-red-500/20 p-3">
+								<Icon name="error" iconClass="text-red-400 w-6 h-6" />
+							</div>
+							<div class="flex-1">
+								<h3 class="mb-2 text-lg font-semibold text-[#F44336]">Setup Error</h3>
+								<p class="mb-4 text-sm leading-relaxed text-[#F44336]">{clientError}</p>
+								<button
+									class="w-full rounded-xl bg-[#8A2BE2] px-4 py-3 font-medium text-[#FFFFFF] transition-all hover:bg-[#A052E8]"
+									onclick={() => window.location.reload()}
+								>
+									<div class="flex items-center justify-center gap-2">
+										<Icon name="refresh" iconClass="w-4 h-4" />
+										Try Again
+									</div>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			{:else}
+				<div
+					class="flex w-full max-w-4xl flex-col items-center"
+					in:fade={{ duration: 400, delay: 100 }}
+				>
+					<!-- Welcome Section -->
+					<div class="mb-8 text-center" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
+						<div class="mb-4 inline-flex items-center gap-3">
+							<div
+								class="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg"
+							>
+								<Icon name="add_comment" iconClass="text-white text-lg" />
+							</div>
+							<h1 class="text-3xl font-bold text-[#E0E0E0]">Start a new team chat</h1>
+						</div>
+						<!-- <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
                             Create a collaborative space for your team in <span class="text-purple-400 font-medium">{currentSpaceName()}</span>. 
                             Work together, share ideas, and get AI assistance.
                         </p> -->
-                    </div>
-                    
-                    <!-- Chat Creation Form -->
-                    <div class="w-full max-w-lg mb-12" in:scale={{ duration: 400, delay: 300, start: 0.95 }}>
-                        <div class="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-700/50 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
-                            <div class="mb-6">
-                                <label for="chatTitle" class="block text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                                    <Icon name="edit" iconClass="text-purple-400 w-4 h-4" />
-                                    Chat Title
-                                </label>
-                                <input
-                                    id="chatTitle"
-                                    type="text"
-                                    bind:value={chatTitle}
-                                    onkeydown={handleKeyDown}
-                                    placeholder="Enter a descriptive chat title..."
-                                    maxlength="30"
-                                    class="w-full px-4 py-4 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all text-lg"
-                                    disabled={isCreatingChat}
-                                />
-                                <div class="flex justify-between items-center mt-3">
-                                    {#if titleError}
-                                        <span class="text-red-400 text-sm font-medium flex items-center gap-1">
-                                            <Icon name="error" iconClass="w-3 h-3" />
-                                            {titleError}
-                                        </span>
-                                    {:else}
-                                        <span class="text-gray-500 text-sm">Choose a clear, descriptive name</span>
-                                    {/if}
-                                    <span class="text-xs text-gray-400 font-medium px-2 py-1 bg-gray-700/50 rounded-full">
-                                        {chatTitle.length}/30
-                                    </span>
-                                </div>
-                            </div>
+					</div>
 
-                            <button
-                                onclick={() => handleCreateChat()}
-                                disabled={isCreatingChat || !chatTitle.trim() || chatTitle.length > 30}
-                                class="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl transition-all font-semibold shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2"
-                            >
-                                {#if isCreatingChat}
-                                    <div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                                    Creating Chat...
-                                {:else}
-                                    <Icon name="add" iconClass="w-5 h-5" />
-                                    Create Team Chat
-                                {/if}
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Start Templates -->
-                    <!-- <div class="w-full max-w-4xl" in:scale={{ duration: 400, delay: 400, start: 0.95 }}>
+					<!-- Chat Creation Form -->
+					<div class="mb-12 w-full max-w-lg" in:scale={{ duration: 400, delay: 300, start: 0.95 }}>
+						<div
+							class="rounded-2xl border border-[#2C2C2C] bg-[#1E1E1E] p-6 shadow-xl backdrop-blur-sm"
+						>
+							<div class="mb-6">
+								<label
+									for="chatTitle"
+									class="mb-3 block flex items-center gap-2 text-sm font-semibold text-[#E0E0E0]"
+								>
+									<Icon name="edit" iconClass="text-purple-400 w-4 h-4" />
+									Chat Title
+								</label>
+								<input
+									id="chatTitle"
+									type="text"
+									bind:value={chatTitle}
+									onkeydown={handleKeyDown}
+									placeholder="Enter a descriptive chat title..."
+									maxlength="30"
+									class="w-full rounded-xl border border-[#4F4F4F] bg-[#2C2C2C] px-4 py-4 text-lg text-[#E0E0E0] placeholder-[#B0B0B0] transition-all focus:border-[#8A2BE2]/50 focus:outline-none focus:ring-2 focus:ring-[#8A2BE2]/50"
+									disabled={isCreatingChat}
+								/>
+								<div class="mt-3 flex items-center justify-between">
+									{#if titleError}
+										<span class="flex items-center gap-1 text-sm font-medium text-red-400">
+											<Icon name="error" iconClass="w-3 h-3" />
+											{titleError}
+										</span>
+									{:else}
+										<span class="text-sm text-[#B0B0B0]">Choose a clear, descriptive name</span>
+									{/if}
+									<span
+										class="rounded-full bg-[#2C2C2C] px-2 py-1 text-xs font-medium text-[#B0B0B0]"
+									>
+										{chatTitle.length}/30
+									</span>
+								</div>
+							</div>
+
+							<button
+								onclick={() => handleCreateChat()}
+								disabled={isCreatingChat || !chatTitle.trim() || chatTitle.length > 30}
+								class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#8A2BE2] px-6 py-4 font-semibold text-[#FFFFFF] transition-all hover:bg-[#A052E8] disabled:cursor-not-allowed disabled:opacity-60"
+							>
+								{#if isCreatingChat}
+									<div
+										class="h-5 w-5 animate-spin rounded-full border-b-2 border-t-2 border-white"
+									></div>
+									Creating Chat...
+								{:else}
+									<Icon name="add" iconClass="w-5 h-5" />
+									Create Team Chat
+								{/if}
+							</button>
+						</div>
+					</div>
+
+					<!-- Quick Start Templates -->
+					<!-- <div class="w-full max-w-4xl" in:scale={{ duration: 400, delay: 400, start: 0.95 }}>
                         <div class="text-center mb-8">
                             <h2 class="text-2xl font-semibold text-white mb-2">Quick Start Templates</h2>
-                            <p class="text-gray-400">Get started faster with pre-made chat templates</p>
+                            <p class="text-[#B0B0B0]">Get started faster with pre-made chat templates</p>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -322,8 +350,8 @@
                             </div>
                         </div>
                     </div> -->
-                </div>
-            {/if}
-        </div>
-    </div>
+				</div>
+			{/if}
+		</div>
+	</div>
 </div>

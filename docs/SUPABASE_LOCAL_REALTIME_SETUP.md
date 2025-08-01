@@ -31,8 +31,8 @@ Check if Realtime is working by running:
 
 ```sql
 -- Check if message table is in the realtime publication
-SELECT schemaname, tablename 
-FROM pg_publication_tables 
+SELECT schemaname, tablename
+FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime';
 ```
 
@@ -51,6 +51,7 @@ ALTER publication supabase_realtime ADD TABLE message;
 ```
 
 Then run:
+
 ```bash
 supabase db reset
 ```
@@ -75,17 +76,20 @@ supabase db reset
 ### If Realtime still doesn't work:
 
 1. **Restart Supabase services:**
+
    ```bash
    supabase stop
    supabase start
    ```
 
 2. **Check the logs:**
+
    ```bash
    supabase logs
    ```
 
 3. **Verify the message table exists:**
+
    ```sql
    SELECT * FROM information_schema.tables WHERE table_name = 'message';
    ```
@@ -105,9 +109,10 @@ supabase db reset
 ## Expected Behavior
 
 Once setup correctly:
+
 - Your app should show "LIVE" status with a green dot
 - Messages should appear instantly across browser windows
 - The Realtime Inspector should show message events
 - Browser console should log "Collaboration chat subscription status: SUBSCRIBED"
 
-Your local Realtime setup should now be working! 🎉 
+Your local Realtime setup should now be working! 🎉

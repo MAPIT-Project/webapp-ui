@@ -1,15 +1,14 @@
 <script lang="ts">
-  import { getSpace } from '$lib/stores/collaborationStore.svelte';
-  import PersonalDashboard from './components/personal-dashboard.svelte';
-  import CollaborationDashboard from './components/collaboration-dashboard.svelte';
-  
-  // Track the space value reactively
-  let currentSpace = $derived(getSpace());
+	import { getSpace } from '$lib/stores/collaborationStore.svelte';
+	import PersonalDashboard from './components/personal-dashboard.svelte';
+	import CollaborationDashboard from './components/collaboration-dashboard.svelte';
+
+	// Track the space value reactively
+	let currentSpace = $derived(getSpace());
 </script>
 
 {#if currentSpace === 'personal'}
-  <PersonalDashboard />
+	<PersonalDashboard />
 {:else}
-  <CollaborationDashboard />
+	<CollaborationDashboard />
 {/if}
-
