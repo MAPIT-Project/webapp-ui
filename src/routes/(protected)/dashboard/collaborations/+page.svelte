@@ -74,7 +74,7 @@
 				const enhancedCollaboration = {
 					...newCollabData,
 					collaboratorsCount: 1, // New collaboration starts with 1 member (the creator)
-					client_collaboration: [{ role: 'owner' }]
+					client_collaboration: [{ role: 'owner' as const }]
 				};
 				collaborations = [enhancedCollaboration, ...collaborations];
 
@@ -130,23 +130,21 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-[#2B2A2C] via-[#282729] to-[#252327] p-6">
+<div class="min-h-screen p-6">
 	<div class="mx-auto max-w-7xl">
 		<!-- Header Section -->
 		<div class="mb-12" in:scale={{ duration: 300, start: 0.95 }}>
 			<div class="mb-4 flex items-center gap-4">
 				<div
-					class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg"
+					class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#8A2BE2] shadow-lg"
 				>
-					<Icon name="groups" iconClass="text-[#E0E0E0] text-xl" />
+					<Icon name="groups" iconClass="text-[#FFFFFF] text-xl" />
 				</div>
 				<div>
-					<h1
-						class="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-4xl font-bold text-transparent"
-					>
+					<h1 class="text-3xl font-bold text-[#E0E0E0]">
 						Team Workspaces
 					</h1>
-					<p class="mt-1 text-lg text-gray-400">Create and manage your collaborative projects</p>
+					<p class="mt-1 text-lg text-[#B0B0B0]">Create and manage your collaborative projects</p>
 				</div>
 			</div>
 
@@ -155,14 +153,14 @@
 				<div class="flex items-center gap-6">
 					<div class="flex items-center gap-2 text-gray-400">
 						<Icon name="folder" iconClass="w-5 h-5" />
-						<span class="font-medium"
+						<span class="font-medium text-[#E0E0E0]"
 							>{collaborations.length} workspace{collaborations.length !== 1 ? 's' : ''}</span
 						>
 					</div>
 					{#if collaborations.length > 0}
 						<div class="flex items-center gap-2 text-gray-400">
 							<Icon name="people" iconClass="w-5 h-5" />
-							<span class="font-medium"
+							<span class="font-medium text-[#E0E0E0]"
 								>{collaborations.reduce((sum, c) => sum + (c.collaboratorsCount || 1), 0)} total members</span
 							>
 						</div>
@@ -171,7 +169,7 @@
 
 				<button
 					onclick={openModal}
-					class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3 font-medium text-[#E0E0E0] shadow-lg transition-all hover:scale-105 hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25"
+					class="flex items-center gap-2 rounded-lg bg-[#8A2BE2] px-6 py-3 font-medium text-[#FFFFFF] shadow-lg transition-all hover:bg-[#A052E8]"
 				>
 					<Icon name="add" iconClass="w-5 h-5" />
 					New Workspace
@@ -183,14 +181,14 @@
 		{#if error}
 			<div class="mb-8" in:scale={{ duration: 300, start: 0.95 }}>
 				<div
-					class="rounded-xl border border-red-500/50 bg-gradient-to-r from-red-900/40 to-red-800/40 p-4 shadow-lg backdrop-blur-sm"
+					class="rounded-lg border border-[#F44336] bg-[#1E1E1E] p-4 shadow-lg"
 				>
 					<div class="flex items-start gap-3">
-						<Icon name="error" iconClass="text-red-400 w-5 h-5 mt-0.5" />
+						<Icon name="error" iconClass="text-[#F44336] w-5 h-5 mt-0.5" />
 						<div class="flex-1">
-							<p class="font-medium text-red-200">{error}</p>
+							<p class="font-medium text-[#E0E0E0]">{error}</p>
 						</div>
-						<button onclick={clearError} class="text-red-400 transition-colors hover:text-red-300">
+						<button onclick={clearError} class="text-[#F44336] transition-colors hover:text-[#F44336]/80">
 							<Icon name="close" iconClass="w-4 h-4" />
 						</button>
 					</div>
@@ -204,18 +202,18 @@
 				<!-- Loading Skeletons -->
 				{#each Array(6) as _, i}
 					<div
-						class="h-64 animate-pulse rounded-2xl border border-[#2C2C2C] bg-gradient-to-br from-gray-800/40 to-gray-900/40 p-6"
+						class="h-64 animate-pulse rounded-[12px] border border-[#4F4F4F] bg-[#1E1E1E] p-4 shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
 						in:scale={{ duration: 200, delay: i * 50, start: 0.95 }}
 					>
 						<div class="space-y-4">
-							<div class="h-6 rounded-lg bg-gray-700/50"></div>
+							<div class="h-6 rounded-[8px] bg-[#3A3A3A]"></div>
 							<div class="space-y-2">
-								<div class="h-3 rounded bg-gray-700/30"></div>
-								<div class="h-3 w-3/4 rounded bg-gray-700/30"></div>
-								<div class="h-3 w-1/2 rounded bg-gray-700/30"></div>
+								<div class="h-3 rounded bg-[#3A3A3A]"></div>
+								<div class="h-3 w-3/4 rounded bg-[#3A3A3A]"></div>
+								<div class="h-3 w-1/2 rounded bg-[#3A3A3A]"></div>
 							</div>
-							<div class="mt-auto border-t border-gray-700/30 pt-4">
-								<div class="h-4 w-1/3 rounded bg-gray-700/30"></div>
+							<div class="mt-auto border-t border-[#4F4F4F] pt-4">
+								<div class="h-4 w-1/3 rounded bg-[#3A3A3A]"></div>
 							</div>
 						</div>
 					</div>
@@ -241,18 +239,18 @@
 				<div in:scale={{ duration: 300, delay: collaborations.length * 50, start: 0.95 }}>
 					<button
 						onclick={openModal}
-						class="group flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-600/50 bg-gradient-to-br from-gray-800/20 to-gray-900/20 transition-all duration-300 hover:border-purple-500/50 hover:from-purple-500/10 hover:to-purple-600/10"
+						class="group flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-[#4F4F4F] bg-[#1E1E1E] shadow-[0_4px_6px_rgba(0,0,0,0.1)] transition-all duration-300 hover:border-[#8A2BE2] hover:shadow-[0_4px_6px_rgba(138,43,226,0.1)]"
 						aria-label="Create new workspace"
 					>
 						<div
-							class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-500/20 to-purple-600/20 transition-transform group-hover:scale-110"
+							class="mb-4 flex h-16 w-16 items-center justify-center rounded-[8px] border border-[#8A2BE2] bg-[#1E1E1E] transition-transform group-hover:scale-110"
 						>
-							<Icon name="add" iconClass="text-purple-400 w-5.5 h-4" />
+							<Icon name="add" iconClass="text-[#8A2BE2] w-5.5 h-4" />
 						</div>
-						<span class="font-medium text-gray-400 transition-colors group-hover:text-purple-400"
+						<span class="font-medium text-[#B0B0B0] transition-colors group-hover:text-[#8A2BE2]"
 							>Create Workspace</span
 						>
-						<span class="mt-1 text-sm text-gray-500">Start collaborating with your team</span>
+						<span class="mt-1 text-sm text-[#757575]">Start collaborating with your team</span>
 					</button>
 				</div>
 			{/if}
@@ -272,7 +270,7 @@
 				</p>
 				<button
 					onclick={openModal}
-					class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-8 py-4 font-semibold text-[#E0E0E0] shadow-lg transition-all hover:scale-105 hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25"
+					class="flex items-center gap-2 rounded-lg bg-[#8A2BE2] px-8 py-4 font-semibold text-[#FFFFFF] shadow-lg transition-all hover:bg-[#A052E8]"
 				>
 					<Icon name="add" iconClass="w-5 h-5" />
 					Create Your First Workspace
@@ -304,7 +302,7 @@
 			<div class="relative">
 				<input
 					id="collab-title"
-					class="w-full rounded-xl border border-gray-600/50 bg-gray-800/50 px-4 py-3 text-[#E0E0E0] placeholder-gray-400 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+					class="w-full rounded-lg border border-[#4F4F4F] bg-[#2C2C2C] px-4 py-3 text-[#E0E0E0] placeholder-[#B0B0B0] transition-all focus:border-[#8A2BE2] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2]"
 					placeholder="Enter a descriptive workspace name"
 					bind:value={newTitle}
 					maxlength={50}
@@ -312,7 +310,7 @@
 				/>
 				{#if newTitle.length > 0}
 					<div
-						class="absolute right-3 top-3 rounded-full bg-gray-700/50 px-2 py-1 text-xs text-gray-400"
+						class="absolute right-3 top-3 rounded-full bg-[#3A3A3A] px-2 py-1 text-xs text-[#B0B0B0]"
 					>
 						{newTitle.length}/50
 					</div>
@@ -329,7 +327,7 @@
 			<div class="relative">
 				<textarea
 					id="collab-desc"
-					class="w-full resize-none rounded-xl border border-gray-600/50 bg-gray-800/50 px-4 py-3 text-[#E0E0E0] placeholder-gray-400 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+					class="w-full resize-none rounded-lg border border-[#4F4F4F] bg-[#2C2C2C] px-4 py-3 text-[#E0E0E0] placeholder-[#B0B0B0] transition-all focus:border-[#8A2BE2] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2]"
 					placeholder="Describe what this workspace is for and what your team will work on"
 					bind:value={newDescription}
 					maxlength={200}
@@ -338,7 +336,7 @@
 				></textarea>
 				{#if newDescription.length > 0}
 					<div
-						class="absolute bottom-3 right-3 rounded-full bg-gray-700/50 px-2 py-1 text-xs text-gray-400"
+						class="absolute bottom-3 right-3 rounded-full bg-[#3A3A3A] px-2 py-1 text-xs text-[#B0B0B0]"
 					>
 						{newDescription.length}/200
 					</div>
@@ -348,12 +346,12 @@
 
 		<!-- Info Box -->
 		<div
-			class="rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-purple-600/10 p-4"
+			class="rounded-lg border border-[#8A2BE2] bg-[#1E1E1E] p-4"
 		>
 			<div class="flex items-start gap-3">
-				<Icon name="info" iconClass="text-purple-400 w-5 h-5 mt-0.5" />
-				<div class="text-sm leading-relaxed text-gray-300">
-					<p class="mb-1 font-medium text-purple-300">About Workspaces</p>
+				<Icon name="info" iconClass="text-[#8A2BE2] w-5 h-5 mt-0.5" />
+				<div class="text-sm leading-relaxed text-[#E0E0E0]">
+					<p class="mb-1 font-medium text-[#8A2BE2]">About Workspaces</p>
 					<p>
 						Workspaces allow you to organize team projects with shared conversations, documents, and
 						AI assistance. You can invite team members and collaborate in real-time.
@@ -366,7 +364,7 @@
 	<div slot="footer" class="flex justify-end gap-3 border-t border-[#2C2C2C] p-6">
 		<button
 			onclick={closeModal}
-			class="rounded-xl border border-gray-600/50 px-6 py-2.5 font-medium text-gray-300 transition-all hover:border-gray-500/50 hover:bg-gray-700/30"
+			class="rounded-lg border border-[#4F4F4F] px-6 py-2.5 font-medium text-[#B0B0B0] transition-all hover:border-[#757575] hover:bg-[#3A3A3A]"
 			disabled={isCreating}
 		>
 			Cancel
@@ -374,7 +372,7 @@
 		<button
 			onclick={addCollaboration}
 			disabled={!newTitle.trim() || isCreating}
-			class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-2.5 font-medium text-[#E0E0E0] shadow-lg transition-all hover:from-purple-700 hover:to-purple-800 hover:shadow-purple-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+			class="flex items-center justify-center gap-2 rounded-lg bg-[#8A2BE2] px-6 py-2.5 font-medium text-[#FFFFFF] shadow-lg transition-all hover:bg-[#A052E8] disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			{#if isCreating}
 				<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>

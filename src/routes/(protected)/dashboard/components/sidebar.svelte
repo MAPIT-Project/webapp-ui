@@ -26,7 +26,7 @@
 
 	// Custom dropdown state
 	let showSpaceDropdown = $state(false);
-	let dropdownElement: HTMLDivElement;
+	let dropdownElement: HTMLDivElement | undefined = $state();
 
 	onMount(() => {
 		// Handle async initialization
@@ -257,16 +257,16 @@
 					<!-- Dropdown Menu -->
 					{#if showSpaceDropdown}
 						<div
-							class="absolute left-0 right-0 top-full mt-2 {isPersonalSpace(currentSpace)
-								? 'border border-gray-600/40 bg-gradient-to-b from-gray-800/95 to-gray-900/95'
-								: 'border border-gray-600/40 bg-gradient-to-b from-gray-800/95 to-gray-900/95'} z-50 overflow-hidden rounded-xl shadow-2xl backdrop-blur-sm"
+							class="absolute left-0 right-0 top-full mt-2 border border-[#4F4F4F] bg-[#1E1E1E] z-50 overflow-hidden rounded-xl shadow-2xl backdrop-blur-sm"
 						>
 							<div class="space-y-1 p-2">
 								{#each spaces as space (space.id)}
 									<button
-										class="group w-full rounded-lg p-3 text-left transition-all duration-200 hover:bg-gray-700/50 {currentSpace ===
+										class="group w-full rounded-lg p-3 text-left transition-all duration-200 hover:bg-[#4F4F4F] {currentSpace ===
 										space.id
-											? 'border border-blue-500/30 bg-gradient-to-r from-blue-600/20 to-purple-600/20'
+											? isPersonalSpace(space.id)
+												? 'border border-blue-500/30 bg-blue-600/20'
+												: 'border border-[#8A2BE2] bg-[#8A2BE2]/20'
 											: 'border border-transparent'}"
 										onclick={() => handleSpaceChange(space.id)}
 									>
@@ -277,7 +277,7 @@
 													space.id
 												)
 													? 'bg-gradient-to-r from-blue-500 to-blue-600'
-													: 'bg-gradient-to-r from-purple-500 to-purple-600'} shadow-md"
+													: 'bg-[#8A2BE2]'} shadow-md"
 											>
 												<Icon
 													name={isPersonalSpace(space.id) ? 'person' : 'groups'}
@@ -288,20 +288,22 @@
 											<!-- Space Name -->
 											<div class="min-w-0 flex-1">
 												<div
-													class="truncate text-sm font-medium text-white {currentSpace === space.id
-														? 'text-blue-100'
-														: 'group-hover:text-blue-100'}"
+													class="truncate text-sm font-medium {currentSpace === space.id
+														? isPersonalSpace(space.id)
+															? 'text-blue-100'
+															: 'text-[#BB86FC]'
+														: 'text-[#E0E0E0] group-hover:text-[#E0E0E0]'}"
 												>
 													{space.name}
 												</div>
-												<div class="text-xs text-gray-400">
+												<div class="text-xs text-[#B0B0B0]">
 													{isPersonalSpace(space.id) ? 'Personal workspace' : 'Team collaboration'}
 												</div>
 											</div>
 
 											<!-- Current Indicator -->
 											{#if currentSpace === space.id}
-												<div class="text-blue-400">
+												<div class="{isPersonalSpace(space.id) ? 'text-blue-400' : 'text-[#8A2BE2]'}">
 													<Icon name="check" iconClass="w-4 h-4" />
 												</div>
 											{/if}
@@ -311,10 +313,10 @@
 							</div>
 
 							<!-- Footer -->
-							<div class="border-t border-gray-700/50 bg-gray-800/50 p-3">
+							<div class="border-t border-[#4F4F4F] bg-[#2C2C2C] p-3">
 								<a
 									href="/dashboard/collaborations"
-									class="flex items-center gap-2 text-xs font-medium text-gray-400 transition-colors hover:text-blue-400"
+									class="flex items-center gap-2 text-xs font-medium text-[#B0B0B0] transition-colors {isPersonalSpace(currentSpace) ? 'hover:text-blue-400' : 'hover:text-[#BB86FC]'}"
 									onclick={() => (showSpaceDropdown = false)}
 								>
 									<Icon name="add" iconClass="w-3 h-3" />

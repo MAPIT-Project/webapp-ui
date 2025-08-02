@@ -57,10 +57,10 @@
 </script>
 
 <div
-	class="group relative h-64 cursor-pointer overflow-hidden rounded-2xl transition-all duration-300 {isActive
-		? 'border-2 border-purple-500/50 bg-gradient-to-br from-purple-600/20 to-purple-700/20 shadow-lg shadow-purple-500/20'
-		: 'border border-gray-700/50 bg-gradient-to-br from-gray-800/40 to-gray-900/40 hover:border-gray-600/70'} 
-    backdrop-blur-sm hover:scale-[1.02] hover:shadow-xl"
+	class="group relative h-64 cursor-pointer overflow-hidden rounded-[12px] bg-[#1E1E1E] transition-all duration-300 {isActive
+		? 'border border-[#8A2BE2] shadow-[0_4px_6px_rgba(138,43,226,0.1)]'
+		: 'border border-[#4F4F4F] hover:border-[#8A2BE2] shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_6px_rgba(138,43,226,0.1)]'} 
+    hover:scale-[1.02]"
 	onclick={handleClick}
 	onkeydown={(e) => {
 		if (e.key === 'Enter' || e.key === ' ') {
@@ -75,10 +75,10 @@
 	<!-- Active indicator -->
 	{#if isActive}
 		<div
-			class="absolute left-3 top-3 flex items-center gap-2 rounded-full border border-purple-400/30 bg-purple-500/20 px-2 py-1 backdrop-blur-sm"
+			class="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-[#8A2BE2] bg-[#2C2C2C] px-2 py-1"
 		>
-			<div class="h-2 w-2 animate-pulse rounded-full bg-purple-400"></div>
-			<span class="text-xs font-medium text-purple-300">Active</span>
+			<div class="h-2 w-2 animate-pulse rounded-full bg-[#8A2BE2]"></div>
+			<span class="text-xs font-medium text-[#E0E0E0]">Active</span>
 		</div>
 	{/if}
 
@@ -87,7 +87,7 @@
 		<button
 			type="button"
 			onclick={handleDelete}
-			class="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 opacity-0 transition-all hover:bg-red-500/20 hover:text-red-300 group-hover:opacity-100"
+			class="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-[#F44336] bg-[#2C2C2C] text-[#F44336] opacity-0 transition-all hover:bg-[#F44336] hover:text-[#FFFFFF] group-hover:opacity-100"
 			aria-label="Delete workspace"
 		>
 			<Icon name="delete" iconClass="w-4 h-4" />
@@ -97,29 +97,30 @@
 	<!-- Delete confirmation overlay -->
 	{#if showDeleteConfirm}
 		<div
-			class="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-2xl bg-gray-900/95 p-6 backdrop-blur-sm"
+			class="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-xl bg-[#121212] p-6"
+			style="background-color: rgba(18, 18, 18, 0.95);"
 		>
 			<div
-				class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/20"
+				class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[#F44336] bg-[#2C2C2C]"
 			>
-				<Icon name="warning" iconClass="text-red-400 w-6 h-6" />
+				<Icon name="warning" iconClass="text-[#F44336] w-6 h-6" />
 			</div>
-			<h4 class="mb-2 text-center text-lg font-semibold text-white">Delete Workspace?</h4>
-			<p class="mb-6 max-w-xs text-center text-sm text-gray-400">
+			<h4 class="mb-2 text-center text-lg font-semibold text-[#E0E0E0]">Delete Workspace?</h4>
+			<p class="mb-6 max-w-xs text-center text-sm text-[#B0B0B0]">
 				This action cannot be undone. All conversations and data will be permanently removed.
 			</p>
 			<div class="flex gap-3">
 				<button
 					type="button"
 					onclick={cancelDelete}
-					class="rounded-xl border border-gray-600/50 bg-gray-700/50 px-4 py-2 font-medium text-gray-300 transition-all hover:bg-gray-600/50"
+					class="rounded-lg border border-[#4F4F4F] bg-[#2C2C2C] px-4 py-2 font-medium text-[#E0E0E0] transition-all hover:bg-[#3A3A3A]"
 				>
 					Cancel
 				</button>
 				<button
 					type="button"
 					onclick={confirmDelete}
-					class="rounded-xl bg-red-600 px-4 py-2 font-medium text-white shadow-lg transition-all hover:bg-red-700"
+					class="rounded-lg bg-[#F44336] px-4 py-2 font-medium text-[#FFFFFF] shadow-lg transition-all hover:bg-[#D32F2F]"
 				>
 					Delete
 				</button>
@@ -128,25 +129,25 @@
 	{/if}
 
 	<!-- Main content -->
-	<div class="flex h-full flex-col p-6">
+	<div class="flex h-full flex-col p-4">
 		<!-- Header -->
 		<div class="mb-4 flex-shrink-0 {isActive ? 'pt-8' : 'pt-2'}">
-			<h3 class="mb-2 line-clamp-2 pr-8 text-xl font-bold text-white">{title}</h3>
-			<p class="line-clamp-3 text-sm leading-relaxed text-gray-400">
+			<h3 class="mb-2 line-clamp-2 pr-8 text-xl font-bold text-[#E0E0E0]">{title}</h3>
+			<p class="line-clamp-3 text-sm leading-relaxed text-[#B0B0B0]">
 				{description || 'No description provided'}
 			</p>
 		</div>
 
 		<!-- Footer -->
-		<div class="mt-auto border-t border-gray-700/30 pt-4">
+		<div class="mt-auto border-t border-[#4F4F4F] pt-4">
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-2">
 					<div
-						class="flex h-8 w-8 items-center justify-center rounded-lg border border-purple-500/30 bg-gradient-to-r from-purple-500/20 to-purple-600/20"
+						class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#8A2BE2] bg-[#3A3A3A]"
 					>
-						<Icon name="people" iconClass="text-purple-400 w-4 h-4" />
+						<Icon name="people" iconClass="text-[#8A2BE2] w-4 h-4" />
 					</div>
-					<span class="text-sm font-medium text-gray-300">
+					<span class="text-sm font-medium text-[#E0E0E0]">
 						{collaboratorsCount}
 						{collaboratorsCount === 1 ? 'member' : 'members'}
 					</span>
@@ -154,10 +155,10 @@
 
 				{#if isOwner}
 					<div
-						class="flex items-center gap-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1"
+						class="flex items-center gap-1 rounded-[8px] border border-[#FFC107] bg-[#3A3A3A] px-2 py-1"
 					>
-						<Icon name="star" iconClass="text-amber-400 w-3 h-3" />
-						<span class="text-xs font-medium text-amber-400">Owner</span>
+						<Icon name="star" iconClass="text-[#FFC107] w-3 h-3" />
+						<span class="text-xs font-medium text-[#FFC107]">Owner</span>
 					</div>
 				{/if}
 			</div>
@@ -166,6 +167,6 @@
 
 	<!-- Hover effect overlay -->
 	<div
-		class="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+		class="pointer-events-none absolute inset-0 rounded-[12px] bg-gradient-to-t from-[#121212] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-20"
 	></div>
 </div>
