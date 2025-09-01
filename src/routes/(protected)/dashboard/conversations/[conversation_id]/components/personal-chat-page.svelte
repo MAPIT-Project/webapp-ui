@@ -207,6 +207,7 @@
 
 				let currentAnswer = '';
 				let finalData: any = null;
+				let streamMetadata: any = null; // Store metadata separately
 				let lastSaveTime = Date.now();
 				let lastSavedLength = 0;
 				const SAVE_INTERVAL_MS = 3000; // Save every 3 seconds
@@ -228,6 +229,7 @@
 				currentStreamingService = getStreamingAIResponse(question, {
 					onMetadata: (data) => {
 						console.log('Streaming metadata:', data);
+						streamMetadata = data; // Store metadata for later use
 					},
 
 					onProgress: (data) => {
@@ -236,6 +238,7 @@
 					},
 
 					onToken: (token, fullAnswer) => {
+						console.log('onToken called with:', token, 'Full answer length:', fullAnswer.length);
 						currentAnswer = fullAnswer;
 						// Update the message in the UI immediately
 						const messageIndex = messages.findIndex((m) => m.id === aiMessage.id);
@@ -246,6 +249,9 @@
 								text: fullAnswer
 							};
 							messages = updatedMessages;
+							console.log('Updated message in UI with text:', fullAnswer.substring(0, 100) + '...');
+						} else {
+							console.log('Message not found in array for ID:', aiMessage.id);
 						}
 
 						// Check if we should save progress to database
@@ -262,15 +268,18 @@
 						console.log('Streaming complete:', data);
 						finalData = data;
 
+						// Extract metadata - could be from complete event, metadata stored separately, or data itself
+						const metadata = streamMetadata || finalData || data;
+						
 						// Final save with complete tracking data
 						await saveProgress(currentAnswer || data.answer, {
-							ai_provider: data.ai_provider,
-							ai_version: data.ai_version,
-							model_used: data.logs?.model_used,
-							data_source: data.data_source,
-							processing_time: data.processing_time,
-							projects_found: data.projects_found,
-							logs: data.logs
+							ai_provider: metadata.ai_provider,
+							ai_version: metadata.ai_version,
+							model_used: metadata.logs?.model_used,
+							data_source: metadata.data_source,
+							processing_time: metadata.processing_time,
+							projects_found: metadata.projects_found,
+							logs: metadata.logs
 						});
 
 						// Update the local message object with metadata for immediate UI display
@@ -281,12 +290,12 @@
 								...updatedMessages[messageIndex],
 								text: currentAnswer || data.answer,
 								// Add metadata fields using camelCase to match TypeScript types
-								aiProvider: data.ai_provider,
-								aiVersion: data.ai_version,
-								modelUsed: data.logs?.model_used,
-								dataSource: data.data_source,
-								processingTime: data.processing_time,
-								projectsFound: data.projects_found
+								aiProvider: metadata.ai_provider,
+								aiVersion: metadata.ai_version,
+								modelUsed: metadata.logs?.model_used,
+								dataSource: metadata.data_source,
+								processingTime: metadata.processing_time,
+								projectsFound: metadata.projects_found
 							};
 							messages = updatedMessages;
 						}

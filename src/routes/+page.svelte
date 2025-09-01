@@ -16,18 +16,18 @@
 />
 
 <!-- Main Container -->
-<div class="bg-[#1E1E20]">
+<div class="bg-[#121212]">
 	<!-- Navigation -->
-	<header class="w-full border-b border-[#4A4A57] shadow">
+	<header class="w-full border-b border-[#4F4F4F] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
 		<div class="container mx-auto flex items-center justify-between px-4 py-4">
-			<a href="/" class="flex items-center text-xl font-bold text-[#F9F9FA]">
+			<a href="/" class="flex items-center text-xl font-bold text-[#E0E0E0]">
 				<img src="/images/mapit_logo_no_bg.png" alt="Mapit AI Logo" class="mr-2 h-8" />
 				Mapit AI Expert
 			</a>
 
 			<!-- Mobile menu button -->
 			<button
-				class="rounded-md p-2 text-[#A0A0A8] hover:bg-[#383842] hover:text-[#F9F9FA] md:hidden"
+				class="rounded-[8px] p-2 text-[#B0B0B0] hover:bg-[#3A3A3A] hover:text-[#E0E0E0] md:hidden transition-colors duration-300"
 				on:click={toggleMobileMenu}
 				aria-label="Toggle mobile menu"
 			>
@@ -60,18 +60,18 @@
 			<nav class="hidden md:block">
 				<ul class="flex space-x-6">
 					<li>
-						<a href="/" class="text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]">Home</a>
+						<a href="/" class="text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]">Home</a>
 					</li>
 					<li>
-						<a href="/about" class="text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]">About</a>
+						<a href="/about" class="text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]">About</a>
 					</li>
 					<li>
-						<a href="/features" class="text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]"
+						<a href="/features" class="text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]"
 							>Features</a
 						>
 					</li>
 					<li>
-						<a href="/contact" class="text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]"
+						<a href="/contact" class="text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]"
 							>Contact</a
 						>
 					</li>
@@ -81,23 +81,23 @@
 
 		<!-- Mobile Navigation -->
 		{#if mobileMenuOpen}
-			<div class="border-t border-[#4A4A57] md:hidden">
+			<div class="border-t border-[#4F4F4F] md:hidden">
 				<ul class="space-y-3 px-4 py-3">
 					<li>
-						<a href="/" class="block text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]">Home</a>
+						<a href="/" class="block text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]">Home</a>
 					</li>
 					<li>
-						<a href="/about" class="block text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]"
+						<a href="/about" class="block text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]"
 							>About</a
 						>
 					</li>
 					<li>
-						<a href="/features" class="block text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]"
+						<a href="/features" class="block text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]"
 							>Features</a
 						>
 					</li>
 					<li>
-						<a href="/contact" class="block text-[#A0A0A8] transition-colors hover:text-[#F9F9FA]"
+						<a href="/contact" class="block text-[#B0B0B0] transition-colors duration-300 hover:text-[#BB86FC]"
 							>Contact</a
 						>
 					</li>
@@ -107,18 +107,18 @@
 	</header>
 
 	<!-- Hero Section -->
-	<section class="w-full bg-[#2F2F33] text-[#F9F9FA]">
+	<section class="w-full bg-[#1E1E1E] text-[#E0E0E0]">
 		<div class="container mx-auto px-4 py-20 text-center">
-			<h1 class="mb-4 break-words text-4xl font-extrabold md:text-5xl">
+			<h1 class="mb-4 break-words text-4xl font-bold md:text-5xl">
 				Mapit AI Domain Expert Tool
 			</h1>
-			<p class="mx-auto mb-8 max-w-2xl text-lg text-[#A0A0A8] md:text-xl">
+			<p class="mx-auto mb-8 max-w-2xl text-lg text-[#B0B0B0] md:text-xl">
 				Empowering domain experts with advanced AI-driven insights—bridging cutting-edge technology
 				with deep subject expertise.
 			</p>
 			<a
 				href="/dashboard"
-				class="inline-block rounded-full bg-[#525252] px-8 py-3 font-semibold text-[#F9F9FA] shadow transition-colors hover:bg-[#606060]"
+				class="inline-block rounded-[8px] bg-[#8A2BE2] px-8 py-3 font-medium text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] transition-all duration-300 hover:bg-[#A052E8]"
 			>
 				Get Started
 			</a>
@@ -129,14 +129,14 @@
 	<section class="container mx-auto px-4 py-16">
 		<div class="grid grid-cols-1 gap-12 md:grid-cols-2">
 			<div>
-				<h2 class="mb-4 text-2xl font-bold text-[#F9F9FA]">About Mapit AI</h2>
-				<p class="mb-4 leading-relaxed text-[#A0A0A8]">
+				<h2 class="mb-4 text-2xl font-semibold text-[#E0E0E0]">About Mapit AI</h2>
+				<p class="mb-4 leading-relaxed text-[#B0B0B0]">
 					The Mapit AI Expert tool is a core part of the MAPIT project, designed to integrate
 					domain-specific knowledge with state-of-the-art AI. By leveraging a unique blend of
 					technical expertise and advanced algorithms, we empower experts in various domains to
 					extract, analyze, and apply insights with greater efficiency.
 				</p>
-				<p class="leading-relaxed text-[#A0A0A8]">
+				<p class="leading-relaxed text-[#B0B0B0]">
 					Whether you are a researcher, a professional, or simply curious about the intersection of
 					AI and domain expertise, our platform provides a comprehensive suite of tools to support
 					your journey.
@@ -147,23 +147,23 @@
 				<img
 					src="/images/mapit_logo_no_bg.png"
 					alt="Mapit AI Illustration"
-					class="h-auto max-w-full rounded shadow-lg"
+					class="h-auto max-w-full rounded-[12px] shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
 				/>
 			</div>
 		</div>
 	</section>
 
 	<!-- Call to Action -->
-	<section class="w-full bg-[#343541] py-16">
+	<section class="w-full bg-[#2C2C2C] py-16">
 		<div class="container mx-auto px-4 text-center">
-			<h3 class="mb-4 text-3xl font-bold text-[#F9F9FA]">Ready to Experience the Future?</h3>
-			<p class="mx-auto mb-8 max-w-xl text-[#A0A0A8]">
+			<h3 class="mb-4 text-3xl font-semibold text-[#E0E0E0]">Ready to Experience the Future?</h3>
+			<p class="mx-auto mb-8 max-w-xl text-[#B0B0B0]">
 				Discover how Mapit AI Expert can transform the way you work with domain-specific data and
 				insights.
 			</p>
 			<a
 				href="/demo"
-				class="inline-block rounded-full bg-[#525252] px-8 py-3 font-semibold text-[#F9F9FA] shadow transition-colors hover:bg-[#606060]"
+				class="inline-block rounded-[8px] bg-[#8A2BE2] px-8 py-3 font-medium text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] transition-all duration-300 hover:bg-[#A052E8]"
 			>
 				View Demo
 			</a>
@@ -171,7 +171,7 @@
 	</section>
 
 	<!-- Footer -->
-	<footer class="w-full border-t border-[#4A4A57] py-6 text-[#A0A0A8]">
+	<footer class="w-full border-t border-[#4F4F4F] py-6 text-[#B0B0B0]">
 		<div class="container mx-auto flex flex-col items-center justify-between px-4 md:flex-row">
 			<p class="mb-4 md:mb-0">
 				&copy; {new Date().getFullYear()} Mapit AI Expert. All rights reserved.
@@ -179,9 +179,9 @@
 			<nav>
 				<ul class="flex space-x-4">
 					<li>
-						<a href="/privacy" class="transition-colors hover:text-[#F9F9FA]">Privacy Policy</a>
+						<a href="/privacy" class="transition-colors duration-300 hover:text-[#BB86FC]">Privacy Policy</a>
 					</li>
-					<li><a href="/terms" class="transition-colors hover:text-[#F9F9FA]">Terms of Use</a></li>
+					<li><a href="/terms" class="transition-colors duration-300 hover:text-[#BB86FC]">Terms of Use</a></li>
 				</ul>
 			</nav>
 		</div>

@@ -105,6 +105,24 @@ export class StreamingQueryService {
 					const data = JSON.parse(event.data);
 
 					switch (data.type) {
+						case 'status':
+							// Handle status messages (e.g., "Starting query processing...")
+							result.progress.push(data);
+							options.onProgress?.(data);
+							break;
+
+						case 'task_started':
+							// Handle task started messages
+							result.progress.push(data);
+							options.onProgress?.(data);
+							break;
+
+						case 'processing':
+							// Handle processing messages
+							result.progress.push(data);
+							options.onProgress?.(data);
+							break;
+
 						case 'metadata':
 							result.metadata = data;
 							options.onMetadata?.(data);
@@ -119,6 +137,21 @@ export class StreamingQueryService {
 							result.tokens.push(data.content);
 							result.fullAnswer += data.content;
 							options.onToken?.(data.content, result.fullAnswer);
+							break;
+
+						case 'answer':
+							// Handle answer messages from your backend
+							console.log('Processing answer message:', data);
+							
+							// The content field now directly contains the answer text
+							if (data.content && typeof data.content === 'string') {
+								result.fullAnswer = data.content;
+								console.log('Setting fullAnswer to:', data.content.substring(0, 100) + '...');
+								// Trigger onToken to update the UI with the full answer
+								options.onToken?.(data.content, data.content);
+							} else {
+								console.log('No content found in answer message');
+							}
 							break;
 
 						case 'complete':
@@ -139,6 +172,10 @@ export class StreamingQueryService {
 							options.onError?.(data);
 							this.cleanup();
 							reject(new Error(data.details || data.error));
+							break;
+
+						default:
+							console.log('Unknown message type:', data.type, data);
 							break;
 					}
 				} catch (e) {
