@@ -30,6 +30,7 @@
 	let showDeleteConfirm = $state(false);
 	let conversationToDelete = $state<Conversation | null>(null);
 	let isDeleting = $state(false);
+	let editableTitles: any[] = $state([]);
 
 	async function loadWithRetry() {
 		try {
@@ -272,7 +273,7 @@
 		{:else}
 			<!-- Conversations List -->
 			<div class="space-y-1">
-				{#each $conversationStore.conversations as conversation}
+				{#each $conversationStore.conversations as conversation, index}
 					<a
 						href="/dashboard/conversations/{conversation.id}"
 						class="group relative flex items-start justify-between p-3 hover:bg-gradient-to-r hover:from-gray-800/40 hover:to-gray-700/20 {currentChatId ===
@@ -284,40 +285,22 @@
 							<div class="relative flex items-center justify-between">
 								<div class="flex-1">
 									<EditableTitle
+										bind:this={editableTitles[index]}
 										value={conversation.name || 'Untitled'}
 										onSave={(newName) => handleSaveConversationName(conversation.id, newName)}
 										placeholder="Untitled Conversation"
 										maxLength={30}
-										showEditIcon={true}
+										showEditIcon={false}
 										compactMode={true}
 										titleClass="text-white text-sm font-medium truncate {currentChatId ===
 										conversation.id
 											? 'text-blue-100'
 											: 'group-hover:text-blue-100'}"
 										inputClass="text-white text-sm font-medium bg-gray-800/50 border border-blue-500/50 rounded-lg px-2 py-1 outline-none w-full text-left"
-										class="w-full"
+										class="w-full overflow-hidden"
 									/>
 								</div>
 
-								<!-- Delete button for collaboration conversations where user is owner -->
-								{#if (conversation.collaborationId || (conversation as any).collaboration_id) && currentUser}
-									{#await checkOwnership(conversation)}
-										<!-- Loading ownership check -->
-									{:then isOwner}
-										{#if isOwner}
-											<button
-												onclick={(e) => handleDeleteClick(e, conversation)}
-												class="ml-2 rounded-lg p-1.5 text-gray-500 opacity-0 transition-all duration-200 hover:scale-110 hover:bg-red-900/30 hover:text-red-400 group-hover:opacity-100"
-												title="Delete conversation (Owner only)"
-												disabled={isDeleting}
-											>
-												<Icon name="delete" iconClass="w-3.5 h-3.5" />
-											</button>
-										{/if}
-									{:catch}
-										<!-- Error checking ownership, don't show delete button -->
-									{/await}
-								{/if}
 							</div>
 
 							<div class="mt-2 flex items-center justify-between">
@@ -350,7 +333,72 @@
 									{conversation.topic}
 								</p>
 							{/if}
+
+							<!-- Delete button -->
+							{#if currentUser}
+								{#if conversation.collaborationId || (conversation as any).collaboration_id}
+									{#await checkOwnership(conversation)}
+										<!-- Loading ownership check -->
+									{:then isOwner}
+										{#if isOwner}
+											<button
+												onclick={(e) => handleDeleteClick(e, conversation)}
+												class="absolute bottom-2 right-2 rounded-lg p-1.5 text-gray-500 opacity-0 transition-all duration-200 hover:scale-110 hover:bg-red-900/30 hover:text-red-400 group-hover:opacity-100"
+												title="Delete conversation"
+												disabled={isDeleting}
+											>
+												<Icon name="delete" iconClass="w-3.5 h-3.5" />
+											</button>
+										{/if}
+									{:catch}
+										<!-- Error checking ownership, don't show delete button -->
+									{/await}
+								{:else if (conversation as any).user_id === currentUser.id}
+									<button
+										onclick={(e) => handleDeleteClick(e, conversation)}
+										class="absolute bottom-2 right-2 rounded-lg p-1.5 text-gray-500 opacity-0 transition-all duration-200 hover:scale-110 hover:bg-red-900/30 hover:text-red-400 group-hover:opacity-100"
+										title="Delete conversation"
+										disabled={isDeleting}
+									>
+										<Icon name="delete" iconClass="w-3.5 h-3.5" />
+									</button>
+								{/if}
+							{/if}
+							
 						</div>
+
+						<!-- Edit button -->
+						{#if currentUser}
+							<button
+								onclick={(e) => { e.preventDefault(); e.stopPropagation(); editableTitles[index]?.startEdit(); }}
+								class="absolute top-2 right-2 text-gray-400 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-700/70 hover:text-white hover:scale-110 rounded-lg z-10"
+								title="Edit conversation name"
+								aria-label="Edit conversation name"
+							>
+								<svg
+									width="12"
+									height="12"
+									viewBox="0 0 24 24"
+									fill="none"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<path
+										d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+									<path
+										d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+						{/if}
 
 						<!-- Active indicator -->
 						{#if currentChatId === conversation.id}
@@ -386,29 +434,29 @@
 	title="Delete Conversation"
 	on:cancel={() => (showDeleteConfirm = false)}
 	closeOnEscape={true}
-	background="bg-gradient-to-br from-gray-900 to-gray-800"
+	background="bg-[#1E1E1E] border border-[#4F4F4F] rounded-xl shadow-lg"
 >
-	<div slot="content" class="flex w-full flex-col gap-6 p-6">
+	<div slot="content" class="flex w-full flex-col gap-4 p-4">
 		<div class="flex items-start gap-4">
 			<div class="mt-1 flex-shrink-0">
 				<div
-					class="flex h-12 w-12 items-center justify-center rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/20 to-red-600/20"
+					class="flex h-12 w-12 items-center justify-center rounded-lg border border-[#F44336]/30 bg-[#F44336]/20"
 				>
-					<Icon name="warning" iconClass="text-red-400 w-6 h-6" />
+					<Icon name="warning" iconClass="text-[#F44336] w-6 h-6" />
 				</div>
 			</div>
 			<div class="flex-1">
-				<h3 class="mb-2 text-lg font-semibold text-white">
+				<h3 class="mb-2 text-xl font-semibold text-[#E0E0E0]">
 					Delete "{conversationToDelete?.name || 'this conversation'}"?
 				</h3>
-				<p class="mb-3 text-sm leading-relaxed text-gray-300">
+				<p class="mb-3 text-sm leading-relaxed text-[#B0B0B0]">
 					This action cannot be undone. All messages and data in this conversation will be
 					permanently deleted.
 				</p>
-				<div class="rounded-lg border border-red-500/30 bg-red-900/20 p-3">
+				<div class="rounded-lg border border-[#F44336]/30 bg-[#F44336]/20 p-3">
 					<div class="flex items-center gap-2">
-						<Icon name="info" iconClass="text-red-400 w-4 h-4" />
-						<span class="text-xs font-medium text-red-300"
+						<Icon name="info" iconClass="text-[#F44336] w-4 h-4" />
+						<span class="text-xs font-medium text-[#F44336]"
 							>This will affect all team members with access to this conversation</span
 						>
 					</div>
@@ -417,10 +465,10 @@
 		</div>
 	</div>
 
-	<div slot="footer" class="flex justify-end gap-3 border-t border-gray-700/50 p-6">
+	<div slot="footer" class="flex justify-end gap-3 border-t border-[#4F4F4F]/50 p-4">
 		<button
 			onclick={() => (showDeleteConfirm = false)}
-			class="rounded-xl border border-gray-600/50 px-6 py-2.5 font-medium text-gray-300 transition-all duration-200 hover:border-gray-500/50 hover:bg-gray-700/30"
+			class="rounded-lg bg-[#3A3A3A] px-4 py-2.5 font-medium text-[#FFFFFF] transition-all duration-200 hover:bg-[#4F4F4F] disabled:cursor-not-allowed disabled:opacity-50"
 			disabled={isDeleting}
 		>
 			Cancel
@@ -428,10 +476,10 @@
 		<button
 			onclick={handleDeleteConversation}
 			disabled={isDeleting}
-			class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 px-6 py-2.5 font-medium text-white shadow-lg transition-all duration-200 hover:from-red-700 hover:to-red-800 hover:shadow-red-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+			class="flex items-center justify-center gap-2 rounded-lg bg-[#F44336] px-4 py-2.5 font-medium text-[#FFFFFF] shadow-lg transition-all duration-200 hover:bg-[#D32F2F] hover:shadow-[#F44336]/25 disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			{#if isDeleting}
-				<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
+				<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-t-2 border-[#FFFFFF]"></div>
 				Deleting...
 			{:else}
 				<Icon name="delete" iconClass="w-4 h-4" />

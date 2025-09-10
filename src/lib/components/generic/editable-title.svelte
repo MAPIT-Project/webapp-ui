@@ -9,6 +9,7 @@
 		inputClass?: string;
 		showEditIcon?: boolean;
 		compactMode?: boolean;
+		triggerEdit?: boolean;
 	}
 
 	let {
@@ -20,8 +21,10 @@
 		titleClass = 'text-xl font-semibold text-gray-100',
 		inputClass = 'text-xl font-semibold bg-transparent border-b-2 border-blue-500 text-gray-100 outline-none',
 		showEditIcon = true,
-		compactMode = false
+		compactMode = false,
+		triggerEdit = false
 	}: Props = $props();
+
 
 	let isEditing = $state(false);
 	let editValue = $state(value);
@@ -33,6 +36,7 @@
 	let remainingChars = $derived(maxLength - editValue.length);
 	let isNearLimit = $derived(remainingChars <= 5 && remainingChars >= 0);
 	let isOverLimit = $derived(remainingChars < 0);
+
 
 	// Update editValue when value prop changes
 	$effect(() => {
@@ -58,6 +62,8 @@
 		isEditing = true;
 		showCharacterWarning = false;
 	}
+
+	export function startEdit() { startEditing(); }
 
 	function cancelEditing() {
 		editValue = value;
@@ -121,7 +127,7 @@
 	}
 </script>
 
-<div class="inline-block {containerClass}">
+<div class="block {containerClass}">
 	{#if isEditing}
 		<div class="w-full">
 			<input
@@ -165,43 +171,10 @@
 				? 'flex w-full items-center justify-between'
 				: 'inline-flex items-center'}"
 		>
-			<h1 class="{titleClass} {compactMode ? 'min-w-0 flex-1' : ''}" title={value || placeholder}>
-				{value || placeholder}
+			<h1 class="{titleClass} {compactMode ? 'min-w-0 flex-1 cursor-pointer' : ''}" title={value || placeholder} onclick={(e) => { e.preventDefault(); e.stopPropagation(); startEditing(e); }}>
+				<span class="group-hover:hidden">{value || placeholder}</span>
+				<span class="group-hover:block hidden">{(value || placeholder).length > 25 ? (value || placeholder).slice(0, 25) + '...' : (value || placeholder)}</span>
 			</h1>
-			{#if showEditIcon}
-				<button
-					onclick={(e) => startEditing(e)}
-					class="opacity-0 transition-opacity duration-200 group-hover:opacity-100 {compactMode
-						? 'p-0.5'
-						: 'p-1'} z-10 rounded hover:bg-gray-700/50 {compactMode
-						? 'relative flex-shrink-0'
-						: 'absolute left-full top-1/2 ml-2 -translate-y-1/2'}"
-					title="Edit title"
-				>
-					<svg
-						width={compactMode ? '12' : '14'}
-						height={compactMode ? '12' : '14'}
-						viewBox="0 0 24 24"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path
-							d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-						<path
-							d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg>
-				</button>
-			{/if}
 		</div>
 	{/if}
 </div>
