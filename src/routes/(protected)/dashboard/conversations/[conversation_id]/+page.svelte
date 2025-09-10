@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import PersonalChatPage from './components/personal-chat-page.svelte';
+	import PersonalChatContext from './components/personal-chat-context.svelte';
 	import CollaborationChatPage from './components/collaboration-chat-page.svelte';
 
 	// Get conversation ID from URL params
@@ -57,7 +58,8 @@
 		</div>
 	</div>
 {:else if isCollaborationConversation}
-	<CollaborationChatPage />
+	<CollaborationChatPage conversationId={conversationId} />
 {:else}
-	<PersonalChatPage />
+  <!-- Use the streaming chat interface for personal conversations -->
+  <PersonalChatPage conversationId={conversationId} />
 {/if}

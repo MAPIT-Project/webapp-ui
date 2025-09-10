@@ -3,6 +3,8 @@ export interface StreamingOptions {
 	aiProvider?: 'openai' | 'gemini';
 	aiVersion?: string;
 	useLocalDb?: boolean;
+	conversationId?: number;
+	includeContext?: boolean;
 	onMetadata?: (data: MetadataEvent) => void;
 	onProgress?: (data: ProgressEvent) => void;
 	onToken?: (token: string, fullAnswer: string) => void;
@@ -84,8 +86,21 @@ export class StreamingQueryService {
 				queryParams.append('use_local_db', options.useLocalDb.toString());
 			}
 
-			// Create EventSource for SSE
-			const url = `/api/query/stream?${queryParams}`;
+			// Add conversation context parameters if provided
+			if (options.conversationId !== undefined) {
+				queryParams.append('conversation_id', options.conversationId.toString());
+			}
+			
+			if (options.includeContext !== undefined) {
+				queryParams.append('include_context', options.includeContext.toString());
+			}
+
+			// Use conversation streaming endpoint when conversationId is provided
+			const baseEndpoint = options.conversationId !== undefined
+				? `/api/proxy/conversation/${options.conversationId}/message/stream`
+				: '/api/query/stream';
+				
+			const url = `${baseEndpoint}?${queryParams}`;
 			this.eventSource = new EventSource(url);
 			this.isStreaming = true;
 

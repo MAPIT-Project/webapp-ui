@@ -23,15 +23,19 @@ export interface LogsData {
 }
 
 export interface AIResponseData {
-	answer: string;
-	ai_provider?: string;
-	model_used?: string;
-	ai_version?: string;
-	data_source?: string;
-	processing_time?: number;
-	projects_found?: number;
-	logs?: LogsData;
-	demo?: boolean;
+    answer: string;
+    ai_provider?: string;
+    model_used?: string;
+    ai_version?: string;
+    data_source?: string;
+    processing_time?: number;
+    projects_found?: number;
+    logs?: LogsData;
+    demo?: boolean;
+    context_used?: boolean;
+    resolved_question?: string;
+    follow_up_suggestions?: string[];
+    projects_discussed?: any[];
 }
 
 /**
@@ -176,85 +180,98 @@ export async function addAIMessage(
 /**
  * Get an AI response from the API
  */
-export async function getAIResponse(question: string): Promise<AIResponseData> {
-	try {
-		// Check if we should use the demo endpoint
-		const isDemo = get(useDemo);
-		const endpoint = isDemo ? '/api/demo' : '/api/query';
+export async function getAIResponse(question: string, conversationId?: number, includeContext: boolean = true): Promise<AIResponseData> {
+    try {
+        // Check if we should use the demo endpoint
+        const isDemo = get(useDemo);
+        const endpoint = isDemo ? '/api/demo' : conversationId && includeContext ? `/api/conversation/${conversationId}/message` : '/api/query';
 
-		// Get the current selected provider and version if not in demo mode
-		const provider = get(currentProvider);
-		const version = get(selectedVersion);
+        // Get the current selected provider and version if not in demo mode
+        const provider = get(currentProvider);
+        const version = get(selectedVersion);
 
-		// Prepare the request body
-		const requestBody: any = { question };
+        // Prepare the request body
+        const requestBody: any = { question };
 
-		// Add AI provider if specified and not in demo mode
-		if (provider && !isDemo) {
-			requestBody.ai_provider = provider;
-		}
+        // Add context flag for conversation endpoint
+        if (conversationId && includeContext) {
+            requestBody.include_context = includeContext;
+        }
 
-		// Add AI version if specified and not in demo mode
-		if (version && !isDemo) {
-			requestBody.ai_version = version;
+        // Add AI provider if specified and not in demo mode
+        if (provider && !isDemo) {
+            requestBody.ai_provider = provider;
+        }
 
-			// Add use_local_db if version is V5 or higher
-			if (isVersionV5OrHigher(version)) {
-				requestBody.use_local_db = get(useLocalDb);
-			}
-		}
+        // Add AI version if specified and not in demo mode
+        if (version && !isDemo) {
+            requestBody.ai_version = version;
 
-		const response = await fetch(endpoint, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(requestBody)
-		});
+            // Add use_local_db if version is V5 or higher
+            if (isVersionV5OrHigher(version)) {
+                requestBody.use_local_db = get(useLocalDb);
+            }
+        }
 
-		const data = await response.json();
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
 
-		if (!response.ok) {
-			// Handle API error responses - format as error message
-			let errorMessage = `Error: ${data.error || `API request failed with status ${response.status}`}`;
-			if (data.details) {
-				errorMessage += `\n\nDetails: ${data.details}`;
-			}
+        const data = await response.json();
 
-			return {
-				answer: errorMessage,
-				ai_provider: data.ai_provider,
-				model_used: data.model_used,
-				ai_version: data.ai_version,
-				data_source: data.data_source,
-				processing_time: data.processing_time,
-				projects_found: data.projects_found,
-				logs: data.logs,
-				demo: data.demo
-			};
-		}
+        if (!response.ok) {
+            // Handle API error responses - format as error message
+            let errorMessage = `Error: ${data.error || `API request failed with status ${response.status}`}`;
+            if (data.details) {
+                errorMessage += `\n\nDetails: ${data.details}`;
+            }
 
-		return {
-			answer: data.answer,
-			ai_provider: data.ai_provider,
-			model_used: data.model_used,
-			ai_version: data.ai_version,
-			data_source: data.data_source,
-			processing_time: data.processing_time,
-			projects_found: data.projects_found,
-			logs: data.logs,
-			demo: data.demo
-		};
-	} catch (error) {
-		console.error('Error fetching AI response:', error);
+            return {
+                answer: errorMessage,
+                ai_provider: data.ai_provider,
+                model_used: data.model_used,
+                ai_version: data.ai_version,
+                data_source: data.data_source,
+                processing_time: data.processing_time,
+                projects_found: data.projects_found,
+                logs: data.logs,
+                demo: data.demo,
+                context_used: data.context_used,
+                resolved_question: data.resolved_question,
+                follow_up_suggestions: data.follow_up_suggestions,
+                projects_discussed: data.projects_discussed
+            };
+        }
 
-		// Return the actual error message with Error: prefix
-		const errorMessage = `Error: ${error instanceof Error ? error.message : "I'm sorry, I wasn't able to generate a response. Please try again later."}`;
+        return {
+            answer: data.answer,
+            ai_provider: data.ai_provider,
+            model_used: data.model_used,
+            ai_version: data.ai_version,
+            data_source: data.data_source,
+            processing_time: data.processing_time,
+            projects_found: data.projects_found,
+            logs: data.logs,
+            demo: data.demo,
+            context_used: data.context_used,
+            resolved_question: data.resolved_question,
+            follow_up_suggestions: data.follow_up_suggestions,
+            projects_discussed: data.projects_discussed
+        };
+    } catch (error) {
+        console.error('Error fetching AI response:', error);
 
-		return {
-			answer: errorMessage
-		};
-	}
+        // Return the actual error message with Error: prefix
+        const errorMessage = `Error: ${error instanceof Error ? error.message : "I'm sorry, I wasn't able to generate a response. Please try again later."}`;
+
+        return {
+            answer: errorMessage
+        };
+    }
 }
 
 /**
@@ -341,37 +358,41 @@ export async function getUserConversations(spaceId: string): Promise<Conversatio
  * Get streaming AI response from the API
  */
 export function getStreamingAIResponse(
-	question: string,
-	callbacks: {
-		onMetadata?: (data: any) => void;
-		onProgress?: (data: any) => void;
-		onToken?: (token: string, fullAnswer: string) => void;
-		onComplete?: (data: any) => void;
-		onError?: (error: any) => void;
-	}
+    question: string,
+    callbacks: {
+        onMetadata?: (data: any) => void;
+        onProgress?: (data: any) => void;
+        onToken?: (token: string, fullAnswer: string) => void;
+        onComplete?: (data: any) => void;
+        onError?: (error: any) => void;
+    },
+    conversationId?: number,
+    includeContext: boolean = true
 ): StreamingQueryService {
-	const streamingService = new StreamingQueryService();
+    const streamingService = new StreamingQueryService();
 
-	// Get the current selected provider and version
-	const provider = get(currentProvider);
-	const version = get(selectedVersion);
+    // Get the current selected provider and version
+    const provider = get(currentProvider);
+    const version = get(selectedVersion);
 
-	const options: StreamingOptions = {
-		maxResults: 5,
-		aiProvider: provider || 'gemini',
-		aiVersion: version || 'V6',
-		useLocalDb: isVersionV5OrHigher(version || 'V6') ? get(useLocalDb) : undefined,
-		...callbacks
-	};
+    const options: StreamingOptions = {
+        maxResults: 5,
+        aiProvider: provider || 'gemini',
+        aiVersion: version || 'V6',
+        useLocalDb: isVersionV5OrHigher(version || 'V6') ? get(useLocalDb) : undefined,
+        conversationId,
+        includeContext,
+        ...callbacks
+    };
 
-	// Start the streaming (fire and forget, callbacks handle the results)
-	streamingService.streamQuery(question, options).catch((error) => {
-		console.error('Streaming query failed:', error);
-		// Don't call onError here - it was already called by the streaming service with the proper error data
-		// callbacks.onError?.(error);
-	});
+    // Start the streaming (fire and forget, callbacks handle the results)
+    streamingService.streamQuery(question, options).catch((error) => {
+        console.error('Streaming query failed:', error);
+        // Don't call onError here - it was already called by the streaming service with the proper error data
+        // callbacks.onError?.(error);
+    });
 
-	return streamingService;
+    return streamingService;
 }
 
 /**
@@ -419,8 +440,10 @@ export async function addStreamingAIMessage(
 		// Return the message and an update function
 		const updateMessage = async (text: string, finalData?: Partial<AIResponseData>) => {
 			try {
-				await fetch(`/api/messages/${message.id}`, {
-					method: 'PUT',
+				console.log('Updating message ID:', message.id, 'with text length:', text.length);
+				// Use a proxy endpoint that handles authentication properly
+				const response = await fetch(`/api/proxy/messages/${message.id}/update`, {
+					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
@@ -436,8 +459,17 @@ export async function addStreamingAIMessage(
 						logs: finalData?.logs || aiData?.logs
 					})
 				});
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					console.error('Error updating streaming message:', errorData.error);
+					console.error('Response status:', response.status);
+				} else {
+					console.log('Message update successful for ID:', message.id);
+				}
 			} catch (error) {
 				console.error('Error updating streaming message:', error);
+				console.error('Error details:', error);
 			}
 		};
 

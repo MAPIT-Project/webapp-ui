@@ -4,25 +4,33 @@
 	import {
 		getConversationMessages,
 		addUserMessage,
-		addAIMessage,
-		getAIResponse,
-		getStreamingAIResponse,
-		addStreamingAIMessage
+		addAIMessage
 	} from '$lib/clients/conversationService';
 	import type { Message, Conversation } from '$lib/types/schema';
+	import type { StreamingMessage as StreamingMessageType } from '$lib/stores/streamingConversationStore';
 
 	import { fetchAvailableProviders, selectedVersion } from '$lib/stores/aiProviderStore';
 	import { conversationStore } from '$lib/stores/conversationStore';
+	import { streamingClient } from '$lib/clients/streamingConversationClient';
+	import { streamingConversationStore, conversationSummary } from '$lib/stores/streamingConversationStore';
 
 	// Import components
 	import ChatHeader from './ChatHeader.svelte';
 	import ChatTitle from './ChatTitle.svelte';
 	import ChatMessage from './ChatMessage.svelte';
+	import StreamingMessage from '$lib/components/generic/streaming-message.svelte';
 	import TypingIndicator from './TypingIndicator.svelte';
 	import ChatInput from './ChatInput.svelte';
 	import ErrorMessage from './ErrorMessage.svelte';
 	import EmptyState from './EmptyState.svelte';
 	import LoadingState from './LoadingState.svelte';
+	import ProcessingStageIndicator from '$lib/components/generic/processing-stage-indicator.svelte';
+
+	interface Props {
+	  conversationId: number;
+	}
+
+	let { conversationId }: Props = $props();
 
 	// State using runes
 	let userInput = $state('');
@@ -30,10 +38,7 @@
 	let conversation = $state<Conversation | null>(null);
 	let isLoading = $state(false);
 	let isSending = $state(false);
-	let isStreaming = $state(false);
-	let streamingProgress = $state('');
 	let error = $state<string | null>(null);
-	let currentStreamingService: any = null;
 
 	// Reference to the messages container for auto-scrolling
 	let messagesContainer: HTMLDivElement;
@@ -41,19 +46,23 @@
 	// Derived state for conversation name handling
 	let conversationName = $derived(conversation?.name || 'Untitled Conversation');
 
-	// Derive chatId from URL params
-	let chatId = $derived(parseInt($page.params.conversation_id));
+	// Use the provided conversationId prop
+	let chatId = $derived(conversationId);
 
 	// Function to check if a message should be grouped with the previous one
 	function shouldGroupMessage(
-		currentMessage: Message,
-		previousMessage: Message | undefined
+		currentMessage: Message | StreamingMessageType,
+		previousMessage: Message | StreamingMessageType | undefined
 	): boolean {
 		if (!previousMessage) return false;
 
-		// Group if same sender and within 5 minutes
-		const currentTime = new Date(currentMessage.createdAt).getTime();
-		const previousTime = new Date(previousMessage.createdAt).getTime();
+		// Get timestamp from either createdAt (database) or timestamp (streaming)
+		const currentTime = new Date(
+			'createdAt' in currentMessage ? currentMessage.createdAt : currentMessage.timestamp
+		).getTime();
+		const previousTime = new Date(
+			'createdAt' in previousMessage ? previousMessage.createdAt : previousMessage.timestamp
+		).getTime();
 		const timeDiff = currentTime - previousTime;
 		const fiveMinutes = 5 * 60 * 1000;
 
@@ -61,12 +70,19 @@
 	}
 
 	// Function to check if this is the last message in a group (WhatsApp style)
-	function isLastInGroup(currentMessage: Message, nextMessage: Message | undefined): boolean {
+	function isLastInGroup(
+		currentMessage: Message | StreamingMessageType,
+		nextMessage: Message | StreamingMessageType | undefined
+	): boolean {
 		if (!nextMessage) return true; // Last message overall
 
-		// Check if next message is from different sender or outside time window
-		const currentTime = new Date(currentMessage.createdAt).getTime();
-		const nextTime = new Date(nextMessage.createdAt).getTime();
+		// Get timestamp from either createdAt (database) or timestamp (streaming)
+		const currentTime = new Date(
+			'createdAt' in currentMessage ? currentMessage.createdAt : currentMessage.timestamp
+		).getTime();
+		const nextTime = new Date(
+			'createdAt' in nextMessage ? nextMessage.createdAt : nextMessage.timestamp
+		).getTime();
 		const timeDiff = nextTime - currentTime;
 		const fiveMinutes = 5 * 60 * 1000;
 
@@ -78,6 +94,9 @@
 		if (chatId) {
 			loadMessages(chatId);
 			loadConversationDetails(chatId);
+			streamingConversationStore.setConversation(chatId);
+			// Don't load existing messages into streaming store to avoid duplication
+			// streamingConversationStore.loadExistingMessages(chatId);
 		}
 	});
 
@@ -85,16 +104,16 @@
 	let autostartProcessed = $state(false);
 
 	// Effect to check for autostart parameter and trigger AI response
-	$effect(() => {
-		const autostartQuestion = $page.url.searchParams.get('autostart');
-		if (
-			autostartQuestion &&
-			chatId &&
-			messages.length > 0 &&
-			!isStreaming &&
-			!isSending &&
-			!autostartProcessed
-		) {
+$effect(() => {
+	const autostartQuestion = $page.url.searchParams.get('autostart');
+	if (
+		autostartQuestion &&
+		chatId &&
+		messages.length > 0 &&
+		!$streamingConversationStore.isProcessing &&
+		!isSending &&
+		!autostartProcessed
+	) {
 			// Only autostart if we have messages loaded and we're not already processing
 			// This means the user message is already in the conversation
 			autostartProcessed = true; // Set flag immediately to prevent re-triggering
@@ -118,21 +137,12 @@
 
 	// Effect to scroll to bottom when messages change
 	$effect(() => {
-		if (messagesContainer && (messages.length > 0 || isSending || isStreaming)) {
+		if (messagesContainer && (messages.length > 0 || isSending || $streamingConversationStore.isProcessing)) {
 			// Use setTimeout to ensure DOM has updated
 			setTimeout(() => {
 				messagesContainer.scrollTop = messagesContainer.scrollHeight;
 			}, 10);
 		}
-	});
-
-	// Cleanup effect for streaming service
-	$effect(() => {
-		return () => {
-			if (currentStreamingService) {
-				currentStreamingService.destroy();
-			}
-		};
 	});
 
 	// Load conversation details using API endpoint
@@ -192,167 +202,125 @@
 	}
 
 	async function startAIResponse(question: string) {
-		if (isStreaming || isSending) return;
+		if ($streamingConversationStore.isProcessing || isSending) return;
 
-		isStreaming = true;
-		streamingProgress = '';
 		error = null;
 
 		try {
-			// Create initial AI message for streaming
-			const { message: aiMessage, updateMessage } = await addStreamingAIMessage(chatId, '');
+			// Start AI response in the store
+			const messageId = streamingConversationStore.startAIResponse();
 
-			if (aiMessage) {
-				messages = [...messages, aiMessage];
+			// Use the streaming client to send the message
+			await streamingClient.sendStreamingMessage(
+				chatId,
+				question,
+				true, // include context
+				(stage, message) => {
+					// Update progress indicator
+					streamingConversationStore.updateStage({
+						stage,
+						message,
+						timestamp: new Date().toISOString()
+					});
+				},
+				(content) => {
+					// Append token to AI message
+					streamingConversationStore.appendToAIMessage(messageId, content);
+				},
+				async (metadata) => {
+					// Handle completion - mark as complete and add final message to UI
+					streamingConversationStore.completeAIMessage(messageId, metadata);
 
-				let currentAnswer = '';
-				let finalData: any = null;
-				let streamMetadata: any = null; // Store metadata separately
-				let lastSaveTime = Date.now();
-				let lastSavedLength = 0;
-				const SAVE_INTERVAL_MS = 3000; // Save every 3 seconds
-				const MIN_SAVE_TOKENS = 50; // Or every 50 tokens, whichever comes first
+					console.log('Streaming complete, adding final message to UI...');
 
-				// Periodic save function
-				const saveProgress = async (text: string, trackingData?: any) => {
-					try {
-						await updateMessage(text, trackingData || {});
-						lastSaveTime = Date.now();
-						lastSavedLength = text.length;
-						console.log('Saved streaming progress:', text.length, 'characters');
-					} catch (error) {
-						console.error('Error saving streaming progress:', error);
+					// Create the final message object from the streaming message
+					const streamingMessages = $streamingConversationStore.messages;
+					const aiMessage = streamingMessages.find(m => m.id === messageId && m.sender === 'ai');
+
+					if (aiMessage) {
+						// Convert streaming message to database message format
+						const finalMessage: Message = {
+							id: Date.now(), // Temporary ID until database sync
+							conversationId: chatId,
+							text: aiMessage.text,
+							sender: 'ai',
+							createdAt: new Date(),
+							// Add metadata fields
+							aiProvider: metadata.ai_provider,
+							aiVersion: metadata.ai_version,
+							modelUsed: metadata.model_used,
+							dataSource: metadata.data_source,
+							processingTime: metadata.processing_time?.toString(),
+							projectsFound: metadata.projects_found,
+							// Map logs to individual fields
+							logsQuestion: metadata.logs?.question,
+							logsModelUsed: metadata.logs?.model_used,
+							logsPhases: metadata.logs?.phases ? JSON.stringify(metadata.logs.phases) : null,
+							logsTotalProcessingTimeMs: metadata.logs?.total_processing_time_ms,
+							logsProjectsRetrieved: metadata.logs?.projects_retrieved,
+							logsProjectsProcessed: metadata.logs?.projects_processed,
+							logsSuccess: metadata.logs?.success,
+							logsAverageRelevanceScore: metadata.logs?.average_relevance_score?.toString()
+						};
+
+						// Add the final message to the messages array
+						messages = [...messages, finalMessage];
+
+						console.log('Final message added to UI, removing streaming message');
+						streamingConversationStore.removeAIMessage(messageId);
+					} else {
+						console.log('Streaming message not found, removing anyway');
+						streamingConversationStore.removeAIMessage(messageId);
 					}
-				};
+				},
+				async (error) => {
+					// Handle error - mark as complete and add error message to UI
+					console.log('Streaming error occurred, adding error message to UI...');
 
-				// Start streaming
-				currentStreamingService = getStreamingAIResponse(question, {
-					onMetadata: (data) => {
-						console.log('Streaming metadata:', data);
-						streamMetadata = data; // Store metadata for later use
-					},
+					// Create the error message object
+					const errorMessage: Message = {
+						id: Date.now(), // Temporary ID until database sync
+						conversationId: chatId,
+						text: error,
+						sender: 'ai',
+						createdAt: new Date(),
+						// Add error metadata
+						aiProvider: 'error',
+						aiVersion: 'error',
+						modelUsed: 'error',
+						dataSource: 'error',
+						processingTime: '0',
+						projectsFound: 0,
+						// Add error logs
+						logsQuestion: question,
+						logsModelUsed: 'error',
+						logsPhases: JSON.stringify(['error']),
+						logsTotalProcessingTimeMs: 0,
+						logsProjectsRetrieved: 0,
+						logsProjectsProcessed: 0,
+						logsSuccess: false,
+						logsAverageRelevanceScore: '0'
+					};
 
-					onProgress: (data) => {
-						console.log('Streaming progress:', data);
-						streamingProgress = data.message;
-					},
+					// Add the error message to the messages array
+					messages = [...messages, errorMessage];
 
-					onToken: (token, fullAnswer) => {
-						console.log('onToken called with:', token, 'Full answer length:', fullAnswer.length);
-						currentAnswer = fullAnswer;
-						// Update the message in the UI immediately
-						const messageIndex = messages.findIndex((m) => m.id === aiMessage.id);
-						if (messageIndex !== -1) {
-							const updatedMessages = [...messages];
-							updatedMessages[messageIndex] = {
-								...updatedMessages[messageIndex],
-								text: fullAnswer
-							};
-							messages = updatedMessages;
-							console.log('Updated message in UI with text:', fullAnswer.substring(0, 100) + '...');
-						} else {
-							console.log('Message not found in array for ID:', aiMessage.id);
-						}
+					console.log('Error message added to UI, removing streaming message');
+					streamingConversationStore.removeAIMessage(messageId);
 
-						// Check if we should save progress to database
-						const now = Date.now();
-						const timeSinceLastSave = now - lastSaveTime;
-						const tokensSinceLastSave = fullAnswer.length - lastSavedLength;
+					// Also set the error in the store for UI display
+					streamingConversationStore.setError(error);
+				}
+			);
 
-						if (timeSinceLastSave >= SAVE_INTERVAL_MS || tokensSinceLastSave >= MIN_SAVE_TOKENS) {
-							saveProgress(fullAnswer);
-						}
-					},
-
-					onComplete: async (data) => {
-						console.log('Streaming complete:', data);
-						finalData = data;
-
-						// Extract metadata - could be from complete event, metadata stored separately, or data itself
-						const metadata = streamMetadata || finalData || data;
-						
-						// Final save with complete tracking data
-						await saveProgress(currentAnswer || data.answer, {
-							ai_provider: metadata.ai_provider,
-							ai_version: metadata.ai_version,
-							model_used: metadata.logs?.model_used,
-							data_source: metadata.data_source,
-							processing_time: metadata.processing_time,
-							projects_found: metadata.projects_found,
-							logs: metadata.logs
-						});
-
-						// Update the local message object with metadata for immediate UI display
-						const messageIndex = messages.findIndex((m) => m.id === aiMessage.id);
-						if (messageIndex !== -1) {
-							const updatedMessages = [...messages];
-							updatedMessages[messageIndex] = {
-								...updatedMessages[messageIndex],
-								text: currentAnswer || data.answer,
-								// Add metadata fields using camelCase to match TypeScript types
-								aiProvider: metadata.ai_provider,
-								aiVersion: metadata.ai_version,
-								modelUsed: metadata.logs?.model_used,
-								dataSource: metadata.data_source,
-								processingTime: metadata.processing_time,
-								projectsFound: metadata.projects_found
-							};
-							messages = updatedMessages;
-						}
-
-						isStreaming = false;
-						streamingProgress = '';
-						currentStreamingService = null;
-					},
-
-					onError: async (errorEvent) => {
-						console.error('Streaming error:', errorEvent);
-
-						// Construct the error message
-						const errorTitle = errorEvent.error || 'Streaming error';
-						const errorDetails = errorEvent.details || 'No additional details available';
-						const fullErrorMessage = `Error: ${errorTitle}\n\nDetails: ${errorDetails}`;
-
-						// Always save the error message to the database
-						if (currentAnswer) {
-							// If we have partial content, append the error
-							await saveProgress(currentAnswer + `\n\n${fullErrorMessage}`);
-						} else {
-							// If no content yet, save just the error message
-							await saveProgress(fullErrorMessage);
-						}
-
-						isStreaming = false;
-						streamingProgress = '';
-
-						// Set error for UI display
-						error = `${errorTitle}\n\nDetails: ${errorDetails}`;
-
-						currentStreamingService = null;
-
-						// Update the message in UI with error
-						const messageIndex = messages.findIndex((m) => m.id === aiMessage.id);
-						if (messageIndex !== -1) {
-							const updatedMessages = [...messages];
-							updatedMessages[messageIndex] = {
-								...updatedMessages[messageIndex],
-								text: fullErrorMessage
-							};
-							messages = updatedMessages;
-						}
-					}
-				});
-			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An error occurred';
-			isStreaming = false;
-			streamingProgress = '';
 			console.error('AI response error:', err);
 		}
 	}
 
 	async function handleSubmit() {
-		if (!userInput.trim() || isStreaming || isSending) return;
+		if (!userInput.trim() || $streamingConversationStore.isProcessing || isSending) return;
 
 		isSending = true;
 		error = null;
@@ -361,12 +329,16 @@
 			// Store the current input before clearing it
 			const currentInput = userInput;
 
-			// Add the user message
+			// Add the user message to the database for persistence
 			const userMessage = await addUserMessage(chatId, currentInput);
 
 			if (userMessage) {
+				// Only add to database messages array, streaming store will handle UI
 				messages = [...messages, userMessage];
 			}
+
+			// Add user message to streaming store for immediate UI display
+			streamingConversationStore.addUserMessage(currentInput);
 
 			// Clear the input field
 			userInput = '';
@@ -377,21 +349,13 @@
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An error occurred';
 			isSending = false;
-			isStreaming = false;
-			streamingProgress = '';
 			console.error('Chat error:', err);
 		}
 	}
 
 	function stopStreaming() {
-		if (currentStreamingService) {
-			currentStreamingService.stopStreaming();
-			currentStreamingService = null;
-		}
-		isStreaming = false;
-		streamingProgress = '';
-
-		// Note: currentAnswer will be saved by the onError callback when streaming stops
+		streamingClient.closeConnection();
+		streamingConversationStore.setError('Streaming stopped by user');
 	}
 
 	// Helper functions for message grouping
@@ -414,7 +378,7 @@
 >
 	<!-- Subtle pattern overlay for texture -->
 	<div
-		class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] opacity-[0.02]"
+		class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] opacity-[0.02]"
 	></div>
 
 	<!-- Top header with modern backdrop -->
@@ -451,6 +415,7 @@
 					</div>
 				{:else}
 					<div class="space-y-1 pb-8 pt-6">
+						<!-- Show database messages (persisted) -->
 						{#each messages as message, index}
 							{@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
 							{@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
@@ -458,6 +423,26 @@
 								<ChatMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
 							</div>
 						{/each}
+
+						<!-- Show streaming AI message (temporary UI state during streaming) -->
+						{#if $streamingConversationStore.isProcessing}
+							{#each $streamingConversationStore.messages as message, index}
+								{#if message.sender === 'ai' && message.isStreaming}
+									{@const isGrouped = shouldGroupMessage(message, messages[messages.length - 1])}
+									{@const isLastInGroupFlag = true}
+									<div class="animate-fadeInUp">
+										<StreamingMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
+									</div>
+								{/if}
+							{/each}
+						{/if}
+
+						<!-- Processing stage indicator -->
+						{#if $streamingConversationStore.currentStage}
+							<div class="animate-fadeInUp mb-4">
+								<ProcessingStageIndicator stage={$streamingConversationStore.currentStage} />
+							</div>
+						{/if}
 
 						<!-- Typing indicator with modern styling -->
 						{#if isSending}
@@ -481,9 +466,9 @@
 		<div class="mx-auto w-full max-w-4xl px-6">
 			<ChatInput
 				{userInput}
-				{isStreaming}
+				isStreaming={$streamingConversationStore.isProcessing}
 				{isSending}
-				{streamingProgress}
+				streamingProgress={$streamingConversationStore.currentStage?.message || ''}
 				onInputChange={handleUserInputChange}
 				onSubmit={handleChatInputSubmit}
 				onStopStreaming={handleStopStreaming}
