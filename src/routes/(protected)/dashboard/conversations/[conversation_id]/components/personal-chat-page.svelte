@@ -49,6 +49,9 @@
 	// Use the provided conversationId prop
 	let chatId = $derived(conversationId);
 
+	// Track the last loaded chat ID to prevent duplicate loads
+	let lastLoadedChatId = $state<number | null>(null);
+
 	// Function to check if a message should be grouped with the previous one
 	function shouldGroupMessage(
 		currentMessage: Message | StreamingMessageType,
@@ -91,12 +94,13 @@
 
 	// Effect to load messages and conversation details when chatId changes
 	$effect(() => {
-		if (chatId) {
+		if (chatId && chatId !== lastLoadedChatId) {
 			loadMessages(chatId);
 			loadConversationDetails(chatId);
 			streamingConversationStore.setConversation(chatId);
 			// Don't load existing messages into streaming store to avoid duplication
 			// streamingConversationStore.loadExistingMessages(chatId);
+			lastLoadedChatId = chatId;
 		}
 	});
 
