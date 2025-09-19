@@ -14,6 +14,8 @@ export interface ProcessingStage {
   stage: string;
   message: string;
   timestamp: string;
+  routingDecision?: string;
+  intentConfidence?: number;
 }
 
 export interface StreamingConversationState {
@@ -106,11 +108,12 @@ function createStreamingConversationStore() {
     
     appendToAIMessage: (messageId: string, content: string) => update(state => ({
       ...state,
-      messages: state.messages.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, text: msg.text + content }
-          : msg
-      )
+      messages: state.messages.map(msg => {
+        if (msg.id !== messageId) return msg;
+        const incoming = typeof content === 'string' ? content : '';
+        const trimmedFirstChunk = msg.text.length === 0 ? incoming.replace(/^\s+/, '') : incoming;
+        return { ...msg, text: msg.text + trimmedFirstChunk };
+      })
     })),
     
     completeAIMessage: (messageId: string, metadata: any) => update(state => ({

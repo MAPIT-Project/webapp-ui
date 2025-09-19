@@ -74,7 +74,7 @@ export const message = pgTable('message', {
 
 	// AI response tracking fields (V6+)
 	aiProvider: varchar('ai_provider', { length: 50 }),
-	aiVersion: varchar('ai_version', { length: 20 }),
+	aiVersion: varchar('ai_version', { length: 100 }),
 	modelUsed: varchar('model_used', { length: 100 }),
 	dataSource: varchar('data_source', { length: 100 }),
 	processingTime: decimal('processing_time'),

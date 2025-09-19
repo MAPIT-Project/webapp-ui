@@ -24,6 +24,7 @@
     'reference_resolved': 'Resolved references in your question',
     'intent_detection': 'Understanding your question',
     'intent_detected': 'Question intent identified',
+    'route_selected': 'Route Selected',
     'query_extraction': 'Extracting search terms',
     'queries_extracted': 'Search queries ready',
     'data_retrieval': 'Searching CORDIS database',
@@ -46,8 +47,23 @@
         {stageDescriptions[stage.stage] || stage.stage}
       </div>
       <div class="stage-message">
-        {stage.message}
+        {#if stage.routingDecision}
+          Route Selected: {stage.routingDecision}
+          {#if stage.intentConfidence !== undefined}
+            ({Math.round((stage.intentConfidence || 0) * 100)}%)
+          {/if}
+        {:else}
+          {stage.message}
+        {/if}
       </div>
+      {#if stage.routingDecision && stage.stage !== 'route_selected'}
+        <div class="route-chip">
+          Route: <span class="route-value">{stage.routingDecision}</span>
+          {#if stage.intentConfidence !== undefined}
+            <span class="confidence">({Math.round((stage.intentConfidence || 0) * 100)}%)</span>
+          {/if}
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -88,6 +104,27 @@
     color: #B0B0B0; /* palette.text.secondary */
     font-size: 0.85rem;
   }
+
+.route-chip {
+  margin-top: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  background: #1E1E1E; /* palette.primary.surface */
+  border: 1px solid #3A3A3A; /* palette.secondary.main */
+  color: #E0E0E0; /* palette.text.primary */
+  font-size: 0.75rem;
+}
+
+.route-value {
+  font-weight: 600;
+}
+
+.confidence {
+  color: #B0B0B0; /* palette.text.secondary */
+}
   
   @keyframes pulse {
     0%, 100% { opacity: 1; }

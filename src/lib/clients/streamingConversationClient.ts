@@ -17,7 +17,7 @@ export class StreamingConversationClient {
     conversationId: number,
     message: string,
     includeContext: boolean = true,
-    onProgress?: (stage: string, message: string) => void,
+    onProgress?: (stage: string, message: string, extras?: any) => void,
     onToken?: (content: string) => void,
     onComplete?: (metadata: any) => void,
     onError?: (error: string) => void
@@ -77,7 +77,14 @@ export class StreamingConversationClient {
               switch (data.type) {
                 case 'progress':
                 case 'status':
-                  onProgress?.(data.stage || 'processing', data.message || '');
+                  onProgress?.(
+                    data.stage || 'processing',
+                    data.message || '',
+                    {
+                      routingDecision: (data as any).routing_decision,
+                      intentConfidence: (data as any).intent_confidence
+                    }
+                  );
                   break;
 
                 case 'token':

@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
   
   try {
     // Forward the request to the backend API on localhost:8000
-    const backendUrl = `http://localhost:8000/api/conversation/${conversation_id}/message`;
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/v2/conversation/${conversation_id}/message`;
     
     // Get the request body
     const body = await request.json();

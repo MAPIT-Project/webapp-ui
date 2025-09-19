@@ -1,0 +1,1 @@
+ALTER TABLE "message" ALTER COLUMN "ai_version" SET DATA TYPE varchar(100);

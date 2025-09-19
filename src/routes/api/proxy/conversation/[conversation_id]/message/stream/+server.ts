@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ params, request, fetch }) => {
   
   try {
     // Forward the request to your FastAPI backend
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/conversation/${conversationId}/message/stream`;
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/v2/conversation/${conversationId}/message/stream`;
     
     const body = await request.text();
     

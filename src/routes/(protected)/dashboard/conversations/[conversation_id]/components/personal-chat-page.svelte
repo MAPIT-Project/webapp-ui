@@ -25,6 +25,7 @@
 	import EmptyState from './EmptyState.svelte';
 	import LoadingState from './LoadingState.svelte';
 	import ProcessingStageIndicator from '$lib/components/generic/processing-stage-indicator.svelte';
+	import Icon from '$lib/components/generic/icon.svelte';
 
 	interface Props {
 	  conversationId: number;
@@ -42,6 +43,31 @@
 
 	// Reference to the messages container for auto-scrolling
 	let messagesContainer: HTMLDivElement;
+
+	// Scroll-to-bottom button visibility
+	let showScrollDown = $state(false);
+
+	function updateScrollDownVisibility() {
+		if (!messagesContainer) return;
+		const distanceFromBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
+		showScrollDown = distanceFromBottom > 120; // show when user scrolled up a bit
+	}
+
+	function scrollToBottom() {
+		if (!messagesContainer) return;
+		messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+	}
+
+	function scrollElementTopIntoView(container: HTMLElement, element: HTMLElement) {
+		try {
+			const containerRect = container.getBoundingClientRect();
+			const elRect = element.getBoundingClientRect();
+			const top = elRect.top - containerRect.top + container.scrollTop;
+			container.scrollTop = Math.max(top - 72, 0);
+		} catch (e) {
+			console.error('Scroll error', e);
+		}
+	}
 
 	// Derived state for conversation name handling
 	let conversationName = $derived(conversation?.name || 'Untitled Conversation');
@@ -139,14 +165,32 @@ $effect(() => {
 		}
 	});
 
-	// Effect to scroll to bottom when messages change
+	// Effect to anchor view to the top of the AI answer instead of bottom
 	$effect(() => {
-		if (messagesContainer && (messages.length > 0 || isSending || $streamingConversationStore.isProcessing)) {
-			// Use setTimeout to ensure DOM has updated
-			setTimeout(() => {
-				messagesContainer.scrollTop = messagesContainer.scrollHeight;
-			}, 10);
-		}
+		if (!messagesContainer) return;
+
+		// Prefer currently streaming AI message if present
+		const streamingMessages = $streamingConversationStore.messages;
+		const lastStreamingAi = [...streamingMessages].reverse().find((m) => m.sender === 'ai' && m.isStreaming);
+
+		// Otherwise, use the last persisted AI message
+		const lastPersistedAi = lastStreamingAi
+			? null
+			: [...messages].reverse().find((m) => m.sender === 'ai');
+
+		setTimeout(() => {
+			let targetEl: HTMLElement | null = null;
+
+			if (lastStreamingAi) {
+				targetEl = document.getElementById(`stream-msg-${lastStreamingAi.id}`) as HTMLElement | null;
+			} else if (lastPersistedAi) {
+				targetEl = document.getElementById(`msg-${lastPersistedAi.id}`) as HTMLElement | null;
+			}
+
+			if (targetEl) {
+				scrollElementTopIntoView(messagesContainer, targetEl);
+			}
+		}, 10);
 	});
 
 	// Load conversation details using API endpoint
@@ -249,6 +293,8 @@ $effect(() => {
 							text: aiMessage.text,
 							sender: 'ai',
 							createdAt: new Date(),
+							updatedAt: new Date(),
+							userId: null,
 							// Add metadata fields
 							aiProvider: metadata.ai_provider,
 							aiVersion: metadata.ai_version,
@@ -256,6 +302,7 @@ $effect(() => {
 							dataSource: metadata.data_source,
 							processingTime: metadata.processing_time?.toString(),
 							projectsFound: metadata.projects_found,
+							context: null,
 							// Map logs to individual fields
 							logsQuestion: metadata.logs?.question,
 							logsModelUsed: metadata.logs?.model_used,
@@ -288,6 +335,8 @@ $effect(() => {
 						text: error,
 						sender: 'ai',
 						createdAt: new Date(),
+						updatedAt: new Date(),
+						userId: null,
 						// Add error metadata
 						aiProvider: 'error',
 						aiVersion: 'error',
@@ -295,6 +344,7 @@ $effect(() => {
 						dataSource: 'error',
 						processingTime: '0',
 						projectsFound: 0,
+						context: null,
 						// Add error logs
 						logsQuestion: question,
 						logsModelUsed: 'error',
@@ -406,6 +456,7 @@ $effect(() => {
 		<div
 			class="scrollbar-thin min-h-0 flex-1 overflow-y-auto scroll-smooth pb-6"
 			bind:this={messagesContainer}
+			onscroll={updateScrollDownVisibility}
 		>
 			<!-- Centered content container -->
 			<div class="mx-auto w-full max-w-4xl px-6">
@@ -423,7 +474,7 @@ $effect(() => {
 						{#each messages as message, index}
 							{@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
 							{@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
-							<div class="animate-fadeInUp">
+							<div id={"msg-" + message.id} class="animate-fadeInUp">
 								<ChatMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
 							</div>
 						{/each}
@@ -434,7 +485,7 @@ $effect(() => {
 								{#if message.sender === 'ai' && message.isStreaming}
 									{@const isGrouped = shouldGroupMessage(message, messages[messages.length - 1])}
 									{@const isLastInGroupFlag = true}
-									<div class="animate-fadeInUp">
+									<div id={"stream-msg-" + message.id} class="animate-fadeInUp">
 										<StreamingMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
 									</div>
 								{/if}
@@ -478,6 +529,17 @@ $effect(() => {
 				onStopStreaming={handleStopStreaming}
 			/>
 		</div>
+
+		{#if showScrollDown}
+			<button
+				onclick={scrollToBottom}
+				class="absolute bottom-28 right-6 z-40 size-10 rounded-full bg-[#2C2C2C] text-[#E0E0E0] opacity-80 hover:opacity-100 shadow-md transition-colors transition-opacity hover:bg-[#4F4F4F] focus:outline-none flex items-center justify-center border border-[#4F4F4F]"
+				aria-label="Scroll to bottom"
+				title="Scroll to bottom"
+			>
+				<Icon name="arrow_downward" className="text-white text-lg" />
+			</button>
+		{/if}
 	</div>
 
 	<!-- Subtle bottom gradient overlay -->

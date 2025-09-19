@@ -9,7 +9,20 @@
   export let onMessageSent: () => void = () => {};
   export let onError: (error: string) => void = () => {};
   
+  import Icon from '$lib/components/generic/icon.svelte';
   let messagesContainer: HTMLElement;
+  let showScrollDown = false;
+
+  function updateScrollDownVisibility() {
+    if (!messagesContainer) return;
+    const distanceFromBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
+    showScrollDown = distanceFromBottom > 120;
+  }
+
+  function scrollToBottom() {
+    if (!messagesContainer) return;
+    messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+  }
   
   $: {
     streamingConversationStore.setConversation(conversationId);
@@ -18,13 +31,27 @@
     }
   }
   
-  // Auto-scroll to bottom when new content arrives
+  function scrollElementTopIntoView(container: HTMLElement, element: HTMLElement) {
+    try {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = element.getBoundingClientRect();
+      const top = elRect.top - containerRect.top + container.scrollTop;
+      container.scrollTo({ top: Math.max(top - 72, 0), behavior: 'smooth' });
+    } catch (e) {
+      console.error('Scroll error', e);
+    }
+  }
+
+  // Anchor to the top of the latest AI message instead of the bottom
   $: if ($streamingConversationStore.messages.length > 0) {
     setTimeout(() => {
-      messagesContainer?.scrollTo({
-        top: messagesContainer.scrollHeight,
-        behavior: 'smooth'
-      });
+      const msgs = $streamingConversationStore.messages;
+      const lastAi = [...msgs].reverse().find((m) => m.sender === 'ai');
+      if (!messagesContainer || !lastAi) return;
+      const el = document.getElementById(`stream-msg-${lastAi.id}`) as HTMLElement | null;
+      if (el) {
+        scrollElementTopIntoView(messagesContainer, el);
+      }
     }, 100);
   }
   
@@ -46,11 +73,13 @@
       true, // include context
       
       // onProgress
-      (stage: string, message: string) => {
+      (stage: string, message: string, extras?: any) => {
         streamingConversationStore.updateStage({
           stage,
           message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          routingDecision: extras?.routingDecision,
+          intentConfidence: extras?.intentConfidence
         });
       },
       
@@ -80,32 +109,37 @@
 
 <div class="streaming-conversation-container">
   <!-- Context and Status Header -->
-  {#if $conversationSummary.hasContext || $conversationSummary.isActive}
+  {#if $conversationSummary.hasContext}
     <div class="conversation-header">
-      {#if $conversationSummary.hasContext}
-        <div class="context-info">
-          💬 {$conversationSummary.messageCount} messages • 
-          📊 {$conversationSummary.projectCount} projects discussed
-        </div>
-      {/if}
-      
-      {#if $conversationSummary.isActive}
-        <ProcessingStageIndicator 
-          stage={$streamingConversationStore.currentStage}
-        />
-      {/if}
+      <div class="context-info">
+        💬 {$conversationSummary.messageCount} messages • 
+        📊 {$conversationSummary.projectCount} projects discussed
+      </div>
     </div>
   {/if}
   
   <!-- Messages Container -->
-  <div class="messages-container" bind:this={messagesContainer}>
+  <div class="messages-container" bind:this={messagesContainer} onscroll={updateScrollDownVisibility}>
     {#each $streamingConversationStore.messages as message (message.id)}
-      <StreamingMessageBubble 
-        {message}
-        isStreaming={message.isStreaming}
-      />
+      <div id={"stream-msg-" + message.id}>
+        <StreamingMessageBubble 
+          {message}
+          isStreaming={message.isStreaming}
+        />
+      </div>
     {/each}
   </div>
+
+  {#if showScrollDown}
+    <button
+      onclick={scrollToBottom}
+      class="scroll-down-btn"
+      aria-label="Scroll to bottom"
+      title="Scroll to bottom"
+    >
+      <Icon name="arrow_downward" className="text-white text-xl" />
+    </button>
+  {/if}
   
   <!-- Follow-up Suggestions -->
   {#if $streamingConversationStore.followUpSuggestions.length > 0 && !$streamingConversationStore.isProcessing}
@@ -119,7 +153,7 @@
   <div class="input-container">
     <input
       type="text"
-      on:keypress={(e) => e.key === 'Enter' && handleSendMessage(e.currentTarget.value)}
+      onkeypress={(e) => e.key === 'Enter' && handleSendMessage(e.currentTarget.value)}
       placeholder={$conversationSummary.hasContext 
         ? "Ask a follow-up question..." 
         : "Ask about European research projects..."}
@@ -127,7 +161,7 @@
       class:disabled={$streamingConversationStore.isProcessing}
     />
     <button 
-      on:click={() => handleSendMessage((document.querySelector('.input-container input') as HTMLInputElement)?.value || '')}
+      onclick={() => handleSendMessage((document.querySelector('.input-container input') as HTMLInputElement)?.value || '')}
       disabled={$streamingConversationStore.isProcessing}
       class:loading={$streamingConversationStore.isProcessing}
     >
@@ -172,6 +206,31 @@
     flex-direction: column;
     gap: 1rem;
     background: #121212; /* palette.primary.background */
+  }
+
+  .scroll-down-btn {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 7rem;
+    z-index: 40;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    background: #2C2C2C; /* palette.secondary.dark */
+    color: #E0E0E0; /* palette.text.primary */
+    border: 1px solid #4F4F4F; /* components.input.border */
+    box-shadow: 0 10px 15px rgba(0,0,0,0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .scroll-down-btn:hover {
+    background: #4F4F4F; /* palette.secondary.light */
+    opacity: 1;
   }
   
   .input-container {

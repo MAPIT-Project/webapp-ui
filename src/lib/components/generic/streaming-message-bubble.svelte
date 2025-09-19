@@ -39,6 +39,7 @@
 <style>
   .message-bubble {
     max-width: 80%;
+    word-break: break-word;
     padding: 1rem;
     border-radius: 12px;
     margin-bottom: 0.5rem;
@@ -57,6 +58,7 @@
     background: #1E1E1E; /* palette.primary.surface */
     border: 1px solid #3A3A3A; /* palette.secondary.main */
     color: #E0E0E0; /* palette.text.primary */
+    max-width: 70ch;
   }
   
   .message-bubble.system {
@@ -88,6 +90,7 @@
   .message-content {
     line-height: 1.5;
     position: relative;
+    overflow-wrap: anywhere;
   }
   
   .cursor {

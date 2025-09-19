@@ -39,17 +39,17 @@
 <div class="flex-shrink-0 p-4">
 	<form on:submit|preventDefault={handleSubmit} class="relative mx-auto max-w-4xl">
 		<div
-			class="relative rounded-2xl border border-gray-500/30 bg-[#2A2A2A]/50 backdrop-blur-sm transition-all focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-500/50"
+			class="relative rounded-2xl border border-gray-600/30 bg-[#2A2A2A]/50 backdrop-blur-sm transition-all focus-within:border-gray-600/50 focus-within:ring-2 focus-within:ring-gray-600/50"
 		>
 			<input
 				type="text"
 				value={userInput}
 				on:input={handleInput}
 				placeholder={isStreaming ? 'AI is generating response...' : 'Message AI Assistant...'}
-				class="w-full rounded-2xl bg-transparent px-4 py-3 pr-12 text-gray-100 placeholder-gray-400 focus:outline-none {hasMapitInput(
+				class="w-full rounded-2xl bg-transparent px-4 py-3 pr-12 text-gray-200 placeholder-gray-500 focus:outline-none {hasMapitInput(
 					userInput
 				)
-					? 'font-semibold text-emerald-500 [text-shadow:0_0_8px_rgba(16,185,129,0.4)]'
+					? 'font-semibold'
 					: ''}"
 				disabled={isSending || isStreaming}
 			/>
@@ -67,8 +67,8 @@
 					type="submit"
 					class="absolute right-2 top-1/2 -translate-y-1/2 transform rounded-xl border px-2 py-1.5 transition-all duration-200 {userInput.trim() &&
 					!isSending
-						? 'border-emerald-500/50 text-emerald-400 hover:border-emerald-400 hover:text-emerald-300'
-						: 'border-[#404040]/50 text-[#888888]'}"
+						? 'border-blue-500/30 bg-blue-500/20 text-blue-300 hover:border-blue-400 hover:text-blue-200'
+						: 'border-gray-600/50 text-gray-500'}"
 					disabled={isSending || !userInput.trim()}
 				>
 					<Icon name="send" className="text-current" />
@@ -79,23 +79,23 @@
 		<!-- Streaming progress indicator -->
 		{#if isStreaming && streamingProgress}
 			<div
-				class="mt-4 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-900/20 to-blue-900/20 p-4 backdrop-blur-sm"
+				class="mt-4 rounded-xl border border-gray-600/30 bg-gradient-to-r from-gray-800/20 to-gray-700/20 p-4 backdrop-blur-sm"
 			>
 				<div class="flex items-center gap-3">
 					<div class="flex space-x-1">
-						<div class="h-2 w-2 animate-bounce rounded-full bg-emerald-500"></div>
+						<div class="h-2 w-2 animate-bounce rounded-full bg-gray-600"></div>
 						<div
-							class="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:0.1s]"
+							class="h-2 w-2 animate-bounce rounded-full bg-gray-700 [animation-delay:0.1s]"
 						></div>
 						<div
-							class="h-2 w-2 animate-bounce rounded-full bg-purple-500 [animation-delay:0.2s]"
+							class="h-2 w-2 animate-bounce rounded-full bg-gray-800 [animation-delay:0.2s]"
 						></div>
 					</div>
-					<span class="text-sm font-medium text-emerald-300">{streamingProgress}</span>
+					<span class="text-sm font-medium text-gray-400">{streamingProgress}</span>
 				</div>
-				<div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-gray-700/50">
+				<div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-gray-800/50">
 					<div
-						class="h-full animate-pulse bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500"
+						class="h-full animate-pulse bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800"
 					></div>
 				</div>
 			</div>
@@ -103,7 +103,7 @@
 
 		<!-- Input hint -->
 		<div class="mt-2 text-center">
-			<p class="text-xs text-gray-500">
+			<p class="text-xs text-gray-600">
 				{#if isStreaming}
 					Real-time AI response streaming • Click stop to cancel
 				{:else}
