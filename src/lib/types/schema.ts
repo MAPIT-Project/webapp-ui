@@ -30,3 +30,11 @@ export interface MessageWithUser extends Message {
 		email: string;
 	};
 }
+
+// Extended message interface for messages with additional API response fields
+export interface MessageWithSuggestions extends Message {
+	follow_up_suggestions?: string[];
+	context_used?: boolean;
+	resolved_question?: string;
+	projects_discussed?: any[];
+}

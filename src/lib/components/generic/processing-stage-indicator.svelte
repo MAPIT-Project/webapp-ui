@@ -2,6 +2,7 @@
   import type { ProcessingStage } from '$lib/stores/streamingConversationStore';
   
   export let stage: ProcessingStage | null;
+  export let showWhenSending: boolean = false;
   
   const stageIcons: Record<string, string> = {
     'context_resolution': '🧠',
@@ -16,7 +17,8 @@
     'reranking': '📊',
     'answer_generation': '💭',
     'context_enhancement': '🔗',
-    'streaming_response': '📤'
+    'streaming_response': '📤',
+    'processing': '⚙️'
   };
   
   const stageDescriptions: Record<string, string> = {
@@ -33,34 +35,36 @@
     'reranking': 'Ranking projects by relevance',
     'answer_generation': 'Generating comprehensive answer',
     'context_enhancement': 'Adding conversational context',
-    'streaming_response': 'Delivering your answer'
+    'streaming_response': 'Delivering your answer',
+    'processing': 'Processing your request'
   };
 </script>
 
-{#if stage}
-  <div class="stage-indicator" class:pulsing={stage.stage !== 'streaming_response'}>
+{#if stage || showWhenSending}
+  {@const effectiveStage = stage || { stage: 'processing', message: 'Preparing your response...', timestamp: new Date().toISOString() }}
+  <div class="stage-indicator" class:pulsing={effectiveStage.stage !== 'streaming_response'}>
     <div class="stage-icon">
-      {stageIcons[stage.stage] || '⚙️'}
+      {stageIcons[effectiveStage.stage] || '⚙️'}
     </div>
     <div class="stage-content">
       <div class="stage-title">
-        {stageDescriptions[stage.stage] || stage.stage}
+        {stageDescriptions[effectiveStage.stage] || effectiveStage.stage}
       </div>
       <div class="stage-message">
-        {#if stage.routingDecision}
-          Route Selected: {stage.routingDecision}
-          {#if stage.intentConfidence !== undefined}
-            ({Math.round((stage.intentConfidence || 0) * 100)}%)
+        {#if effectiveStage.routingDecision}
+          Route Selected: {effectiveStage.routingDecision}
+          {#if effectiveStage.intentConfidence !== undefined}
+            ({Math.round((effectiveStage.intentConfidence || 0) * 100)}%)
           {/if}
         {:else}
-          {stage.message}
+          {effectiveStage.message}
         {/if}
       </div>
-      {#if stage.routingDecision && stage.stage !== 'route_selected'}
+      {#if effectiveStage.routingDecision && effectiveStage.stage !== 'route_selected'}
         <div class="route-chip">
-          Route: <span class="route-value">{stage.routingDecision}</span>
-          {#if stage.intentConfidence !== undefined}
-            <span class="confidence">({Math.round((stage.intentConfidence || 0) * 100)}%)</span>
+          Route: <span class="route-value">{effectiveStage.routingDecision}</span>
+          {#if effectiveStage.intentConfidence !== undefined}
+            <span class="confidence">({Math.round((effectiveStage.intentConfidence || 0) * 100)}%)</span>
           {/if}
         </div>
       {/if}
