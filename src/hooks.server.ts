@@ -47,25 +47,33 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
 
 // Supabase authentication middleware
 const supabaseHandle: Handle = async ({ event, resolve }) => {
-	const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		cookies: {
-			get: (key) => event.cookies.get(key),
-			set: (key, value, options) => {
-				event.cookies.set(key, value, { ...options, path: '/' });
-			},
-			remove: (key, options) => {
-				event.cookies.delete(key, { ...options, path: '/' });
+	try {
+		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+			cookies: {
+				get: (key) => event.cookies.get(key),
+				set: (key, value, options) => {
+					event.cookies.set(key, value, { ...options, path: '/' });
+				},
+				remove: (key, options) => {
+					event.cookies.delete(key, { ...options, path: '/' });
+				}
 			}
-		}
-	});
+		});
 
-	const {
-		data: { session }
-	} = await supabase.auth.getSession();
+		const {
+			data: { session }
+		} = await supabase.auth.getSession();
 
-	event.locals.supabase = supabase;
-	event.locals.session = session;
-	event.locals.user = session?.user ?? null;
+		event.locals.supabase = supabase;
+		event.locals.session = session;
+		event.locals.user = session?.user ?? null;
+	} catch (error) {
+		console.error('Error in supabaseHandle:', error);
+		// Continue without authentication if there's an error
+		event.locals.supabase = null;
+		event.locals.session = null;
+		event.locals.user = null;
+	}
 
 	return resolve(event);
 };

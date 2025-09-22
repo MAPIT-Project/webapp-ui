@@ -58,11 +58,14 @@ export const GET: RequestHandler = async ({ params, cookies }) => {
 
 		const uniqueProjectIds = [...new Set(projectIds.map(record => record.projectID))];
 
+		// Limit projects to prevent overwhelming the frontend (take first 20)
+		const limitedProjectIds = uniqueProjectIds.slice(0, 20);
+
 		// Fetch project details
 		const { data: projectDetails, error: detailsError } = await supabase
 			.from('projects')
-			.select('id, acronym, title, objective, status, startDate, endDate, totalCost, ecMaxContribution, frameworkProgramme, fundingScheme')
-			.in('id', uniqueProjectIds);
+			.select('id, acronym, title, status, startDate, endDate, totalCost, ecMaxContribution')
+			.in('id', limitedProjectIds);
 
 		if (detailsError) {
 			console.error('Error fetching project details:', detailsError);
@@ -81,14 +84,11 @@ export const GET: RequestHandler = async ({ params, cookies }) => {
 				projectID: project.id,
 				acronym: project.acronym,
 				title: project.title,
-				objective: project.objective,
 				status: project.status,
 				startDate: project.startDate || null,
 				endDate: project.endDate || null,
 				totalCost: project.totalCost,
 				ecMaxContribution: project.ecMaxContribution,
-				frameworkProgramme: project.frameworkProgramme,
-				fundingScheme: project.fundingScheme,
 				contribution: orgRecord ? orgRecord.ecContribution : 0
 			};
 		});
