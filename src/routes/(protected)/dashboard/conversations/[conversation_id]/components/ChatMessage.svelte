@@ -3,6 +3,9 @@
 	import type { MessageWithSuggestions } from '$lib/types/schema';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
+	import { renderTextWithCitationSpans } from '$lib/utils/citationRenderer';
+	import { onMount } from 'svelte';
+	import type { Citation } from '$lib/types/schema';
 
 	let copied = $state(false);
 
@@ -12,10 +15,10 @@
 			copied = true;
 
 			// reset after a short delay (2 seconds for clearer feedback)
-	 		setTimeout(() => (copied = false), 2000);
-	 	} catch (err) {
-	 		console.error('Copy failed', err);
-	 	}
+			setTimeout(() => (copied = false), 2000);
+		} catch (err) {
+			console.error('Copy failed', err);
+		}
 	}
 
 	interface Props {
@@ -126,6 +129,67 @@
 		// Dispatch on the window or document since we can't dispatch on message object
 		window.dispatchEvent(event);
 	}
+
+	// Function to render message content with citations
+	function renderMessageContent(): string {
+		let content = message.text;
+		
+		// First, highlight @mapit
+		content = highlightMapitInMessage(content);
+		
+		// Then, if this is an AI message with citations, replace citation markers with HTML spans
+		if (message.sender === 'ai' && message.citations && message.citations.length > 0) {
+			content = renderTextWithCitationSpans(content, message.citations);
+		}
+		
+		// Finally, render markdown
+		return renderMarkdown(content);
+	}
+
+	// Get message content as HTML
+	const messageContentHtml = $derived(renderMessageContent());
+
+	// Handle citation clicks
+	function handleCitationClick(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+		if (target.classList.contains('citation-marker')) {
+			const citationId = target.getAttribute('data-citation-id');
+			const citationData = target.getAttribute('data-citation');
+			
+			if (citationId && citationData) {
+				try {
+					const citation = JSON.parse(citationData);
+					showCitationPopover(citation, event);
+				} catch (error) {
+					console.error('Error parsing citation data:', error);
+				}
+			}
+		}
+	}
+
+	// Citation popover state
+	let showPopover = $state(false);
+	let currentCitation = $state<Citation | null>(null);
+	let popoverPosition = $state({ x: 0, y: 0 });
+
+	function showCitationPopover(citation: Citation, event: MouseEvent) {
+		currentCitation = citation;
+		popoverPosition = { x: event.clientX, y: event.clientY };
+		showPopover = true;
+	}
+
+	function closeCitationPopover() {
+		showPopover = false;
+		currentCitation = null;
+	}
+
+	// Add click event listener to the message content
+	onMount(() => {
+		const messageContent = document.getElementById(`message-content-${message.id}`);
+		if (messageContent) {
+			messageContent.addEventListener('click', handleCitationClick);
+		}
+	});
 </script>
 
 <div class="group relative {isGrouped ? 'mt-0.5' : 'mt-8 pt-4'} animate-[fadeInUp_0.3s_ease-out]">
@@ -203,16 +267,17 @@
 								: 'rounded-tl-sm'} backdrop-blur-sm"
 						>
 						<div
+							id="message-content-{message.id}"
 							class="[&>p:first-child]:!mt-0 prose prose-sm prose-invert max-w-full leading-relaxed break-words [&>*]:text-gray-100 [&_a:hover]:text-blue-300 [&_a]:text-blue-400 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:rounded [&_blockquote]:border-l-4 [&_blockquote]:border-blue-400 [&_blockquote]:bg-blue-400/5 [&_blockquote]:p-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-300 [&_hr]:block [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-slate-600/20 [&_code]:rounded [&_code]:border [&_code]:border-indigo-500/20 [&_code]:bg-indigo-500/15 [&_code]:px-2 [&_code]:py-1 [&_code]:text-sm [&_code]:font-medium [&_code]:text-indigo-200 [&_em]:text-blue-300 [&_h1:first-child]:mt-0 [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-xl [&_h1]:text-blue-400 [&_h2:first-child]:mt-0 [&_h2]:mb-2 [&_h2]:mt-3 [&_h2]:text-lg [&_h2]:text-emerald-400 [&_h3:first-child]:mt-0 [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-base [&_h3]:text-white [&_li]:my-1 [&_li]:text-gray-200 [&_ol]:my-3 [&_ol_li::marker]:text-emerald-400 [&_p:last-child]:mb-0 [&_p]:mb-3 [&_p]:text-gray-100 [&_p]:leading-relaxed [&_p:not(:first-child)]:mt-2 [&_p:has(>strong:first-child)]:mt-6 [&_pre]:my-4 [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-indigo-500/20 [&_pre]:bg-slate-900/40 [&_pre]:p-4 [&_pre]:text-sm [&_pre]:overflow-x-auto [&_pre_code]:border-none [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-slate-200 [&_strong]:text-white [&_table]:my-4 [&_table]:w-full [&_table]:overflow-x-auto [&_table]:rounded [&_td]:border-b [&_td]:border-slate-600/20 [&_td]:p-3 [&_td]:text-gray-200 [&_th]:border-b-2 [&_th]:border-indigo-500/30 [&_th]:bg-slate-700/50 [&_th]:p-3 [&_th]:text-left [&_th]:font-bold [&_th]:text-white [&_tr:nth-child(even)]:bg-slate-700/20 [&_ul]:my-3 [&_ul_li::marker]:text-blue-400 [&_ul_ul]:mb-2 [&_ul_ul]:mt-2 [&_ul_ul]:rounded [&_ul_ul]:border [&_ul_ul]:border-slate-600/10 [&_ul_ul]:bg-slate-900/20 [&_ul_ul]:p-2 [&_ul_ul_li]:my-1 [&_ul_ul_li]:text-sm"
 						>
-								{@html renderMarkdown(message.text)}
-							</div>
-							<div class="mt-1 text-right">
-								<span class="text-xs text-gray-500 font-medium">
-									{formatMessageTime(getMessageCreatedAt(message) || '')}
-								</span>
-							</div>
+							{@html messageContentHtml}
 						</div>
+						<div class="mt-1 text-right">
+							<span class="text-xs text-gray-500 font-medium">
+								{formatMessageTime(getMessageCreatedAt(message) || '')}
+							</span>
+						</div>
+					</div>
 						<!-- Footer action row (does not affect bubble width) -->
 						<div class="mt-1 flex justify-end opacity-0 translate-y-1 group-hover/ai:opacity-100 group-hover/ai:translate-y-0 transition-all duration-150 select-none">
 							<button
@@ -227,6 +292,42 @@
 								{/if}
 							</button>
 						</div>
+
+						<!-- Sources section - only show if citations exist -->
+						{#if message.sender === 'ai' && message.citations && message.citations.length > 0}
+							<div class="mt-3 border-t border-gray-700/50 pt-3">
+								<h4 class="text-xs font-medium text-gray-400 mb-2">Sources</h4>
+								<div class="space-y-2">
+									{#each message.citations as citation, index}
+										<div class="flex items-start gap-2 p-2 rounded bg-gray-800/50 border border-gray-700/30">
+											<span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full dark:text-blue-400 dark:bg-blue-900 flex-shrink-0">
+												{citation.id}
+											</span>
+											<div class="flex-1 min-w-0">
+												<p class="text-sm text-gray-300 font-medium truncate">{citation.title}</p>
+												{#if citation.metadata?.sourceType}
+													<p class="text-xs text-gray-500 capitalize">{citation.metadata.sourceType}</p>
+												{/if}
+												{#if citation.url}
+													<a
+														href={citation.url}
+														target="_blank"
+														rel="noopener noreferrer"
+														class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
+													>
+														View Source
+														<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+															<path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
+															<path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
+														</svg>
+													</a>
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
 
 						<!-- AI Metadata on hover - only show if at least one field has data -->
 						{#if message.sender === 'ai'}
@@ -317,3 +418,95 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Citation popover -->
+{#if showPopover && currentCitation}
+	<div
+		class="fixed z-50 w-80 p-4 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700"
+		style="left: {Math.min(popoverPosition.x, window.innerWidth - 320)}px; top: {Math.min(popoverPosition.y, window.innerHeight - 200)}px;"
+	>
+		<div class="flex items-start justify-between mb-2">
+			<h3 class="text-sm font-medium text-gray-900 dark:text-white">Source</h3>
+			<button
+				class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+				onclick={closeCitationPopover}
+				aria-label="Close citation"
+			>
+				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+				</svg>
+			</button>
+		</div>
+		
+		<div class="space-y-2">
+			<div>
+				<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Title</h4>
+				<p class="text-sm text-gray-900 dark:text-white">{currentCitation.title}</p>
+			</div>
+			
+			{#if currentCitation.snippet}
+				<div>
+					<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Snippet</h4>
+					<p class="text-sm text-gray-600 dark:text-gray-400 italic">"{currentCitation.snippet}"</p>
+				</div>
+			{/if}
+			
+			{#if currentCitation.url}
+				<div>
+					<a
+						href={currentCitation.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
+					>
+						View Source
+						<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+							<path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
+							<path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
+						</svg>
+					</a>
+				</div>
+			{/if}
+			
+			{#if currentCitation.metadata}
+				<div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+					{#if currentCitation.metadata.authors && currentCitation.metadata.authors.length > 0}
+						<div class="mb-1">
+							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Authors:</span>
+							<span class="text-xs text-gray-600 dark:text-gray-400 ml-1">
+								{currentCitation.metadata.authors.join(', ')}
+							</span>
+						</div>
+					{/if}
+					
+					{#if currentCitation.metadata.publicationDate}
+						<div class="mb-1">
+							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Published:</span>
+							<span class="text-xs text-gray-600 dark:text-gray-400 ml-1">
+								{currentCitation.metadata.publicationDate}
+							</span>
+						</div>
+					{/if}
+					
+					{#if currentCitation.metadata.sourceType}
+						<div class="mb-1">
+							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Type:</span>
+							<span class="text-xs text-gray-600 dark:text-gray-400 ml-1 capitalize">
+								{currentCitation.metadata.sourceType}
+							</span>
+						</div>
+					{/if}
+					
+					{#if currentCitation.metadata.relevanceScore !== undefined}
+						<div>
+							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Relevance:</span>
+							<span class="text-xs text-gray-600 dark:text-gray-400 ml-1">
+								{Math.round(currentCitation.metadata.relevanceScore * 100)}%
+							</span>
+						</div>
+					{/if}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}

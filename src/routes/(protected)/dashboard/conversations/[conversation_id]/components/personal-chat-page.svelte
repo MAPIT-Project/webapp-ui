@@ -6,8 +6,9 @@
 		addUserMessage,
 		addAIMessage
 	} from '$lib/clients/conversationService';
-	import type { Message, Conversation } from '$lib/types/schema';
+	import type { Message, Conversation, MessageWithSuggestions } from '$lib/types/schema';
 	import type { StreamingMessage as StreamingMessageType } from '$lib/stores/streamingConversationStore';
+	import type { Citation } from '$lib/types/schema';
 
 	import { fetchAvailableProviders, selectedVersion } from '$lib/stores/aiProviderStore';
 	import { conversationStore } from '$lib/stores/conversationStore';
@@ -35,7 +36,7 @@
 
 	// State using runes
 	let userInput = $state('');
-	let messages = $state<Message[]>([]);
+	let messages = $state<MessageWithSuggestions[]>([]);
 	let conversation = $state<Conversation | null>(null);
 	let isLoading = $state(false);
 	let isSending = $state(false);
@@ -80,8 +81,8 @@
 
 	// Function to check if a message should be grouped with the previous one
 	function shouldGroupMessage(
-		currentMessage: Message | StreamingMessageType,
-		previousMessage: Message | StreamingMessageType | undefined
+		currentMessage: MessageWithSuggestions | StreamingMessageType,
+		previousMessage: MessageWithSuggestions | StreamingMessageType | undefined
 	): boolean {
 		if (!previousMessage) return false;
 
@@ -100,8 +101,8 @@
 
 	// Function to check if this is the last message in a group (WhatsApp style)
 	function isLastInGroup(
-		currentMessage: Message | StreamingMessageType,
-		nextMessage: Message | StreamingMessageType | undefined
+		currentMessage: MessageWithSuggestions | StreamingMessageType,
+		nextMessage: MessageWithSuggestions | StreamingMessageType | undefined
 	): boolean {
 		if (!nextMessage) return true; // Last message overall
 
@@ -144,19 +145,19 @@ $effect(() => {
 		!isSending &&
 		!autostartProcessed
 	) {
-			// Only autostart if we have messages loaded and we're not already processing
-			// This means the user message is already in the conversation
-			autostartProcessed = true; // Set flag immediately to prevent re-triggering
+		// Only autostart if we have messages loaded and we're not already processing
+		// This means the user message is already in the conversation
+		autostartProcessed = true; // Set flag immediately to prevent re-triggering
 
-			// Remove the autostart parameter from URL to prevent re-triggering
-			const url = new URL($page.url);
-			url.searchParams.delete('autostart');
-			window.history.replaceState({}, '', url.toString());
+		// Remove the autostart parameter from URL to prevent re-triggering
+		const url = new URL($page.url);
+		url.searchParams.delete('autostart');
+		window.history.replaceState({}, '', url.toString());
 
-			// Start the AI response
-			startAIResponse(autostartQuestion);
-		}
-	});
+		// Start the AI response
+		startAIResponse(autostartQuestion);
+	}
+});
 
 	// Reset autostart flag when navigating to a different conversation
 	$effect(() => {
@@ -223,7 +224,31 @@ $effect(() => {
 		error = null;
 
 		try {
-			messages = await getConversationMessages(id);
+			const loadedMessages = await getConversationMessages(id);
+			// Convert to MessageWithSuggestions and load citations for AI messages
+			messages = await Promise.all(loadedMessages.map(async (msg) => {
+				const messageWithSuggestions = msg as MessageWithSuggestions;
+				
+				// Load citations for AI messages
+				if (msg.sender === 'ai') {
+					try {
+						const response = await fetch(`/api/messages/${msg.id}/citations`, {
+							method: 'GET'
+						});
+						if (response.ok) {
+							const data = await response.json();
+							if (data.citations && data.citations.length > 0) {
+								// Add citations to the message
+								messageWithSuggestions.citations = data.citations;
+							}
+						}
+					} catch (err) {
+						console.error('Error loading citations for message:', err);
+					}
+				}
+				
+				return messageWithSuggestions;
+			}));
 		} catch (err) {
 			console.error('Error loading messages:', err);
 			error = 'Failed to load conversation messages';
@@ -247,6 +272,26 @@ $effect(() => {
 			conversation = { ...conversation, name: newName };
 		}
 		return success;
+	}
+
+	// Function to convert API citation format to our Citation type
+	function convertApiCitations(apiCitations: any[]): Citation[] {
+		return apiCitations.map(citation => ({
+			id: citation.number.toString(),
+			title: citation.text,
+			snippet: citation.content_snippet,
+			url: undefined, // API doesn't provide URL
+			metadata: {
+				source: citation.metadata.source,
+				callId: citation.metadata.call_id,
+				isStructured: citation.metadata.is_structured,
+				priority: citation.metadata.priority,
+				sourceType: citation.source_type,
+				chunkId: citation.chunk_id,
+				relevanceScore: citation.metadata.relevance_score,
+				documentType: citation.metadata.document_type
+			}
+		}));
 	}
 
 	async function startAIResponse(question: string) {
@@ -287,8 +332,8 @@ $effect(() => {
 
 					if (aiMessage) {
 						// Convert streaming message to database message format
-						const finalMessage: Message = {
-							id: Date.now(), // Temporary ID until database sync
+						const finalMessage: MessageWithSuggestions = {
+							id: 0, // Will be set by the database
 							conversationId: chatId,
 							text: aiMessage.text,
 							sender: 'ai',
@@ -302,7 +347,6 @@ $effect(() => {
 							dataSource: metadata.data_source,
 							processingTime: metadata.processing_time?.toString(),
 							projectsFound: metadata.projects_found,
-							context: null,
 							// Map logs to individual fields
 							logsQuestion: metadata.logs?.question,
 							logsModelUsed: metadata.logs?.model_used,
@@ -311,14 +355,46 @@ $effect(() => {
 							logsProjectsRetrieved: metadata.logs?.projects_retrieved,
 							logsProjectsProcessed: metadata.logs?.projects_processed,
 							logsSuccess: metadata.logs?.success,
-							logsAverageRelevanceScore: metadata.logs?.average_relevance_score?.toString()
+							logsAverageRelevanceScore: metadata.logs?.average_relevance_score?.toString(),
+							context: null
 						};
 
-						// Add the final message to the messages array
-						messages = [...messages, finalMessage];
+						// Add citations if they exist in the streaming message
+						if (metadata.citations && metadata.citations.length > 0) {
+							const convertedCitations = convertApiCitations(metadata.citations);
+							finalMessage.citations = convertedCitations;
+						}
 
-						console.log('Final message added to UI, removing streaming message');
-						streamingConversationStore.removeAIMessage(messageId);
+						// Save the AI message to the database
+						const savedMessage = await addAIMessage(chatId, finalMessage.text, {
+							ai_provider: metadata.ai_provider,
+							ai_version: metadata.ai_version,
+							model_used: metadata.model_used,
+							data_source: metadata.data_source,
+							processing_time: metadata.processing_time,
+							projects_found: metadata.projects_found,
+							logs: metadata.logs
+						});
+						
+						if (savedMessage) {
+							// Create a proper MessageWithSuggestions object with citations
+							const messageWithSuggestions: MessageWithSuggestions = savedMessage as MessageWithSuggestions;
+							messageWithSuggestions.citations = finalMessage.citations;
+							messages = [...messages, messageWithSuggestions];
+							
+							// If there are citations, save them using the update endpoint with the actual message ID
+							if (finalMessage.citations && finalMessage.citations.length > 0) {
+								await updateMessageWithCitations(savedMessage.id, finalMessage.text, finalMessage.citations, finalMessage);
+							}
+							
+							console.log('Final message added to UI, removing streaming message');
+							streamingConversationStore.removeAIMessage(messageId);
+						} else {
+							// Add the final message to the messages array without saving (error case)
+							messages = [...messages, finalMessage];
+							console.log('Final message added to UI (not saved), removing streaming message');
+							streamingConversationStore.removeAIMessage(messageId);
+						}
 					} else {
 						console.log('Streaming message not found, removing anyway');
 						streamingConversationStore.removeAIMessage(messageId);
@@ -329,8 +405,8 @@ $effect(() => {
 					console.log('Streaming error occurred, adding error message to UI...');
 
 					// Create the error message object
-					const errorMessage: Message = {
-						id: Date.now(), // Temporary ID until database sync
+					const errorMessage: MessageWithSuggestions = {
+						id: 0, // Will be set by the database
 						conversationId: chatId,
 						text: error,
 						sender: 'ai',
@@ -356,8 +432,16 @@ $effect(() => {
 						logsAverageRelevanceScore: '0'
 					};
 
-					// Add the error message to the messages array
-					messages = [...messages, errorMessage];
+					// Save the error message to the database
+					const savedMessage = await addAIMessage(chatId, errorMessage.text);
+					
+					if (savedMessage) {
+						// Add the saved error message to the messages array
+						messages = [...messages, savedMessage as MessageWithSuggestions];
+					} else {
+						// Add the error message to the messages array without saving (error case)
+						messages = [...messages, errorMessage];
+					}
 
 					console.log('Error message added to UI, removing streaming message');
 					streamingConversationStore.removeAIMessage(messageId);
@@ -370,6 +454,44 @@ $effect(() => {
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An error occurred';
 			console.error('AI response error:', err);
+		}
+	}
+
+	// Function to update a message with citations using the update endpoint
+	async function updateMessageWithCitations(messageId: number, text: string, citations: Citation[], message: MessageWithSuggestions) {
+		try {
+			const response = await fetch(`/api/proxy/messages/${messageId}/update`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					text,
+					citations,
+					aiProvider: message.aiProvider,
+					aiVersion: message.aiVersion,
+					modelUsed: message.modelUsed,
+					dataSource: message.dataSource,
+					processingTime: message.processingTime,
+					projectsFound: message.projectsFound,
+					logs: {
+						question: message.logsQuestion,
+						model_used: message.logsModelUsed,
+						phases: message.logsPhases ? JSON.parse(message.logsPhases) : [],
+						total_processing_time_ms: message.logsTotalProcessingTimeMs,
+						projects_retrieved: message.logsProjectsRetrieved,
+						projects_processed: message.logsProjectsProcessed,
+						success: message.logsSuccess,
+						average_relevance_score: parseFloat(message.logsAverageRelevanceScore || '0')
+					}
+				})
+			});
+			
+			if (!response.ok) {
+				console.error('Error updating message with citations:', await response.text());
+			}
+		} catch (err) {
+			console.error('Error updating message with citations:', err);
 		}
 	}
 
@@ -388,7 +510,7 @@ $effect(() => {
 
 			if (userMessage) {
 				// Only add to database messages array, streaming store will handle UI
-				messages = [...messages, userMessage];
+				messages = [...messages, userMessage as MessageWithSuggestions];
 			}
 
 			// Add user message to streaming store for immediate UI display

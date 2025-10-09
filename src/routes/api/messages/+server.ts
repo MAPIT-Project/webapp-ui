@@ -40,7 +40,25 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			return json({ error: error.message }, { status: 500 });
 		}
 
-		return json({ messages: data });
+		// Load citations for AI messages
+		const messagesWithCitations = await Promise.all(
+			data.map(async (message) => {
+				if (message.sender === 'ai') {
+					try {
+						const response = await fetch(`${url.origin}/api/messages/${message.id}/citations`);
+						if (response.ok) {
+							const citationData = await response.json();
+							return { ...message, citations: citationData.citations };
+						}
+					} catch (err) {
+						console.error('Error loading citations for message:', err);
+					}
+				}
+				return message;
+			})
+		);
+
+		return json({ messages: messagesWithCitations });
 	} catch (error) {
 		console.error('Server error:', error);
 		return json(
@@ -66,6 +84,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			dataSource,
 			processingTime,
 			projectsFound,
+			citations,
 			logs
 		} = await request.json();
 
@@ -110,6 +129,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		if (dataSource) messageData.data_source = dataSource;
 		if (processingTime !== undefined) messageData.processing_time = processingTime;
 		if (projectsFound !== undefined) messageData.projects_found = projectsFound;
+		
+		// Add citations if available
+		if (citations) messageData.citations = citations;
 
 		// Add logs data if available
 		if (logs) {

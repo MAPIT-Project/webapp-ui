@@ -1,5 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import type { Writable, Readable } from 'svelte/store';
+import type { Citation } from '$lib/types/schema';
 
 export interface StreamingMessage {
   id: string;
@@ -8,6 +9,7 @@ export interface StreamingMessage {
   timestamp: string;
   isStreaming?: boolean;
   isComplete?: boolean;
+  citations?: Citation[];
 }
 
 export interface ProcessingStage {
@@ -58,7 +60,8 @@ function createStreamingConversationStore() {
             text: msg.text,
             sender: msg.sender,
             timestamp: msg.createdAt,
-            isComplete: true
+            isComplete: true,
+            citations: msg.citations || []
           }));
           
           update(state => ({
@@ -95,7 +98,8 @@ function createStreamingConversationStore() {
           sender: 'ai',
           timestamp: new Date().toISOString(),
           isStreaming: true,
-          isComplete: false
+          isComplete: false,
+          citations: []
         }]
       }));
       return messageId;
@@ -125,7 +129,12 @@ function createStreamingConversationStore() {
       contextUsed: metadata.context_used || false,
       messages: state.messages.map(msg => 
         msg.id === messageId 
-          ? { ...msg, isStreaming: false, isComplete: true }
+          ? { 
+              ...msg, 
+              isStreaming: false, 
+              isComplete: true,
+              citations: metadata.citations || []
+            }
           : msg
       )
     })),
@@ -139,7 +148,8 @@ function createStreamingConversationStore() {
         text: `Error: ${error}`,
         sender: 'system',
         timestamp: new Date().toISOString(),
-        isComplete: true
+        isComplete: true,
+        citations: []
       }]
     })),
     

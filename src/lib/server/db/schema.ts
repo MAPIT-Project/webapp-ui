@@ -10,7 +10,8 @@ import {
 	uuid,
 	decimal,
 	date,
-	pgEnum
+	pgEnum,
+	jsonb
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -80,6 +81,9 @@ export const message = pgTable('message', {
 	processingTime: decimal('processing_time'),
 	projectsFound: integer('projects_found'),
 	context: text('context'),
+	
+	// Citation data
+	citations: jsonb('citations'),
 
 	// Logs data
 	logsQuestion: text('logs_question'),

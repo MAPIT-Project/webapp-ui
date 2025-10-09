@@ -15,6 +15,7 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 			dataSource,
 			processingTime,
 			projectsFound,
+			citations,
 			logs
 		} = await request.json();
 
@@ -53,6 +54,9 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 		if (dataSource) updateData.data_source = dataSource;
 		if (processingTime !== undefined) updateData.processing_time = processingTime;
 		if (projectsFound !== undefined) updateData.projects_found = projectsFound;
+		
+		// Add citations if available
+		if (citations) updateData.citations = citations;
 
 		// Add logs data if available
 		if (logs) {

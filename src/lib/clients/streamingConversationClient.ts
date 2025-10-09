@@ -1,4 +1,5 @@
 import { addStreamingAIMessage } from './conversationService';
+import type { Citation } from '$lib/types/schema';
 
 export interface StreamingEventData {
   type: 'progress' | 'token' | 'complete' | 'error' | 'status';
@@ -7,6 +8,7 @@ export interface StreamingEventData {
   content?: string;
   error?: string;
   details?: string;
+  citations?: Citation[];
   [key: string]: any;
 }
 
@@ -60,6 +62,7 @@ export class StreamingConversationClient {
       }
 
       let accumulatedContent = '';
+      let accumulatedCitations: Citation[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -95,6 +98,11 @@ export class StreamingConversationClient {
                   break;
 
                 case 'complete':
+                  // Accumulate citations if provided
+                  if (data.citations) {
+                    accumulatedCitations = data.citations;
+                  }
+                  
                   // Final update with complete metadata - map to AIResponseData format
                   const aiResponseData = {
                     ai_provider: data.ai_provider,
@@ -107,7 +115,8 @@ export class StreamingConversationClient {
                     context_used: data.context_used,
                     resolved_question: data.resolved_question,
                     follow_up_suggestions: data.follow_up_suggestions,
-                    projects_discussed: data.projects_discussed
+                    projects_discussed: data.projects_discussed,
+                    citations: accumulatedCitations
                   };
                   console.log('Final database update with complete message and metadata');
                   try {
@@ -146,7 +155,8 @@ export class StreamingConversationClient {
                       context_used: false,
                       resolved_question: '',
                       follow_up_suggestions: [],
-                      projects_discussed: []
+                      projects_discussed: [],
+                      citations: []
                     };
 
                     await updateMessage(errorMessage, errorResponseData);
