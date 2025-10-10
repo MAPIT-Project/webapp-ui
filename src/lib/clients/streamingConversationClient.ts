@@ -1,4 +1,3 @@
-import { addStreamingAIMessage } from './conversationService';
 import type { Citation } from '$lib/types/schema';
 
 export interface StreamingEventData {
@@ -29,9 +28,6 @@ export class StreamingConversationClient {
     this.closeConnection();
 
     try {
-      // First create an empty AI message in the database
-      const { updateMessage } = await addStreamingAIMessage(conversationId, '');
-
       // Create the streaming request
       const url = `/api/proxy/conversation/${conversationId}/message/stream`;
       const requestBody = {
@@ -118,53 +114,15 @@ export class StreamingConversationClient {
                     projects_discussed: data.projects_discussed,
                     citations: accumulatedCitations
                   };
-                  console.log('Final database update with complete message and metadata');
-                  try {
-                    await updateMessage(accumulatedContent, aiResponseData);
-                    console.log('Final database update successful');
-                  } catch (error) {
-                    console.error('Final database update failed:', error);
-                  }
+                  console.log('Passing complete metadata to parent component');
                   onComplete?.(data);
                   return; // End the stream
 
                 case 'error':
-                  // Handle error - save error message to database and clean up
+                  // Handle error - pass error to parent component
                   const errorMessage = data.details || data.error || 'An error occurred while processing your request';
                   console.log('Streaming error received:', data.error, 'Details:', data.details);
-
-                  try {
-                    // Save the error message to the database
-                    const errorResponseData = {
-                      ai_provider: 'error',
-                      ai_version: 'error',
-                      model_used: 'error',
-                      data_source: 'error',
-                      processing_time: 0,
-                      projects_found: 0,
-                      logs: {
-                        question: message,
-                        model_used: 'error',
-                        phases: ['error'],
-                        total_processing_time_ms: 0,
-                        projects_retrieved: 0,
-                        projects_processed: 0,
-                        success: false,
-                        average_relevance_score: 0
-                      },
-                      context_used: false,
-                      resolved_question: '',
-                      follow_up_suggestions: [],
-                      projects_discussed: [],
-                      citations: []
-                    };
-
-                    await updateMessage(errorMessage, errorResponseData);
-                    console.log('Error message saved to database');
-                  } catch (saveError) {
-                    console.error('Failed to save error message to database:', saveError);
-                  }
-
+                  console.log('Passing error to parent component');
                   onError?.(errorMessage);
                   return; // End the stream
               }

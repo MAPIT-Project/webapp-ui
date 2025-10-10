@@ -365,7 +365,7 @@ $effect(() => {
 							finalMessage.citations = convertedCitations;
 						}
 
-						// Save the AI message to the database
+						// Save the AI message to the database with all metadata in one call
 						const savedMessage = await addAIMessage(chatId, finalMessage.text, {
 							ai_provider: metadata.ai_provider,
 							ai_version: metadata.ai_version,
@@ -375,18 +375,13 @@ $effect(() => {
 							projects_found: metadata.projects_found,
 							logs: metadata.logs
 						});
-						
+
 						if (savedMessage) {
 							// Create a proper MessageWithSuggestions object with citations
 							const messageWithSuggestions: MessageWithSuggestions = savedMessage as MessageWithSuggestions;
 							messageWithSuggestions.citations = finalMessage.citations;
 							messages = [...messages, messageWithSuggestions];
-							
-							// If there are citations, save them using the update endpoint with the actual message ID
-							if (finalMessage.citations && finalMessage.citations.length > 0) {
-								await updateMessageWithCitations(savedMessage.id, finalMessage.text, finalMessage.citations, finalMessage);
-							}
-							
+
 							console.log('Final message added to UI, removing streaming message');
 							streamingConversationStore.removeAIMessage(messageId);
 						} else {
@@ -434,7 +429,7 @@ $effect(() => {
 
 					// Save the error message to the database
 					const savedMessage = await addAIMessage(chatId, errorMessage.text);
-					
+
 					if (savedMessage) {
 						// Add the saved error message to the messages array
 						messages = [...messages, savedMessage as MessageWithSuggestions];
@@ -457,44 +452,7 @@ $effect(() => {
 		}
 	}
 
-	// Function to update a message with citations using the update endpoint
-	async function updateMessageWithCitations(messageId: number, text: string, citations: Citation[], message: MessageWithSuggestions) {
-		try {
-			const response = await fetch(`/api/proxy/messages/${messageId}/update`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					text,
-					citations,
-					aiProvider: message.aiProvider,
-					aiVersion: message.aiVersion,
-					modelUsed: message.modelUsed,
-					dataSource: message.dataSource,
-					processingTime: message.processingTime,
-					projectsFound: message.projectsFound,
-					logs: {
-						question: message.logsQuestion,
-						model_used: message.logsModelUsed,
-						phases: message.logsPhases ? JSON.parse(message.logsPhases) : [],
-						total_processing_time_ms: message.logsTotalProcessingTimeMs,
-						projects_retrieved: message.logsProjectsRetrieved,
-						projects_processed: message.logsProjectsProcessed,
-						success: message.logsSuccess,
-						average_relevance_score: parseFloat(message.logsAverageRelevanceScore || '0')
-					}
-				})
-			});
-			
-			if (!response.ok) {
-				console.error('Error updating message with citations:', await response.text());
-			}
-		} catch (err) {
-			console.error('Error updating message with citations:', err);
-		}
-	}
-
+	
 	async function handleSubmit() {
 		if (!userInput.trim() || $streamingConversationStore.isProcessing || isSending) return;
 

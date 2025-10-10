@@ -7,6 +7,7 @@
 	import type { Citation } from '$lib/types/schema';
 
 	let copied = $state(false);
+	let showSources = $state(false);
 
 	async function copyMessage(text: string) {
 		try {
@@ -164,6 +165,10 @@
 			messageContent.addEventListener('click', handleCitationClick);
 		}
 	});
+
+	function toggleSources() {
+		showSources = !showSources;
+	}
 </script>
 
 <div class="group relative {isGrouped ? 'mt-0.5' : 'mt-8 pt-4'} animate-[fadeInUp_0.3s_ease-out]">
@@ -241,7 +246,7 @@
 						>
 							<div
 								id="streaming-message-content-{message.id}"
-								class="prose prose-sm prose-invert max-w-full leading-relaxed break-words [&>*]:text-gray-100 [&_a:hover]:text-blue-300 [&_a]:text-blue-400 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:rounded [&_blockquote]:border-l-4 [&_blockquote]:border-blue-400 [&_blockquote]:bg-blue-400/5 [&_blockquote]:p-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-300 [&_hr]:block [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-slate-600/20 [&_code]:rounded [&_code]:border [&_code]:border-indigo-500/20 [&_code]:bg-indigo-500/15 [&_code]:px-2 [&_code]:py-1 [&_code]:text-sm [&_code]:font-medium [&_code]:text-indigo-200 [&_em]:text-blue-300 [&_h1:first-child]:mt-0 [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-xl [&_h1]:text-blue-400 [&_h2:first-child]:mt-0 [&_h2]:mb-2 [&_h2]:mt-3 [&_h2]:text-lg [&_h2]:text-emerald-400 [&_h3:first-child]:mt-0 [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-base [&_h3]:text-white [&_li]:my-1 [&_li]:text-gray-200 [&_ol]:my-3 [&_ol_li::marker]:text-emerald-400 [&_p:last-child]:mb-0 [&_p]:mb-3 [&_p]:text-gray-100 [&_p]:leading-relaxed [&_p:not(:first-child)]:mt-2 [&_p:has(>strong:first-child)]:mt-6 [&_pre]:my-4 [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-indigo-500/20 [&_pre]:bg-slate-900/40 [&_pre]:p-4 [&_pre]:text-sm [&_pre]:overflow-x-auto [&_pre_code]:border-none [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-slate-200 [&_strong]:text-white [&_table]:my-4 [&_table]:w-full [&_table]:overflow-x-auto [&_table]:rounded [&_td]:border-b [&_td]:border-slate-600/20 [&_td]:p-3 [&_td]:text-gray-200 [&_th]:border-b-2 [&_th]:border-indigo-500/30 [&_th]:bg-slate-700/50 [&_th]:p-3 [&_th]:text-left [&_th]:font-bold [&_th]:text-white [&_tr:nth-child(even)]:bg-slate-700/20 [&_ul]:my-3 [&_ul_li::marker]:text-blue-400 [&_ul_ul]:mb-2 [&_ul_ul]:mt-2 [&_ul_ul]:rounded [&_ul_ul]:border [&_ul_ul]:border-slate-600/10 [&_ul_ul]:bg-slate-900/20 [&_ul_ul]:p-2 [&_ul_ul_li]:my-1 [&_ul_ul_li]:text-sm"
+								class="prose prose-sm prose-invert max-w-full leading-relaxed break-words [&>*]:text-gray-100 [&_a:hover]:text-blue-300 [&_a]:text-blue-400 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:rounded [&_blockquote]:border-l-4 [&_blockquote]:border-blue-400 [&_blockquote]:bg-blue-400/5 [&_blockquote]:p-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-300 [&_hr]:block [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-slate-600/20 [&_code]:rounded [&_code]:border [&_code]:border-indigo-500/20 [&_code]:bg-indigo-500/15 [&_code]:px-2 [&_code]:py-1 [&_code]:text-sm [&_code]:font-medium [&_code]:text-indigo-200 [&_em]:text-blue-300 [&_h1]:text-white [&_h1:first-child]:mt-0 [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-xl [&_h2]:!text-white [&_h2:first-child]:mt-0 [&_h2]:mb-2 [&_h2]:mt-3 [&_h2]:text-lg [&_h3]:!text-white [&_h3:first-child]:mt-0 [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-base [&_li]:my-1 [&_li]:text-gray-200 [&_ol]:my-3 [&_ol_li::marker]:text-gray-400 [&_p:last-child]:mb-0 [&_p]:mb-3 [&_p]:text-gray-100 [&_p]:leading-relaxed [&_p:not(:first-child)]:mt-2 [&_p:has(>strong:first-child)]:mt-6 [&_pre]:my-4 [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-indigo-500/20 [&_pre]:bg-slate-900/40 [&_pre]:p-4 [&_pre]:text-sm [&_pre]:overflow-x-auto [&_pre_code]:border-none [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-slate-200 [&_strong]:text-white [&_table]:my-4 [&_table]:w-full [&_table]:overflow-x-auto [&_table]:rounded [&_td]:border-b [&_td]:border-slate-600/20 [&_td]:p-3 [&_td]:text-gray-200 [&_th]:border-b-2 [&_th]:border-indigo-500/30 [&_th]:bg-slate-700/50 [&_th]:p-3 [&_th]:text-left [&_th]:font-bold [&_th]:text-white [&_tr:nth-child(even)]:bg-slate-700/20 [&_ul]:my-3 [&_ul_li::marker]:text-gray-400 [&_ul_ul]:mb-2 [&_ul_ul]:mt-2 [&_ul_ul]:rounded [&_ul_ul]:border [&_ul_ul]:border-slate-600/10 [&_ul_ul]:bg-slate-900/20 [&_ul_ul]:p-2 [&_ul_ul_li]:my-1 [&_ul_ul_li]:text-sm"
 							>
 								{@html messageContentHtml}
 							</div>
@@ -266,38 +271,58 @@
 							</button>
 						</div>
 
-						<!-- Sources section - only show if citations exist and message is complete -->
+						<!-- Sources toggle button - only show if citations exist and message is complete -->
 						{#if message.sender === 'ai' && message.isComplete && message.citations && message.citations.length > 0}
-							<div class="mt-3 border-t border-gray-700/50 pt-3">
-								<h4 class="text-xs font-medium text-gray-400 mb-2">Sources</h4>
-								<div class="space-y-2">
-									{#each message.citations as citation, index}
-										<div class="flex items-start gap-2 p-2 rounded bg-gray-800/50 border border-gray-700/30">
-											<span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full dark:text-blue-400 dark:bg-blue-900 flex-shrink-0">
-												{citation.id}
-											</span>
-											<div class="flex-1 min-w-0">
-												<p class="text-sm text-gray-300 font-medium truncate">{citation.title}</p>
-												{#if citation.metadata?.sourceType}
-													<p class="text-xs text-gray-500 capitalize">{citation.metadata.sourceType}</p>
-												{/if}
-												{#if citation.url}
-													<a
-														href={citation.url}
-														target="_blank"
-														rel="noopener noreferrer"
-														class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
-													>
-														View Source
-														<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-															<path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
-															<path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
-														</svg>
-													</a>
-												{/if}
-											</div>
+							<div class="mt-3">
+								<button
+									class="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-300 transition-colors"
+									onclick={toggleSources}
+									aria-expanded={showSources}
+									aria-controls="streaming-sources-{message.id}"
+								>
+									<Icon 
+										name={showSources ? "expand_less" : "expand_more"} 
+										className="text-xs transition-transform duration-200" 
+									/>
+									{message.citations.length} Source{message.citations.length === 1 ? '' : 's'}
+								</button>
+								
+								<!-- Sources section - shown/hidden based on toggle -->
+								<div
+									id="streaming-sources-{message.id}"
+									class="overflow-hidden transition-all duration-300 {showSources ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'}"
+								>
+									<div class="border-t border-gray-700/50 pt-3">
+										<div class="space-y-2">
+											{#each message.citations as citation, index}
+												<div class="flex items-start gap-2 p-2 rounded-lg bg-gray-800/50 border border-gray-700/30 hover:bg-gray-800/70 transition-colors">
+													<span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full dark:text-blue-400 dark:bg-blue-900 flex-shrink-0">
+														{citation.id}
+													</span>
+													<div class="flex-1 min-w-0">
+														<p class="text-sm text-gray-300 font-medium truncate">{citation.title}</p>
+														{#if citation.metadata?.sourceType}
+															<p class="text-xs text-gray-500 capitalize">{citation.metadata.sourceType}</p>
+														{/if}
+														{#if citation.url}
+															<a
+																href={citation.url}
+																target="_blank"
+																rel="noopener noreferrer"
+																class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
+															>
+																View Source
+																<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+																	<path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
+																	<path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
+																</svg>
+															</a>
+														{/if}
+													</div>
+												</div>
+											{/each}
 										</div>
-									{/each}
+									</div>
 								</div>
 							</div>
 						{/if}
