@@ -87,6 +87,28 @@ export interface StreamingMessage {
 	isStreaming?: boolean;
 	isComplete?: boolean;
 	citations?: Citation[];
+	downloadUrl?: string;
+	fileType?: 'docx' | 'xlsx' | 'zip';
+	fileName?: string;
+	packageContents?: string[];
+}
+
+export interface ProgressMessage {
+	id: string;
+	type: 'progress';
+	message: string;
+	step: number;
+	totalSteps: number;
+	timestamp: string;
+}
+
+export interface ExportResponse {
+	type: 'response';
+	message: string;
+	downloadUrl: string;
+	fileType: 'docx' | 'xlsx' | 'zip';
+	fileName?: string;
+	packageContents?: string[];
 }
 
 export interface ConversationSummary {
@@ -107,6 +129,12 @@ export interface ProcessingStage {
 	stage: string;
 	message: string;
 	timestamp: string;
+	step?: number;
+	totalSteps?: number;
+	downloadUrl?: string;
+	fileType?: 'docx' | 'xlsx' | 'zip';
+	fileName?: string;
+	packageContents?: string[];
 }
 
 export interface AIResponseMetadata {

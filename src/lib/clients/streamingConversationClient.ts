@@ -1,13 +1,19 @@
 import type { Citation } from '$lib/types/schema';
 
 export interface StreamingEventData {
-  type: 'progress' | 'token' | 'complete' | 'error' | 'status';
+  type: 'progress' | 'token' | 'complete' | 'error' | 'status' | 'response';
   stage?: string;
   message?: string;
   content?: string;
   error?: string;
   details?: string;
   citations?: Citation[];
+  step?: number;
+  total_steps?: number;
+  download_url?: string;
+  file_type?: 'docx' | 'xlsx' | 'zip';
+  file_name?: string;
+  package_contents?: string[];
   [key: string]: any;
 }
 
@@ -75,6 +81,31 @@ export class StreamingConversationClient {
 
               switch (data.type) {
                 case 'progress':
+                  // Handle progress messages with step information
+                  if (data.step !== undefined && data.total_steps) {
+                    // This is an export progress message
+                    onProgress?.(
+                      data.stage || 'exporting',
+                      data.message || '',
+                      {
+                        step: data.step,
+                        totalSteps: data.total_steps,
+                        type: 'export'
+                      }
+                    );
+                  } else {
+                    // Regular progress message
+                    onProgress?.(
+                      data.stage || 'processing',
+                      data.message || '',
+                      {
+                        routingDecision: (data as any).routing_decision,
+                        intentConfidence: (data as any).intent_confidence
+                      }
+                    );
+                  }
+                  break;
+
                 case 'status':
                   onProgress?.(
                     data.stage || 'processing',
@@ -82,6 +113,21 @@ export class StreamingConversationClient {
                     {
                       routingDecision: (data as any).routing_decision,
                       intentConfidence: (data as any).intent_confidence
+                    }
+                  );
+                  break;
+
+                case 'response':
+                  // Handle export response with download info
+                  onProgress?.(
+                    'export_complete',
+                    'Export ready for download',
+                    {
+                      downloadUrl: data.download_url,
+                      fileType: data.file_type,
+                      fileName: data.file_name,
+                      packageContents: data.package_contents,
+                      type: 'export_response'
                     }
                   );
                   break;

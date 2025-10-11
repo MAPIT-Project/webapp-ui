@@ -36,7 +36,7 @@
 	}
 </script>
 
-<div class="flex-shrink-0 p-4">
+<div class="flex-shrink-0 py-4 ">
 	<form on:submit|preventDefault={handleSubmit} class="relative mx-auto max-w-4xl">
 		<div
 			class="relative rounded-2xl border border-gray-600/30 bg-[#2A2A2A]/50 backdrop-blur-sm transition-all focus-within:border-gray-600/50 focus-within:ring-2 focus-within:ring-gray-600/50"
@@ -65,13 +65,20 @@
 			{:else}
 				<button
 					type="submit"
-					class="absolute right-2 top-1/2 -translate-y-1/2 transform rounded-xl border px-2 py-1.5 transition-all duration-200 {userInput.trim() &&
+					class="absolute right-2 top-1/2 -translate-y-1/2 transform rounded-xl border px-2 py-2 transition-all duration-200 {userInput.trim() &&
 					!isSending
 						? 'border-blue-500/30 bg-blue-500/20 text-blue-300 hover:border-blue-400 hover:text-blue-200'
 						: 'border-gray-600/50 text-gray-500'}"
 					disabled={isSending || !userInput.trim()}
 				>
-					<Icon name="send" className="text-current" />
+					<!-- <Icon name="send" className="text-current" /> -->
+
+					
+					<svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+					</svg>
+					
+					  
 				</button>
 			{/if}
 		</div>

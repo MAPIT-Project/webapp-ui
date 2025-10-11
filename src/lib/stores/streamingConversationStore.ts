@@ -18,6 +18,12 @@ export interface ProcessingStage {
   timestamp: string;
   routingDecision?: string;
   intentConfidence?: number;
+  step?: number;
+  totalSteps?: number;
+  downloadUrl?: string;
+  fileType?: 'docx' | 'xlsx' | 'zip';
+  fileName?: string;
+  packageContents?: string[];
 }
 
 export interface StreamingConversationState {

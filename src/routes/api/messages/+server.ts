@@ -29,9 +29,10 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
+		// Fetch all messages with citations included in a single query
 		const { data, error } = await supabase
 			.from('message')
-			.select('*')
+			.select('*, citations')
 			.eq('conversation_id', conversationId)
 			.order('created_at', { ascending: true });
 
@@ -40,23 +41,11 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			return json({ error: error.message }, { status: 500 });
 		}
 
-		// Load citations for AI messages
-		const messagesWithCitations = await Promise.all(
-			data.map(async (message) => {
-				if (message.sender === 'ai') {
-					try {
-						const response = await fetch(`${url.origin}/api/messages/${message.id}/citations`);
-						if (response.ok) {
-							const citationData = await response.json();
-							return { ...message, citations: citationData.citations };
-						}
-					} catch (err) {
-						console.error('Error loading citations for message:', err);
-					}
-				}
-				return message;
-			})
-		);
+		// Process the data to ensure citations are properly parsed
+		const messagesWithCitations = data.map(message => ({
+			...message,
+			citations: message.citations || [] // Ensure citations is always an array
+		}));
 
 		return json({ messages: messagesWithCitations });
 	} catch (error) {

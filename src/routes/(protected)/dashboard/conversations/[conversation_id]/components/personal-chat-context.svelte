@@ -352,7 +352,7 @@
             <EmptyState />
           </div>
         {:else}
-          <div class="space-y-1 pb-8 pt-6">
+          <div class="pb-2 pt-6">
             {#each messages as message, index}
               {@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
               {@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}

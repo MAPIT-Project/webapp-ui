@@ -24,30 +24,30 @@
 			</div>
 			<div class="flex items-center gap-2">
 				<span class="text-sm font-semibold text-[#FFFFFF]">AI Assistant</span>
-				<span
-					class="rounded-full bg-[#2196F3] px-2 py-0.5 text-[10px] font-semibold text-[#FFFFFF]"
+				<!-- <span
+					class="rounded-full bg-[#0d5997] px-2 py-0.5 text-[9px] font-semibold text-[#FFFFFF]"
 				>
 					BETA
-				</span>
+				</span> -->
 			</div>
 		</div>
 
 		<!-- Right side - Controls and context indicator -->
 		<div class="flex items-center gap-3">
 			<!-- Context indicator -->
-			<ContextHeaderIndicator
+			<!-- <ContextHeaderIndicator
 				projectCount={$contextSummary.projectCount}
 				messageCount={$contextSummary.messageCount}
 				isContextual={$contextSummary.isContextual}
 				topics={$contextSummary.topics}
 				onToggle={() => conversationContextStore.toggleContext()}
-			/>
+			/> -->
 			
 			<!-- Vertical divider -->
-			<div class="h-6 w-px bg-[#4F4F4F]"></div>
+			<!-- <div class="h-6 w-px bg-[#4F4F4F]"></div> -->
 			
 			<!-- AI provider selector -->
-			<AIProviderSelector />
+			<!-- <AIProviderSelector /> -->
 			
 			<!-- Optional: API mode toggle (commented out) -->
 			<!-- <div class="h-6 w-px bg-[#4F4F4F]"></div> -->

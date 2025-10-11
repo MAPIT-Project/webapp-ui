@@ -216,8 +216,8 @@
 		</div>
 
 		<!-- Message bubble -->
-		<div class="max-w-[80%] flex-1 {message.sender === 'user' ? 'text-right' : 'text-left'}">
-			<div class="inline-block max-w-[70ch] align-top">
+		<div class="max-w-[85ch] flex-1 {message.sender === 'user' ? 'text-right' : 'text-left'}">
+			<div class="inline-block  align-top">
 				{#if message.sender === 'user'}
 					<div
 						class=" relative rounded-lg px-3 py-2 text-white {isGrouped
@@ -229,8 +229,8 @@
 								{@html highlightMapitInMessage(message.text)}
 							</p>
 						</div>
-						<div class="mt-1 text-right">
-							<span class="text-xs text-gray-500 font-medium">
+						<div class="text-right">
+							<span class="text-xs text-gray-500/70 font-medium">
 								{formatMessageTime(getMessageCreatedAt(message) || '')}
 							</span>
 						</div>
@@ -255,7 +255,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="mt-1 text-right">
+						<div class="text-right">
 							<span class="text-xs text-red-400/80 font-medium">
 								{formatMessageTime(getMessageCreatedAt(message) || '')}
 							</span>
@@ -264,7 +264,7 @@
 					</div>
 				{:else}
 					<!-- Normal AI response -->
-					<div class="group/ai relative inline-block max-w-[70ch] align-top">
+					<div class="group/ai relative inline-block max-w-[85ch] align-top">
 						<!-- Bubble -->
 						<div
 							class="rounded-lg border-0 px-2 text-gray-100 {isGrouped
@@ -277,8 +277,8 @@
 						>
 							{@html messageContentHtml}
 						</div>
-						<div class="mt-1 text-right">
-							<span class="text-xs text-gray-500 font-medium">
+						<div class="text-right">
+							<span class="text-xs text-gray-500/70 font-medium">
 								{formatMessageTime(getMessageCreatedAt(message) || '')}
 							</span>
 						</div>

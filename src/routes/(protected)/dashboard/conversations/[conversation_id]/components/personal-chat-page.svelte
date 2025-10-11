@@ -78,6 +78,7 @@
 
 	// Track the last loaded chat ID to prevent duplicate loads
 	let lastLoadedChatId = $state<number | null>(null);
+	let isLoadingMessages = $state(false);
 
 	// Function to check if a message should be grouped with the previous one
 	function shouldGroupMessage(
@@ -97,6 +98,39 @@
 		const fiveMinutes = 5 * 60 * 1000;
 
 		return currentMessage.sender === previousMessage.sender && timeDiff <= fiveMinutes;
+	}
+
+	// Function to handle progress updates
+	function handleProgressUpdate(stage: string, message: string, extras?: any) {
+		if (extras?.type === 'export' && extras.step !== undefined) {
+			// Handle export progress
+			streamingConversationStore.updateStage({
+				stage: `export_step_${extras.step}`,
+				message: message,
+				timestamp: new Date().toISOString(),
+				step: extras.step,
+				totalSteps: extras.totalSteps
+			});
+		} else if (extras?.type === 'export_response') {
+			// Handle export completion
+			streamingConversationStore.updateStage({
+				stage: 'export_complete',
+				message: 'Export ready for download',
+				timestamp: new Date().toISOString(),
+				downloadUrl: extras.downloadUrl,
+				fileType: extras.fileType,
+				fileName: extras.fileName,
+				packageContents: extras.packageContents
+			});
+		} else {
+			// Handle regular progress
+			streamingConversationStore.updateStage({
+				stage,
+				message,
+				timestamp: new Date().toISOString(),
+				...extras
+			});
+		}
 	}
 
 	// Function to check if this is the last message in a group (WhatsApp style)
@@ -121,13 +155,38 @@
 
 	// Effect to load messages and conversation details when chatId changes
 	$effect(() => {
+		console.log('🔄 Effect triggered - chatId:', chatId, 'lastLoadedChatId:', lastLoadedChatId);
 		if (chatId && chatId !== lastLoadedChatId) {
+			console.log('🎯 Loading new conversation:', chatId);
+			// Reset states when loading a new conversation
+			isLoading = true;
+			isLoadingMessages = false;
+			error = null;
+			messages = [];
+			conversation = null;
+
+			// Load both messages and conversation details
+			console.log('📞 Calling loadMessages for conversation:', chatId);
 			loadMessages(chatId);
+			console.log('📞 Calling loadConversationDetails for conversation:', chatId);
 			loadConversationDetails(chatId);
 			streamingConversationStore.setConversation(chatId);
 			// Don't load existing messages into streaming store to avoid duplication
 			// streamingConversationStore.loadExistingMessages(chatId);
 			lastLoadedChatId = chatId;
+
+			// Set a timeout to ensure loading state doesn't get stuck
+			setTimeout(() => {
+				if (isLoading) {
+					console.warn('⏰ Loading timeout reached, resetting loading state');
+					isLoading = false;
+					if (!error) {
+						error = 'Loading timeout - please try refreshing the page';
+					}
+				}
+			}, 10000); // 10 second timeout
+		} else {
+			console.log('⏭️ Skipping load - same conversation or no chatId');
 		}
 	});
 
@@ -196,64 +255,91 @@ $effect(() => {
 
 	// Load conversation details using API endpoint
 	async function loadConversationDetails(id: number) {
+		console.log('🏠 loadConversationDetails called with ID:', id);
 		try {
+			console.log('📡 Fetching conversation details for ID:', id);
 			const response = await fetch(`/api/conversations/${id}`, {
 				method: 'GET'
 			});
 
+			console.log('📊 Conversation details response status:', response.status);
 			const result = await response.json();
+			console.log('📋 Conversation details response:', result);
 
 			if (!response.ok) {
-				console.error('Error loading conversation details:', result.error);
+				console.error('❌ Error loading conversation details:', result.error);
+				// Set error state for conversation loading failure and stop loading
+				if (result.error === 'Unauthorized') {
+					error = 'Please log in to access conversations';
+				} else if (result.error === 'Conversation not found') {
+					error = 'Conversation not found';
+				} else {
+					error = `Failed to load conversation: ${result.error}`;
+				}
+				isLoading = false; // Ensure loading state is reset on error
 				return;
 			}
 
+			console.log('✅ Conversation details loaded successfully');
 			conversation = result.conversation;
 		} catch (err) {
-			console.error('Error loading conversation details:', err);
+			console.error('💥 Error loading conversation details:', err);
+			error = 'Failed to load conversation details';
+			isLoading = false; // Ensure loading state is reset on error
 		}
 	}
 
 	async function loadMessages(id: number) {
+		console.log('🔍 loadMessages called with ID:', id);
 		if (isNaN(id)) {
+			console.error('❌ Invalid conversation ID:', id);
 			error = 'Invalid conversation ID';
+			isLoading = false;
+			isLoadingMessages = false;
 			return;
 		}
 
+		// Prevent duplicate loading if already loading same conversation
+		if (isLoadingMessages || (lastLoadedChatId === id && messages.length > 0)) {
+			console.log('⏭️ Skipping duplicate message load for conversation:', id);
+			return;
+		}
+
+		console.log('🚀 Starting to load messages for conversation:', id);
 		isLoading = true;
+		isLoadingMessages = true;
 		error = null;
 
 		try {
+			console.log('📞 Calling getConversationMessages for conversation:', id);
 			const loadedMessages = await getConversationMessages(id);
-			// Convert to MessageWithSuggestions and load citations for AI messages
-			messages = await Promise.all(loadedMessages.map(async (msg) => {
-				const messageWithSuggestions = msg as MessageWithSuggestions;
-				
-				// Load citations for AI messages
-				if (msg.sender === 'ai') {
-					try {
-						const response = await fetch(`/api/messages/${msg.id}/citations`, {
-							method: 'GET'
-						});
-						if (response.ok) {
-							const data = await response.json();
-							if (data.citations && data.citations.length > 0) {
-								// Add citations to the message
-								messageWithSuggestions.citations = data.citations;
-							}
-						}
-					} catch (err) {
-						console.error('Error loading citations for message:', err);
-					}
-				}
-				
-				return messageWithSuggestions;
-			}));
+
+			// Check if we got an error response (empty array might indicate auth issues)
+			if (!loadedMessages || loadedMessages.length === 0) {
+				console.warn('No messages loaded for conversation:', id);
+				// Don't set error here - let conversation details loading handle auth errors
+			} else {
+				// Convert to MessageWithSuggestions - citations are now included in the API response
+				messages = loadedMessages.map(msg => {
+					const messageWithSuggestions = msg as MessageWithSuggestions;
+					// Citations are already loaded from the API, no separate requests needed
+					return messageWithSuggestions;
+				});
+				console.log('Loaded', messages.length, 'messages for conversation:', id);
+			}
 		} catch (err) {
 			console.error('Error loading messages:', err);
-			error = 'Failed to load conversation messages';
+			// Only set error if it's not an authentication issue (let conversation details handle that)
+			if (err instanceof Error && err.message.includes('Unauthorized')) {
+				error = 'Please log in to access conversations';
+				isLoading = false; // Ensure loading state is reset on auth error
+			} else {
+				error = 'Failed to load conversation messages';
+				isLoading = false; // Ensure loading state is reset on error
+			}
 		} finally {
 			isLoading = false;
+			isLoadingMessages = false;
 		}
 	}
 
@@ -308,13 +394,9 @@ $effect(() => {
 				chatId,
 				question,
 				true, // include context
-				(stage, message) => {
-					// Update progress indicator
-					streamingConversationStore.updateStage({
-						stage,
-						message,
-						timestamp: new Date().toISOString()
-					});
+				(stage, message, extras) => {
+					// Update progress indicator with enhanced handling
+					handleProgressUpdate(stage, message, extras);
 				},
 				(content) => {
 					// Append token to AI message
@@ -549,7 +631,7 @@ $effect(() => {
 						<EmptyState />
 					</div>
 				{:else}
-					<div class="space-y-1 pb-8 pt-6">
+					<div class="py-3">
 						<!-- Show database messages (persisted) -->
 						{#each messages as message, index}
 							{@const isGrouped = shouldGroupMessage(message, messages[index - 1])}

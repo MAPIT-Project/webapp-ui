@@ -10,7 +10,7 @@
 	let isCollaborationConversation = $state<boolean | null>(null); // null = loading
 	let isLoading = $state(true);
 
-	// Fetch conversation details to determine if it's a collaboration conversation
+	// Load conversation details to determine if it's a collaboration conversation
 	$effect(() => {
 		if (conversationId) {
 			loadConversationDetails(conversationId);

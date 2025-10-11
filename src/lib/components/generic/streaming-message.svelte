@@ -4,10 +4,14 @@
 	import DOMPurify from 'dompurify';
 	import { renderTextWithCitationSpans } from '$lib/utils/citationRenderer';
 	import { onMount } from 'svelte';
-	import type { Citation } from '$lib/types/schema';
+	import type { Citation, ProgressMessage, ExportResponse } from '$lib/types/schema';
+	import ProgressIndicator from './progress-indicator.svelte';
+	import DownloadButton from './download-button.svelte';
 
 	let copied = $state(false);
 	let showSources = $state(false);
+	let progressMessage = $state<ProgressMessage | null>(null);
+	let exportResponse = $state<ExportResponse | null>(null);
 
 	async function copyMessage(text: string) {
 		try {
@@ -169,6 +173,46 @@
 	function toggleSources() {
 		showSources = !showSources;
 	}
+
+	// Handle progress messages
+	function handleProgressMessage(progress: ProgressMessage) {
+		progressMessage = progress;
+		exportResponse = null; // Clear any previous export response
+	}
+
+	// Handle export response
+	function handleExportResponse(response: ExportResponse) {
+		exportResponse = response;
+		progressMessage = null; // Clear progress when complete
+	}
+
+	// Check if message contains progress or export data
+	$effect(() => {
+		if (message.text.includes('"type":"progress"')) {
+			try {
+				const progressData = JSON.parse(message.text);
+				if (progressData.type === 'progress') {
+					handleProgressMessage({
+						id: message.id,
+						...progressData
+					});
+				}
+			} catch (e) {
+				// Not valid JSON, ignore
+			}
+		}
+
+		if (message.downloadUrl) {
+			handleExportResponse({
+				type: 'response',
+				message: message.text,
+				downloadUrl: message.downloadUrl,
+				fileType: message.fileType || 'zip',
+				fileName: message.fileName,
+				packageContents: message.packageContents
+			});
+		}
+	});
 </script>
 
 <div class="group relative {isGrouped ? 'mt-0.5' : 'mt-8 pt-4'} animate-[fadeInUp_0.3s_ease-out]">
@@ -190,7 +234,7 @@
 
 		<!-- Message bubble -->
 		<div class="max-w-[80%] flex-1 {message.sender === 'user' ? 'text-right' : 'text-left'}">
-			<div class="inline-block max-w-[70ch] align-top">
+			<div class="inline-block w-full align-top">
 				{#if message.sender === 'user'}
 					<div
 						class=" relative rounded-lg px-3 py-2 text-white {isGrouped
@@ -237,7 +281,7 @@
 					</div>
 				{:else}
 					<!-- Normal AI response -->
-					<div class="group/ai relative inline-block max-w-[70ch] align-top">
+					<div class="group/ai relative inline-block w-full align-top">
 						<!-- Bubble -->
 						<div
 							class="rounded-lg border-0 px-2 text-gray-100 {isGrouped
@@ -331,7 +375,49 @@
 			</div>
 		</div>
 	</div>
+<!-- Progress indicator -->
+	{#if progressMessage}
+		<div class="mt-4">
+			<ProgressIndicator progress={progressMessage} />
+		</div>
+	{/if}
+
+	<!-- Export response with download button -->
+	{#if exportResponse}
+		<div class="mt-4 export-response">
+			<div class="prose prose-sm prose-invert max-w-full">
+				{@html renderMarkdown(exportResponse.message)}
+			</div>
+
+			<div class="mt-4">
+				<DownloadButton
+					url={exportResponse.downloadUrl}
+					fileType={exportResponse.fileType}
+					fileName={exportResponse.fileName}
+					packageContents={exportResponse.packageContents}
+					primary={true}
+				/>
+			</div>
+			</div>
+	{/if}
 </div>
+
+<style>
+	/* Export response styling */
+	.export-response {
+		@apply p-4 rounded-lg border border-purple-500/20 bg-purple-950/20 backdrop-blur-sm;
+		position: relative;
+	}
+
+	.export-response::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), transparent);
+		border-radius: 0.5rem;
+		pointer-events: none;
+	}
+</style>
 
 <!-- Citation popover -->
 {#if showPopover && currentCitation}

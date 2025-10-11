@@ -279,20 +279,24 @@ export async function getAIResponse(question: string, conversationId?: number, i
  */
 export async function getConversationMessages(conversationId: number): Promise<Message[]> {
 	try {
+		console.log('🚀 getConversationMessages called with ID:', conversationId);
 		const response = await fetch(`/api/messages?conversationId=${conversationId}`, {
 			method: 'GET'
 		});
 
+		console.log('📡 Messages API response status:', response.status);
 		const result = await response.json();
+		console.log('📦 Messages API response:', result);
 
 		if (!response.ok) {
-			console.error('Error fetching messages:', result.error);
+			console.error('❌ Error fetching messages:', result.error);
 			return [];
 		}
 
+		console.log('✅ Successfully loaded', result.messages?.length || 0, 'messages');
 		return result.messages as Message[];
 	} catch (error) {
-		console.error('Unexpected error fetching messages:', error);
+		console.error('💥 Unexpected error fetching messages:', error);
 		return [];
 	}
 }
