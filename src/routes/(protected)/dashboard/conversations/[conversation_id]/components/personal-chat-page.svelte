@@ -171,6 +171,8 @@
 			console.log('📞 Calling loadConversationDetails for conversation:', chatId);
 			loadConversationDetails(chatId);
 			streamingConversationStore.setConversation(chatId);
+			// Reset streaming store to clear any leftover messages
+			streamingConversationStore.reset();
 			// Don't load existing messages into streaming store to avoid duplication
 			// streamingConversationStore.loadExistingMessages(chatId);
 			lastLoadedChatId = chatId;
@@ -204,17 +206,32 @@ $effect(() => {
 		!isSending &&
 		!autostartProcessed
 	) {
-		// Only autostart if we have messages loaded and we're not already processing
-		// This means the user message is already in the conversation
-		autostartProcessed = true; // Set flag immediately to prevent re-triggering
+		// Check if the last message is a user message matching the autostart question
+		// and if it already has an AI response after it
+		const lastMessage = messages[messages.length - 1];
+		const hasAIResponse = messages.some(msg => msg.sender === 'ai');
+		
+		// Only autostart if the last user message matches AND there's no AI response yet
+		if (lastMessage?.sender === 'user' && 
+			lastMessage.text === autostartQuestion && 
+			!hasAIResponse) {
+			
+			autostartProcessed = true; // Set flag immediately to prevent re-triggering
 
-		// Remove the autostart parameter from URL to prevent re-triggering
-		const url = new URL($page.url);
-		url.searchParams.delete('autostart');
-		window.history.replaceState({}, '', url.toString());
+			// Remove the autostart parameter from URL to prevent re-triggering
+			const url = new URL($page.url);
+			url.searchParams.delete('autostart');
+			window.history.replaceState({}, '', url.toString());
 
-		// Start the AI response
-		startAIResponse(autostartQuestion);
+			// Start the AI response
+			startAIResponse(autostartQuestion);
+		} else {
+			// If conditions don't match, just remove the autostart parameter
+			autostartProcessed = true;
+			const url = new URL($page.url);
+			url.searchParams.delete('autostart');
+			window.history.replaceState({}, '', url.toString());
+		}
 	}
 });
 
@@ -553,8 +570,8 @@ $effect(() => {
 				messages = [...messages, userMessage as MessageWithSuggestions];
 			}
 
-			// Add user message to streaming store for immediate UI display
-			streamingConversationStore.addUserMessage(currentInput);
+			// Don't add user message to streaming store - it's already in the database
+			// streamingConversationStore.addUserMessage(currentInput);
 
 			// Clear the input field
 			userInput = '';
