@@ -130,12 +130,12 @@
   <div class="relative z-30 border-b border-[#3A3A3A] bg-[#1E1E1E]/70 backdrop-blur-md px-6 py-4">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <Icon name="description" className="text-[#8A2BE2] text-xl" />
+        <Icon name="description" className="text-[#2196F3] text-xl" />
         <h1 class="text-2xl font-bold text-[#E0E0E0]">Proposals</h1>
       </div>
       
       <button
-        class="flex items-center gap-2 px-4 py-2 bg-[#8A2BE2] text-white rounded-lg hover:bg-[#A052E8] transition-colors"
+        class="flex items-center gap-2 px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors"
         onclick={handleNewProposal}
       >
         <Icon name="add" />
@@ -150,7 +150,7 @@
       {#if isLoading}
         <div class="flex items-center justify-center h-64">
           <div class="text-center space-y-4">
-            <div class="w-12 h-12 border-4 border-[#8A2BE2] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div class="w-12 h-12 border-4 border-[#2196F3] border-t-transparent rounded-full animate-spin mx-auto"></div>
             <p class="text-[#B0B0B0]">Loading proposals...</p>
           </div>
         </div>
@@ -162,7 +162,7 @@
           <h2 class="text-xl font-semibold text-[#E0E0E0] mb-2">Error</h2>
           <p class="text-[#B0B0B0] mb-6">{error}</p>
           <button
-            class="px-4 py-2 bg-[#8A2BE2] text-white rounded-lg hover:bg-[#A052E8] transition-colors"
+            class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors"
             onclick={() => window.location.reload()}
           >
             Try Again
@@ -176,7 +176,7 @@
           <h2 class="text-xl font-semibold text-[#E0E0E0] mb-2">No proposals yet</h2>
           <p class="text-[#B0B0B0] mb-6">Create your first proposal to get started</p>
           <button
-            class="px-4 py-2 bg-[#8A2BE2] text-white rounded-lg hover:bg-[#A052E8] transition-colors"
+            class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors"
             onclick={handleNewProposal}
           >
             Create Proposal
@@ -184,7 +184,7 @@
         </div>
       {:else}
         <div class="space-y-4">
-          {#each proposals as proposal (proposal.proposal_id)}
+          {#each proposals as proposal (JSON.stringify(proposal) + '-' + Math.random())}
             <div class="bg-[#1E1E1E]/50 border border-[#3A3A3A] rounded-lg p-6 hover:bg-[#2C2C2C]/50 transition-colors">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
@@ -220,7 +220,7 @@
                     </div>
                     <div class="w-full bg-[#2C2C2C] rounded-full h-2">
                       <div 
-                        class="bg-gradient-to-r from-[#8A2BE2] to-[#A052E8] h-2 rounded-full transition-all duration-300"
+                        class="bg-gradient-to-r from-[#2196F3] to-[#42A5F5] h-2 rounded-full transition-all duration-300"
                         style="width: {proposal.progress.completion_percentage}%"
                       ></div>
                     </div>
@@ -234,7 +234,7 @@
                 
                 <div class="ml-6">
                   <button
-                    class="px-4 py-2 bg-[#8A2BE2] text-white rounded-lg hover:bg-[#A052E8] transition-colors flex items-center gap-2"
+                    class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors flex items-center gap-2"
                     onclick={() => handleEditProposal(proposal.proposal_id)}
                   >
                     <Icon name="edit" />
@@ -268,7 +268,7 @@
               type="text"
               bind:value={newProposalTitle}
               placeholder="Enter proposal title"
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#8A2BE2]"
+              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
             />
           </div>
           
@@ -278,7 +278,7 @@
               type="text"
               bind:value={newProposalCallId}
               placeholder="Enter call ID"
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#8A2BE2]"
+              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
             />
           </div>
           
@@ -288,7 +288,7 @@
               type="text"
               bind:value={newProposalAcronym}
               placeholder="Enter acronym (optional)"
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#8A2BE2]"
+              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
             />
           </div>
           
@@ -296,7 +296,7 @@
             <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Type</label>
             <select
               bind:value={newProposalType}
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] focus:outline-none focus:border-[#8A2BE2]"
+              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] focus:outline-none focus:border-[#2196F3]"
             >
               <option value="RIA">RIA</option>
               <option value="IA">IA</option>
@@ -315,7 +315,7 @@
             Cancel
           </button>
           <button
-            class="px-4 py-2 bg-[#8A2BE2] text-white rounded-lg hover:bg-[#A052E8] transition-colors flex items-center gap-2"
+            class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors flex items-center gap-2"
             onclick={handleCreateProposal}
             disabled={isCreatingProposal}
           >

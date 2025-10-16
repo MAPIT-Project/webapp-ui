@@ -20,15 +20,15 @@
 				"contrastText": "#FFFFFF"
 			},
 			"accent": {
-				"main": "#8A2BE2",
-				"light": "#A052E8",
+				"main": "#2196F3",
+				"light": "#42A5F5",
 				"contrastText": "#FFFFFF"
 			},
 			"text": {
 				"primary": "#E0E0E0",
 				"secondary": "#B0B0B0",
 				"disabled": "#757575",
-				"link": "#BB86FC"
+				"link": "#42A5F5"
 			},
 			"status": {
 				"info": "#2196F3",
@@ -150,8 +150,8 @@
 				"fontWeight": "500",
 				"variants": {
 					"personal": {
-						"backgroundColor": "rgba(138, 43, 226, 0.2)",
-						"color": "#BB86FC"
+						"backgroundColor": "rgba(33, 150, 243, 0.2)",
+						"color": "#64B5F6"
 					},
 					"team": {
 						"backgroundColor": "rgba(33, 150, 243, 0.2)",

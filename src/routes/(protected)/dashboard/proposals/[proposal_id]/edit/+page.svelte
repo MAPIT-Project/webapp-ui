@@ -349,7 +349,7 @@
           <button
             class="px-3 py-1 rounded text-sm font-medium transition-colors {
               activeTab === 'chat' 
-                ? 'bg-[#8A2BE2] text-white' 
+                ? 'bg-[#2196F3] text-white' 
                 : 'text-[#B0B0B0] hover:text-white'
             }"
             onclick={() => switchToTab('chat')}
@@ -359,7 +359,7 @@
           <button
             class="px-3 py-1 rounded text-sm font-medium transition-colors {
               activeTab === 'document' 
-                ? 'bg-[#8A2BE2] text-white' 
+                ? 'bg-[#2196F3] text-white' 
                 : 'text-[#B0B0B0] hover:text-white'
             }"
             onclick={() => switchToTab('document')}
@@ -388,7 +388,7 @@
             <span class="text-[#B0B0B0]">{progress.completion_percentage}%</span>
             <div class="w-24 bg-[#2C2C2C] rounded-full h-2">
               <div 
-                class="bg-gradient-to-r from-[#8A2BE2] to-[#A052E8] h-2 rounded-full transition-all duration-300"
+                class="bg-gradient-to-r from-[#2196F3] to-[#42A5F5] h-2 rounded-full transition-all duration-300"
                 style="width: {progress.completion_percentage}%"
               ></div>
             </div>
@@ -406,7 +406,7 @@
       <div class="p-4 border-b border-[#3A3A3A] bg-[#1E1E1E]/50 max-h-48 overflow-y-auto">
         <h3 class="text-sm font-semibold text-[#B0B0B0] mb-3">Proposal Sections</h3>
         <div class="space-y-2">
-          {#each Object.entries(PROPOSAL_SECTIONS) as [categoryKey, categoryData]}
+          {#each Object.entries(PROPOSAL_SECTIONS) as [categoryKey, categoryData] (categoryKey)}
             {@const categorySections = sections.filter(s => s.section_id.startsWith(`${categoryKey}.`))}
             {@const categoryProgress = calculateCategoryProgress(categorySections)}
             
@@ -422,19 +422,19 @@
               
               <div class="w-full bg-[#2C2C2C] rounded-full h-1 mb-2">
                 <div 
-                  class="bg-gradient-to-r from-[#8A2BE2] to-[#A052E8] h-1 rounded-full transition-all duration-300"
+                  class="bg-gradient-to-r from-[#2196F3] to-[#42A5F5] h-1 rounded-full transition-all duration-300"
                   style="width: {categoryProgress}%"
                 ></div>
               </div>
               
               <div class="space-y-1 ml-2">
-                {#each Object.entries(categoryData.subsections) as [subsectionKey, subsectionName]}
+                {#each Object.entries(categoryData.subsections) as [subsectionKey, subsectionName] (subsectionKey)}
                   {@const sectionId = `${categoryKey}.${subsectionKey}`}
                   {@const section = sections.find(s => s.section_id === sectionId)}
                   {#if section}
                     <button
                       class="flex items-center gap-2 w-full px-3 py-2 bg-[#2C2C2C]/50 hover:bg-[#4F4F4F]/50 rounded-md transition-colors text-left {
-                        activeSectionId === sectionId ? 'bg-[#8A2BE2]/20 border-l-2 border-[#8A2BE2]' : ''
+                        activeSectionId === sectionId ? 'bg-[#2196F3]/20 border-l-2 border-[#2196F3]' : ''
                       }"
                       onclick={() => handleSectionClick(sectionId)}
                     >
@@ -468,7 +468,7 @@
       
       <!-- Chat Messages - Flexible height with overflow -->
       <div class="flex-1 overflow-y-auto p-4">
-        {#each $streamingConversationStore.messages as message (message.id)}
+        {#each $streamingConversationStore.messages as message (message.id + '-' + Math.random())}
           <div class="mb-4">
             <div class="flex {message.sender === 'user' ? 'justify-end' : 'justify-start'}">
               <div class="max-w-[80%] bg-[#2C2C2C] rounded-lg p-3">
@@ -482,7 +482,7 @@
                 
                 <!-- Show content preview when generating proposal content -->
                 {#if isGeneratingContent && message.sender === 'ai' && previewContent}
-                  <div class="mt-2 p-3 bg-[#8A2BE2]/10 border border-[#8A2BE2]/30 rounded-lg">
+                  <div class="mt-2 p-3 bg-[#2196F3]/10 border border-[#2196F3]/30 rounded-lg">
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-xs font-medium text-[#BB86FC]">
                         Preview: {getSection(targetSectionId)?.section_name || 'Section'}
@@ -499,7 +499,7 @@
                     </div>
                     {#if isGeneratingContent}
                       <div class="flex items-center gap-2 mt-2">
-                        <div class="w-2 h-2 bg-[#8A2BE2] rounded-full animate-pulse"></div>
+                        <div class="w-2 h-2 bg-[#2196F3] rounded-full animate-pulse"></div>
                         <span class="text-xs text-[#BB86FC]">Generating...</span>
                       </div>
                     {/if}
@@ -516,7 +516,7 @@
             <div class="flex justify-center">
               <div class="bg-[#2C2C2C] rounded-lg px-4 py-2">
                 <div class="flex items-center gap-2 text-sm text-[#E0E0E0]">
-                  <div class="w-2 h-2 bg-[#8A2BE2] rounded-full animate-pulse"></div>
+                  <div class="w-2 h-2 bg-[#2196F3] rounded-full animate-pulse"></div>
                   <span>{$streamingConversationStore.currentStage.message}</span>
                 </div>
               </div>
@@ -534,12 +534,12 @@
             onkeypress={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Ask me to write or improve any section..."
             disabled={$streamingConversationStore.isProcessing}
-            class="flex-1 px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#8A2BE2] disabled:opacity-50"
+            class="flex-1 px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3] disabled:opacity-50"
           />
           <button 
             onclick={handleSendMessage}
             disabled={$streamingConversationStore.isProcessing}
-            class="px-4 py-2 bg-[#8A2BE2] text-white rounded-lg hover:bg-[#A052E8] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {#if $streamingConversationStore.isProcessing}
               <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -556,7 +556,7 @@
       {#if isLoading}
         <div class="flex items-center justify-center h-full">
           <div class="text-center space-y-4">
-            <div class="w-12 h-12 border-4 border-[#8A2BE2] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div class="w-12 h-12 border-4 border-[#2196F3] border-t-transparent rounded-full animate-spin mx-auto"></div>
             <p class="text-[#B0B0B0]">Loading proposal...</p>
           </div>
         </div>
@@ -573,7 +573,7 @@
             <div class="mb-6 pb-4 border-b border-[#3A3A3A]">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 bg-[#8A2BE2] rounded-full animate-pulse"></div>
+                  <div class="w-2 h-2 bg-[#2196F3] rounded-full animate-pulse"></div>
                   <h1 class="text-2xl font-bold text-[#E0E0E0] mb-2">
                     {$currentSection?.section_name}
                   </h1>

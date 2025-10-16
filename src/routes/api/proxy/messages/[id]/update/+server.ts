@@ -1,4 +1,4 @@
-import type { RequestHandler } from '@sveltejs/kit';
+?import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
@@ -41,6 +41,18 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
+		// First, fetch the current message to preserve existing citations if needed
+		const { data: currentMessage, error: fetchError } = await supabase
+			.from('message')
+			.select('citations')
+			.eq('id', messageId)
+			.single();
+
+		if (fetchError) {
+			console.error('Error fetching current message:', fetchError);
+			return json({ error: 'Failed to fetch current message' }, { status: 500 });
+		}
+
 		// Prepare update data with optional AI tracking fields
 		const updateData: any = {
 			text,
@@ -55,8 +67,15 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 		if (processingTime !== undefined) updateData.processing_time = processingTime;
 		if (projectsFound !== undefined) updateData.projects_found = projectsFound;
 		
-		// Add citations if available
-		if (citations) updateData.citations = citations;
+		// Handle citations - preserve existing ones if no new citations are provided
+		if (citations) {
+			// New citations provided, use them
+			updateData.citations = citations;
+		} else if (currentMessage?.citations && Array.isArray(currentMessage.citations) && currentMessage.citations.length > 0) {
+			// No new citations but existing ones exist, preserve them
+			updateData.citations = currentMessage.citations;
+			console.log('Preserving', currentMessage.citations.length, 'existing citations for message ID:', messageId);
+		}
 
 		// Add logs data if available
 		if (logs) {

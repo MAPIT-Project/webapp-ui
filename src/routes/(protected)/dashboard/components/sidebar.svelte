@@ -138,6 +138,11 @@
 			url: '/conversations'
 		},
 		{
+			name: 'Proposals',
+			icon: 'description',
+			url: '/proposals'
+		},
+		{
 			name: 'Consortium',
 			icon: 'public',
 			url: '/consortium'
@@ -266,7 +271,7 @@
 										space.id
 											? isPersonalSpace(space.id)
 												? 'border border-blue-500/30 bg-blue-600/20'
-												: 'border border-[#8A2BE2] bg-[#8A2BE2]/20'
+												: 'border border-[#2196F3] bg-[#2196F3]/20'
 											: 'border border-transparent'}"
 										onclick={() => handleSpaceChange(space.id)}
 									>
@@ -277,7 +282,7 @@
 													space.id
 												)
 													? 'bg-gradient-to-r from-blue-500 to-blue-600'
-													: 'bg-[#8A2BE2]'} shadow-md"
+													: 'bg-[#2196F3]'} shadow-md"
 											>
 												<Icon
 													name={isPersonalSpace(space.id) ? 'person' : 'groups'}
@@ -291,7 +296,7 @@
 													class="truncate text-sm font-medium {currentSpace === space.id
 														? isPersonalSpace(space.id)
 															? 'text-blue-100'
-															: 'text-[#BB86FC]'
+															: 'text-[#42A5F5]'
 														: 'text-[#E0E0E0] group-hover:text-[#E0E0E0]'}"
 												>
 													{space.name}
@@ -303,7 +308,7 @@
 
 											<!-- Current Indicator -->
 											{#if currentSpace === space.id}
-												<div class="{isPersonalSpace(space.id) ? 'text-blue-400' : 'text-[#8A2BE2]'}">
+												<div class="{isPersonalSpace(space.id) ? 'text-blue-400' : 'text-[#2196F3]'}">
 													<Icon name="check" iconClass="w-4 h-4" />
 												</div>
 											{/if}
@@ -316,7 +321,7 @@
 							<div class="border-t border-[#4F4F4F] bg-[#2C2C2C] p-3">
 								<a
 									href="/dashboard/collaborations"
-									class="flex items-center gap-2 text-xs font-medium text-[#B0B0B0] transition-colors {isPersonalSpace(currentSpace) ? 'hover:text-blue-400' : 'hover:text-[#BB86FC]'}"
+									class="flex items-center gap-2 text-xs font-medium text-[#B0B0B0] transition-colors {isPersonalSpace(currentSpace) ? 'hover:text-blue-400' : 'hover:text-[#42A5F5]'}"
 									onclick={() => (showSpaceDropdown = false)}
 								>
 									<Icon name="add" iconClass="w-3 h-3" />
