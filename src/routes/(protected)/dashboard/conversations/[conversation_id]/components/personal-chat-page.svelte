@@ -197,42 +197,87 @@
 
 	// Effect to check for autostart parameter and trigger AI response
 $effect(() => {
-	const autostartQuestion = $page.url.searchParams.get('autostart');
-	if (
-		autostartQuestion &&
-		chatId &&
-		messages.length > 0 &&
-		!$streamingConversationStore.isProcessing &&
-		!isSending &&
-		!autostartProcessed
-	) {
-		// Check if the last message is a user message matching the autostart question
-		// and if it already has an AI response after it
-		const lastMessage = messages[messages.length - 1];
-		const hasAIResponse = messages.some(msg => msg.sender === 'ai');
+const autostartQuestion = $page.url.searchParams.get('autostart');
+if (
+	autostartQuestion &&
+	chatId &&
+	!$streamingConversationStore.isProcessing &&
+	!isSending &&
+	!autostartProcessed
+) {
+	// Check if there are any messages and if the last message is a user message matching the autostart question
+	const hasAIResponse = messages.some(msg => msg.sender === 'ai');
+	
+	// For new conversations (empty), add the user message to UI first
+	if (messages.length === 0) {
+		// Add the user message to the UI immediately
+		const tempUserMessage: MessageWithSuggestions = {
+			id: 0, // Temporary ID
+			conversationId: chatId,
+			text: autostartQuestion,
+			sender: 'user',
+			createdAt: new Date(),
+			updatedAt: new Date(),
+			userId: null,
+			// Add all required fields with default/null values
+			aiProvider: null,
+			aiVersion: null,
+			modelUsed: null,
+			dataSource: null,
+			processingTime: null,
+			projectsFound: null,
+			logsQuestion: null,
+			logsModelUsed: null,
+			logsPhases: null,
+			logsTotalProcessingTimeMs: null,
+			logsProjectsRetrieved: null,
+			logsProjectsProcessed: null,
+			logsSuccess: null,
+			logsAverageRelevanceScore: null,
+			context: null
+		};
 		
-		// Only autostart if the last user message matches AND there's no AI response yet
-		if (lastMessage?.sender === 'user' && 
-			lastMessage.text === autostartQuestion && 
-			!hasAIResponse) {
-			
-			autostartProcessed = true; // Set flag immediately to prevent re-triggering
-
-			// Remove the autostart parameter from URL to prevent re-triggering
-			const url = new URL($page.url);
-			url.searchParams.delete('autostart');
-			window.history.replaceState({}, '', url.toString());
-
-			// Start the AI response
+		// Add the temporary user message to the messages array
+		messages = [...messages, tempUserMessage];
+		
+		// Mark as processed to prevent re-triggering
+		autostartProcessed = true;
+		
+		// Remove the autostart parameter from URL
+		const url = new URL($page.url);
+		url.searchParams.delete('autostart');
+		window.history.replaceState({}, '', url.toString());
+		
+		// Start the AI response after a short delay to ensure the UI updates
+		setTimeout(() => {
 			startAIResponse(autostartQuestion);
-		} else {
-			// If conditions don't match, just remove the autostart parameter
-			autostartProcessed = true;
-			const url = new URL($page.url);
-			url.searchParams.delete('autostart');
-			window.history.replaceState({}, '', url.toString());
-		}
+		}, 100);
 	}
+	// For existing conversations, check if the last message matches
+	else if (
+		messages[messages.length - 1]?.sender === 'user' &&
+		messages[messages.length - 1]?.text === autostartQuestion &&
+		!hasAIResponse
+	) {
+		// Mark as processed to prevent re-triggering
+		autostartProcessed = true;
+		
+		// Remove the autostart parameter from URL
+		const url = new URL($page.url);
+		url.searchParams.delete('autostart');
+		window.history.replaceState({}, '', url.toString());
+		
+		// Start the AI response
+		startAIResponse(autostartQuestion);
+	}
+	else {
+		// If conditions don't match, just remove the autostart parameter
+		autostartProcessed = true;
+		const url = new URL($page.url);
+		url.searchParams.delete('autostart');
+		window.history.replaceState({}, '', url.toString());
+	}
+}
 });
 
 	// Reset autostart flag when navigating to a different conversation
@@ -336,12 +381,32 @@ $effect(() => {
 				console.warn('No messages loaded for conversation:', id);
 				// Don't set error here - let conversation details loading handle auth errors
 			} else {
+				// Check if we have a temporary user message (ID = 0) in the current messages
+				const hasTempUserMessage = messages.some(msg => msg.id === 0 && msg.sender === 'user');
+				
 				// Convert to MessageWithSuggestions - citations are now included in the API response
-				messages = loadedMessages.map(msg => {
+				const newMessages = loadedMessages.map(msg => {
 					const messageWithSuggestions = msg as MessageWithSuggestions;
 					// Citations are already loaded from the API, no separate requests needed
 					return messageWithSuggestions;
 				});
+				
+				// If we have a temporary user message, check if the loaded messages already contain a user message
+				// with the same text to avoid duplication
+				if (hasTempUserMessage && newMessages.length > 0) {
+					const tempUserMessage = messages.find(msg => msg.id === 0 && msg.sender === 'user');
+					const hasMatchingUserMessage = newMessages.some(msg =>
+						msg.sender === 'user' && msg.text === tempUserMessage?.text
+					);
+					
+					if (hasMatchingUserMessage) {
+						// Remove the temporary user message before replacing with loaded messages
+						messages = messages.filter(msg => !(msg.id === 0 && msg.sender === 'user'));
+					}
+				}
+				
+				// Replace messages with loaded messages
+				messages = newMessages;
 				console.log('Loaded', messages.length, 'messages for conversation:', id);
 			}
 		} catch (err) {
@@ -464,31 +529,23 @@ $effect(() => {
 							finalMessage.citations = convertedCitations;
 						}
 
-						// Save the AI message to the database with all metadata in one call
-						const savedMessage = await addAIMessage(chatId, finalMessage.text, {
-							ai_provider: metadata.ai_provider,
-							ai_version: metadata.ai_version,
-							model_used: metadata.model_used,
-							data_source: metadata.data_source,
-							processing_time: metadata.processing_time,
-							projects_found: metadata.projects_found,
-							logs: metadata.logs
-						});
-
-						if (savedMessage) {
-							// Create a proper MessageWithSuggestions object with citations
-							const messageWithSuggestions: MessageWithSuggestions = savedMessage as MessageWithSuggestions;
-							messageWithSuggestions.citations = finalMessage.citations;
-							messages = [...messages, messageWithSuggestions];
-
-							console.log('Final message added to UI, removing streaming message');
-							streamingConversationStore.removeAIMessage(messageId);
-						} else {
-							// Add the final message to the messages array without saving (error case)
-							messages = [...messages, finalMessage];
-							console.log('Final message added to UI (not saved), removing streaming message');
-							streamingConversationStore.removeAIMessage(messageId);
-						}
+						// The AI message is now saved by the proxy endpoint, but we'll keep the streaming
+						// message visible and just mark it as complete to avoid any disappearing issues
+						console.log('AI message saved by proxy, keeping streaming message visible');
+						
+						// Don't remove the streaming message at all - it's already marked as complete
+						// by the completeAIMessage call above (line 424)
+						// This ensures the message remains visible while the database is updated
+						// The next time the user visits the conversation, they'll see the persisted message
+						
+						// Refresh messages in the background without removing the streaming message
+						// This ensures the sidebar and other parts of the app have the latest data
+						// but doesn't affect the current view
+						setTimeout(() => {
+							loadMessages(chatId).catch(err => {
+								console.error('Error refreshing messages in background:', err);
+							});
+						}, 1000);
 					} else {
 						console.log('Streaming message not found, removing anyway');
 						streamingConversationStore.removeAIMessage(messageId);
@@ -526,7 +583,7 @@ $effect(() => {
 						logsAverageRelevanceScore: '0'
 					};
 
-					// Save the error message to the database
+					// For error messages, we still save them to the database as they're not handled by the proxy
 					const savedMessage = await addAIMessage(chatId, errorMessage.text);
 
 					if (savedMessage) {
@@ -562,16 +619,36 @@ $effect(() => {
 			// Store the current input before clearing it
 			const currentInput = userInput;
 
-			// Add the user message to the database for persistence
-			const userMessage = await addUserMessage(chatId, currentInput);
-
-			if (userMessage) {
-				// Only add to database messages array, streaming store will handle UI
-				messages = [...messages, userMessage as MessageWithSuggestions];
-			}
-
-			// Don't add user message to streaming store - it's already in the database
-			// streamingConversationStore.addUserMessage(currentInput);
+			// The user message is now saved by the proxy endpoint, so we don't need to save it here
+			// Add the user message to the UI immediately for better UX
+			const tempUserMessage: MessageWithSuggestions = {
+				id: 0, // Temporary ID, will be replaced when messages are reloaded
+				conversationId: chatId,
+				text: currentInput,
+				sender: 'user',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				userId: null,
+				// Add all required fields with default/null values for user messages
+				aiProvider: null,
+				aiVersion: null,
+				modelUsed: null,
+				dataSource: null,
+				processingTime: null,
+				projectsFound: null,
+				logsQuestion: null,
+				logsModelUsed: null,
+				logsPhases: null,
+				logsTotalProcessingTimeMs: null,
+				logsProjectsRetrieved: null,
+				logsProjectsProcessed: null,
+				logsSuccess: null,
+				logsAverageRelevanceScore: null,
+				context: null
+			};
+			
+			// Add the temporary user message to the messages array
+			messages = [...messages, tempUserMessage];
 
 			// Clear the input field
 			userInput = '';
@@ -579,6 +656,9 @@ $effect(() => {
 
 			// Start the AI response
 			await startAIResponse(currentInput);
+			
+			// After the AI response is complete, the messages will be reloaded which will
+			// replace the temporary user message with the one from the database
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An error occurred';
 			isSending = false;
@@ -659,9 +739,9 @@ $effect(() => {
 						{/each}
 
 						<!-- Show streaming AI message (temporary UI state during streaming) -->
-						{#if $streamingConversationStore.isProcessing}
+						{#if $streamingConversationStore.messages.length > 0}
 							{#each $streamingConversationStore.messages as message, index}
-								{#if message.sender === 'ai' && message.isStreaming}
+								{#if message.sender === 'ai' && (message.isStreaming || message.isComplete)}
 									{@const isGrouped = shouldGroupMessage(message, messages[messages.length - 1])}
 									{@const isLastInGroupFlag = true}
 									<div id={"stream-msg-" + message.id} class="animate-fadeInUp">

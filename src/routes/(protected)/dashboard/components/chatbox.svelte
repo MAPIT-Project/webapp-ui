@@ -45,14 +45,8 @@
 			// Add the new conversation to the store so it appears in the sidebar immediately
 			conversationStore.addConversation(conversation);
 
-			// Explicitly add the user's first message to the conversation
-			const userMessage = await addUserMessage(conversation.id, currentInput);
-			if (!userMessage) {
-				throw new Error('Failed to save your message to the new conversation.');
-			}
-
 			// Navigate immediately to the conversation page
-			// The conversation page will handle starting the AI response
+			// The conversation page will handle saving the user message and starting the AI response
 			goto(
 				`/dashboard/conversations/${conversation.id}?autostart=${encodeURIComponent(currentInput)}`
 			);
