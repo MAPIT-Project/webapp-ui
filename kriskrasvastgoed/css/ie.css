@@ -1,0 +1,26 @@
+#homePage {
+	_height: 336px;
+}
+
+#jsddm li ul li, #jsddm li ul li a, #language a#en, #language a#nl, .tx_powermail_pi1_fieldwrap_html {
+	zoom: 1;
+}
+
+.tx_powermail_pi1_fieldwrap_html label {
+	_width: 172px;
+}
+
+.tx_powermail_pi1_fieldwrap_html input.powermail_text, .tx_powermail_pi1_fieldwrap_html textarea {
+	width: 290px;
+}
+
+#homeMenuContainer {
+	_height: 200px;
+}
+
+#jsddm li ul ul.subMenu, #jsddm li ul ul { _height: 88px;}
+#jsddm li ul ul.subMenu {_height: auto;}
+
+#postofolioImageBig {_height 288px;}
+
+#homeMenuContainer {*min-height: 330px;}
