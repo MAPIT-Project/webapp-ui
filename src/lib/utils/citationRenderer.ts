@@ -1,4 +1,5 @@
 import type { Citation } from '$lib/types/schema';
+import type { EnhancedCitation } from '$lib/utils/citationConverter';
 
 /**
  * Renders text with citation markers replaced by interactive components
@@ -90,9 +91,23 @@ export function renderTextWithCitationSpans(
 	// Replace citation markers with HTML spans
 	const html = text.replace(/\[(\d+)\]/g, (match, citationId) => {
 		if (citationMap.has(citationId)) {
-			const citation = citationMap.get(citationId)!;
-			const citationData = JSON.stringify(citation).replace(/'/g, "'");
-			return `<span class="citation-marker inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200 cursor-pointer dark:text-blue-400 dark:bg-blue-900 dark:hover:bg-blue-800" data-citation-id="${citation.id}" title="${citation.title}" data-citation='${citationData}'>${citation.id}</span>`;
+			const citationObj = citationMap.get(citationId)!;
+			const enhancedCitation = citationObj as EnhancedCitation;
+			const citationData = JSON.stringify(citationObj).replace(/'/g, "'");
+			
+			// Determine styling based on relevance
+			const isHighRelevance = enhancedCitation.isHighRelevance;
+			const relevancePercentage = enhancedCitation.relevancePercentage || 0;
+			
+			const baseClasses = "citation-marker inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full hover:scale-110 transition-all duration-200 cursor-pointer border";
+			const colorClasses = isHighRelevance
+				? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30"
+				: "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30";
+			
+			const title = enhancedCitation.displayTitle || enhancedCitation.title || `Source ${citationId}`;
+			const tooltip = `${title} (Relevance: ${relevancePercentage}%)`;
+			
+			return `<span class="${baseClasses} ${colorClasses}" data-citation-id="${citationId}" title="${tooltip}" data-citation='${citationData}'>${citationId}</span>`;
 		}
 		return match;
 	});
@@ -139,4 +154,58 @@ export function validateCitations(text: string, citations: Citation[]): {
 		missingIds,
 		extraIds
 	};
+}
+
+/**
+ * Enhanced citation renderer that supports rich citation metadata
+ * @param text - The text containing citation markers
+ * @param citations - Array of enhanced citation objects
+ * @returns HTML string with styled citation markers
+ */
+export function renderEnhancedCitationSpans(
+	text: string,
+	citations: EnhancedCitation[] = []
+): string {
+	if (!citations.length) {
+		return text;
+	}
+
+	// Create a map of citation IDs to citation objects for quick lookup
+	const citationMap = new Map<string, EnhancedCitation>();
+	citations.forEach(citation => {
+		citationMap.set(citation.id, citation);
+	});
+
+	// Replace citation markers with enhanced HTML spans
+	const html = text.replace(/\[(\d+)\]/g, (match, citationId) => {
+		if (citationMap.has(citationId)) {
+			const citation = citationMap.get(citationId)!;
+			const citationData = JSON.stringify(citation).replace(/'/g, "'");
+			
+			// Enhanced styling based on multiple factors
+			const isHighRelevance = citation.isHighRelevance;
+			const relevancePercentage = citation.relevancePercentage || 0;
+			const documentType = citation.documentTypeDisplay || 'Unknown';
+			
+			let baseClasses = "citation-marker inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full hover:scale-110 transition-all duration-200 cursor-pointer border shadow-sm";
+			
+			// Color coding based on document type and relevance
+			let colorClasses = "";
+			if (isHighRelevance) {
+				colorClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30 hover:shadow-emerald-500/20";
+			} else if (documentType.includes('Annex')) {
+				colorClasses = "bg-purple-500/20 text-purple-400 border-purple-500/30 hover:bg-purple-500/30 hover:shadow-purple-500/20";
+			} else {
+				colorClasses = "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30 hover:shadow-blue-500/20";
+			}
+			
+			const title = citation.displayTitle || citation.title || `Source ${citation.id}`;
+			const tooltip = `${title} (${documentType}, Relevance: ${relevancePercentage}%)`;
+			
+			return `<span class="${baseClasses} ${colorClasses}" data-citation-id="${citation.id}" title="${tooltip}" data-citation='${citationData}'>${citation.id}</span>`;
+		}
+		return match;
+	});
+
+	return html;
 }

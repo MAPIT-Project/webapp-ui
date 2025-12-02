@@ -9,6 +9,7 @@
 	import type { Message, Conversation, MessageWithSuggestions } from '$lib/types/schema';
 	import type { StreamingMessage as StreamingMessageType } from '$lib/stores/streamingConversationStore';
 	import type { Citation } from '$lib/types/schema';
+	import { processRawCitationData } from '$lib/utils/citationConverter';
 
 	import { fetchAvailableProviders, selectedVersion } from '$lib/stores/aiProviderStore';
 	import { conversationStore } from '$lib/stores/conversationStore';
@@ -27,6 +28,10 @@
 	import LoadingState from './LoadingState.svelte';
 	import ProcessingStageIndicator from '$lib/components/generic/processing-stage-indicator.svelte';
 	import Icon from '$lib/components/generic/icon.svelte';
+
+	type DisplayMessage =
+		| { type: 'persisted', data: MessageWithSuggestions }
+		| { type: 'streaming', data: StreamingMessageType };
 
 	interface Props {
 	  conversationId: number;
@@ -79,6 +84,25 @@
 	// Track the last loaded chat ID to prevent duplicate loads
 	let lastLoadedChatId = $state<number | null>(null);
 	let isLoadingMessages = $state(false);
+
+	// Combined and sorted messages for display
+	let displayMessages = $derived.by(() => {
+		const persisted = messages.map(m => ({ type: 'persisted' as const, data: m }));
+		const streaming = $streamingConversationStore.messages
+			.filter(m => m.sender === 'ai' && (m.isStreaming || m.isComplete))
+			// Filter out streaming messages that are already in persisted messages to avoid duplicates
+			.filter(streamMsg => !messages.some(pMsg =>
+				pMsg.sender === 'ai' &&
+				pMsg.text.trim() === streamMsg.text.trim()
+			))
+			.map(m => ({ type: 'streaming' as const, data: m }));
+			
+		return [...persisted, ...streaming].sort((a, b) => {
+			const timeA = new Date(a.type === 'persisted' ? a.data.createdAt : a.data.timestamp).getTime();
+			const timeB = new Date(b.type === 'persisted' ? b.data.createdAt : b.data.timestamp).getTime();
+			return timeA - timeB;
+		});
+	});
 
 	// Function to check if a message should be grouped with the previous one
 	function shouldGroupMessage(
@@ -377,36 +401,64 @@ if (
 			const loadedMessages = await getConversationMessages(id);
 
 			// Check if we got an error response (empty array might indicate auth issues)
-			if (!loadedMessages || loadedMessages.length === 0) {
-				console.warn('No messages loaded for conversation:', id);
+			if (!loadedMessages && loadedMessages !== []) {
+				console.warn('Failed to load messages for conversation:', id);
 				// Don't set error here - let conversation details loading handle auth errors
 			} else {
-				// Check if we have a temporary user message (ID = 0) in the current messages
-				const hasTempUserMessage = messages.some(msg => msg.id === 0 && msg.sender === 'user');
+				const validLoadedMessages = loadedMessages || [];
 				
-				// Convert to MessageWithSuggestions - citations are now included in the API response
-				const newMessages = loadedMessages.map(msg => {
+				// 1. Identify temporary user messages (ID = 0) currently in the UI
+				const currentTempMessages = messages.filter(msg => msg.id === 0 && msg.sender === 'user');
+				
+				// 2. Filter out temporary messages that have been successfully persisted
+				// We check if the loaded messages contain a message with the same text and approximate timestamp
+				const remainingTempMessages = currentTempMessages.filter(tempMsg => {
+					const isPersisted = validLoadedMessages.some(loadedMsg =>
+						loadedMsg.sender === 'user' &&
+						loadedMsg.text === tempMsg.text &&
+						// Check if created within the last 30 seconds of the temp message
+						Math.abs(new Date(loadedMsg.createdAt).getTime() - new Date(tempMsg.createdAt).getTime()) < 30000
+					);
+					return !isPersisted;
+				});
+				
+				// 3. Convert loaded messages to MessageWithSuggestions
+				const processedLoadedMessages = validLoadedMessages.map(msg => {
 					const messageWithSuggestions = msg as MessageWithSuggestions;
-					// Citations are already loaded from the API, no separate requests needed
 					return messageWithSuggestions;
 				});
 				
-				// If we have a temporary user message, check if the loaded messages already contain a user message
-				// with the same text to avoid duplication
-				if (hasTempUserMessage && newMessages.length > 0) {
-					const tempUserMessage = messages.find(msg => msg.id === 0 && msg.sender === 'user');
-					const hasMatchingUserMessage = newMessages.some(msg =>
-						msg.sender === 'user' && msg.text === tempUserMessage?.text
-					);
-					
-					if (hasMatchingUserMessage) {
-						// Remove the temporary user message before replacing with loaded messages
-						messages = messages.filter(msg => !(msg.id === 0 && msg.sender === 'user'));
-					}
+				// 4. Combine loaded messages with remaining temporary messages
+				let finalMessages = [...processedLoadedMessages, ...remainingTempMessages];
+				
+				// 5. Sort all messages by creation time to ensure correct order
+				finalMessages.sort((a, b) =>
+					new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+				);
+				
+				// 6. Update the messages state
+				messages = finalMessages;
+				
+				// 7. Clean up streaming store: Remove AI messages that are now persisted
+				// This prevents duplication between the persisted list and the streaming view
+				const streamingMsgs = $streamingConversationStore.messages;
+				if (streamingMsgs.length > 0) {
+					streamingMsgs.forEach(streamMsg => {
+						if (streamMsg.sender === 'ai' && streamMsg.isComplete) {
+							// Check if this streaming message is present in the persisted list
+							const isPersisted = messages.some(m =>
+								m.sender === 'ai' &&
+								m.text.trim() === streamMsg.text.trim()
+							);
+							
+							if (isPersisted) {
+								console.log('Removing persisted streaming message from store:', streamMsg.id);
+								streamingConversationStore.removeAIMessage(streamMsg.id);
+							}
+						}
+					});
 				}
 				
-				// Replace messages with loaded messages
-				messages = newMessages;
 				console.log('Loaded', messages.length, 'messages for conversation:', id);
 			}
 		} catch (err) {
@@ -442,24 +494,9 @@ if (
 		return success;
 	}
 
-	// Function to convert API citation format to our Citation type
+	// Function to convert API citation format to our Citation type using enhanced converter
 	function convertApiCitations(apiCitations: any[]): Citation[] {
-		return apiCitations.map(citation => ({
-			id: citation.number.toString(),
-			title: citation.text,
-			snippet: citation.content_snippet,
-			url: undefined, // API doesn't provide URL
-			metadata: {
-				source: citation.metadata.source,
-				callId: citation.metadata.call_id,
-				isStructured: citation.metadata.is_structured,
-				priority: citation.metadata.priority,
-				sourceType: citation.source_type,
-				chunkId: citation.chunk_id,
-				relevanceScore: citation.metadata.relevance_score,
-				documentType: citation.metadata.document_type
-			}
-		}));
+		return processRawCitationData(apiCitations);
 	}
 
 	async function startAIResponse(question: string) {
@@ -529,23 +566,17 @@ if (
 							finalMessage.citations = convertedCitations;
 						}
 
-						// The AI message is now saved by the proxy endpoint, but we'll keep the streaming
-						// message visible and just mark it as complete to avoid any disappearing issues
-						console.log('AI message saved by proxy, keeping streaming message visible');
+						// The AI message is now saved by the proxy endpoint.
+						// We need to refresh the messages list to get the persisted message with its correct ID.
+						console.log('AI message saved by proxy, refreshing messages list...');
 						
-						// Don't remove the streaming message at all - it's already marked as complete
-						// by the completeAIMessage call above (line 424)
-						// This ensures the message remains visible while the database is updated
-						// The next time the user visits the conversation, they'll see the persisted message
-						
-						// Refresh messages in the background without removing the streaming message
-						// This ensures the sidebar and other parts of the app have the latest data
-						// but doesn't affect the current view
+						// Refresh messages to get the persisted AI message
+						// The loadMessages function has logic to remove the streaming message once the persisted one is loaded
 						setTimeout(() => {
 							loadMessages(chatId).catch(err => {
 								console.error('Error refreshing messages in background:', err);
 							});
-						}, 1000);
+						}, 500); // Small delay to ensure DB write is complete
 					} else {
 						console.log('Streaming message not found, removing anyway');
 						streamingConversationStore.removeAIMessage(messageId);
@@ -729,27 +760,27 @@ if (
 					</div>
 				{:else}
 					<div class="py-3">
-						<!-- Show database messages (persisted) -->
-						{#each messages as message, index}
-							{@const isGrouped = shouldGroupMessage(message, messages[index - 1])}
-							{@const isLastInGroupFlag = isLastInGroup(message, messages[index + 1])}
-							<div id={"msg-" + message.id} class="animate-fadeInUp">
-								<ChatMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
-							</div>
+						<!-- Show all messages (persisted + streaming) sorted by time -->
+						{#each displayMessages as item, index}
+							{@const message = item.data}
+							{@const prevItem = displayMessages[index - 1]}
+							{@const nextItem = displayMessages[index + 1]}
+							{@const prevMessage = prevItem?.data}
+							{@const nextMessage = nextItem?.data}
+							
+							{@const isGrouped = shouldGroupMessage(message, prevMessage)}
+							{@const isLastInGroupFlag = isLastInGroup(message, nextMessage)}
+							
+							{#if item.type === 'persisted'}
+								<div id={"msg-" + message.id} class="animate-fadeInUp">
+									<ChatMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
+								</div>
+							{:else}
+								<div id={"stream-msg-" + message.id} class="animate-fadeInUp">
+									<StreamingMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
+								</div>
+							{/if}
 						{/each}
-
-						<!-- Show streaming AI message (temporary UI state during streaming) -->
-						{#if $streamingConversationStore.messages.length > 0}
-							{#each $streamingConversationStore.messages as message, index}
-								{#if message.sender === 'ai' && (message.isStreaming || message.isComplete)}
-									{@const isGrouped = shouldGroupMessage(message, messages[messages.length - 1])}
-									{@const isLastInGroupFlag = true}
-									<div id={"stream-msg-" + message.id} class="animate-fadeInUp">
-										<StreamingMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
-									</div>
-								{/if}
-							{/each}
-						{/if}
 
 						<!-- Processing stage indicator -->
 						{#if $streamingConversationStore.currentStage}

@@ -6,6 +6,8 @@
 	import { renderTextWithCitationSpans } from '$lib/utils/citationRenderer';
 	import { onMount } from 'svelte';
 	import type { Citation } from '$lib/types/schema';
+	import type { EnhancedCitation } from '$lib/utils/citationConverter';
+	import CitationSources from '$lib/components/generic/citation-sources.svelte';
 
 	let copied = $state(false);
 	let showSources = $state(false);
@@ -29,6 +31,11 @@
 	}
 
 	let { message, isGrouped, isLastInGroup }: Props = $props();
+
+	// Type assertion for enhanced citations
+	let enhancedCitations = $derived(
+		(message.citations || []) as EnhancedCitation[]
+	);
 
 	// Helper functions
 	function formatMessageTime(date: Date | string): string {
@@ -170,10 +177,10 @@
 
 	// Citation popover state
 	let showPopover = $state(false);
-	let currentCitation = $state<Citation | null>(null);
+	let currentCitation = $state<EnhancedCitation | null>(null);
 	let popoverPosition = $state({ x: 0, y: 0 });
 
-	function showCitationPopover(citation: Citation, event: MouseEvent) {
+	function showCitationPopover(citation: EnhancedCitation, event: MouseEvent) {
 		currentCitation = citation;
 		popoverPosition = { x: event.clientX, y: event.clientY };
 		showPopover = true;
@@ -298,57 +305,36 @@
 							</button>
 						</div>
 
-						<!-- Sources toggle button - only show if citations exist -->
-						{#if message.sender === 'ai' && message.citations && message.citations.length > 0}
+						<!-- Sources section - only show if citations exist -->
+						{#if message.sender === 'ai' && enhancedCitations && enhancedCitations.length > 0}
 							<div class="mt-3">
 								<button
-									class="flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-gray-400 transition-colors"
+									class="flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-gray-400 transition-colors mb-2"
 									onclick={toggleSources}
 									aria-expanded={showSources}
 									aria-controls="sources-{message.id}"
 								>
-									<Icon 
-										name={showSources ? "expand_less" : "expand_more"} 
-										className="text-xs transition-transform duration-200" 
+									<Icon
+										name={showSources ? "expand_less" : "expand_more"}
+										className="text-xs transition-transform duration-200"
 									/>
-									{message.citations.length} Source{message.citations.length === 1 ? '' : 's'}
+									{enhancedCitations.length} Source{enhancedCitations.length === 1 ? '' : 's'}
 								</button>
 								
 								<!-- Sources section - shown/hidden based on toggle -->
 								<div
 									id="sources-{message.id}"
-									class="overflow-hidden transition-all duration-300 {showSources ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'}"
+									class="overflow-hidden transition-all duration-300 {showSources ? 'max-h-none opacity-100' : 'max-h-0 opacity-0'}"
 								>
 									<div class="border-t border-gray-800/50 pt-3">
-										<div class="space-y-2">
-											{#each message.citations as citation, index}
-												<div class="flex items-start gap-2 p-2 rounded-lg bg-gray-900/50 border border-gray-800/30 hover:bg-gray-900/70 transition-colors">
-													<span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-blue-600 bg-blue-100/20 rounded-full dark:text-blue-400 dark:bg-blue-900/30 flex-shrink-0">
-														{citation.id}
-													</span>
-													<div class="flex-1 min-w-0">
-														<p class="text-sm text-gray-400 font-medium truncate">{citation.title}</p>
-														{#if citation.metadata?.sourceType}
-															<p class="text-xs text-gray-600 capitalize">{citation.metadata.sourceType}</p>
-														{/if}
-														{#if citation.url}
-															<a
-																href={citation.url}
-																target="_blank"
-																rel="noopener noreferrer"
-																class="text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1 mt-1"
-															>
-																View Source
-																<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-																	<path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
-																	<path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
-																</svg>
-															</a>
-														{/if}
-													</div>
-												</div>
-											{/each}
-										</div>
+										<CitationSources
+											citations={enhancedCitations}
+											messageId={message.id.toString()}
+											on:citationClick={(e) => {
+												const { citation, event } = e.detail;
+												showCitationPopover(citation, event);
+											}}
+										/>
 									</div>
 								</div>
 							</div>
@@ -463,73 +449,112 @@
 			</button>
 		</div>
 		
-		<div class="space-y-2">
-			<div>
-				<h4 class="text-sm font-medium text-gray-300">Title</h4>
-				<p class="text-sm text-gray-100">{currentCitation.title}</p>
+		<div class="space-y-3">
+			<!-- Title with prominent relevance score -->
+			<div class="flex items-start justify-between gap-2">
+				<div class="flex-1">
+					<h4 class="text-sm font-medium text-gray-300 mb-1">Source</h4>
+					<p class="text-sm text-gray-100 leading-tight">
+						{currentCitation.displayTitle || currentCitation.title}
+					</p>
+				</div>
+				
+				<!-- Prominent relevance score -->
+				{#if currentCitation.relevancePercentage !== undefined}
+					<div class="flex flex-col items-end gap-1 flex-shrink-0">
+						<div class="text-lg font-bold {
+							currentCitation.relevancePercentage >= 15 ? 'text-emerald-400' :
+							currentCitation.relevancePercentage >= 10 ? 'text-blue-400' :
+							currentCitation.relevancePercentage >= 5 ? 'text-yellow-400' :
+							'text-gray-400'
+						}">
+							{currentCitation.relevancePercentage}%
+						</div>
+						<div class="text-xs text-gray-500">relevance</div>
+					</div>
+				{/if}
 			</div>
 			
+			<!-- Snippet -->
 			{#if currentCitation.snippet}
 				<div>
-					<h4 class="text-sm font-medium text-gray-300">Snippet</h4>
-					<p class="text-sm text-gray-400 italic">"{currentCitation.snippet}"</p>
+					<h4 class="text-sm font-medium text-gray-300 mb-1">Content</h4>
+					<p class="text-sm text-gray-400 italic leading-relaxed">
+						"{currentCitation.snippet}"
+					</p>
 				</div>
 			{/if}
 			
+			<!-- Metadata Grid -->
+			{#if currentCitation.metadata}
+				<div class="pt-2 border-t border-gray-700">
+					<div class="grid grid-cols-2 gap-3 text-xs">
+						<!-- Document Type -->
+						{#if currentCitation.documentTypeDisplay}
+							<div>
+								<span class="font-medium text-gray-500">Document Type:</span>
+								<div class="text-gray-400 mt-0.5">{currentCitation.documentTypeDisplay}</div>
+							</div>
+						{/if}
+						
+						<!-- Source Type (only show if not "intelligent_retrieval") -->
+						{#if currentCitation.sourceTypeDisplay && currentCitation.sourceTypeDisplay.toLowerCase() !== 'intelligent retrieval'}
+							<div>
+								<span class="font-medium text-gray-500">Source Type:</span>
+								<div class="text-gray-400 mt-0.5">{currentCitation.sourceTypeDisplay}</div>
+							</div>
+						{/if}
+						
+						<!-- Chunk ID -->
+						{#if currentCitation.metadata.chunkId && currentCitation.metadata.chunkId !== '0'}
+							<div>
+								<span class="font-medium text-gray-500">Chunk ID:</span>
+								<div class="text-gray-400 mt-0.5">{currentCitation.metadata.chunkId}</div>
+							</div>
+						{/if}
+						
+						<!-- Call ID -->
+						{#if currentCitation.metadata.callId}
+							<div>
+								<span class="font-medium text-gray-500">Call ID:</span>
+								<div class="text-gray-400 mt-0.5">{currentCitation.metadata.callId}</div>
+							</div>
+						{/if}
+						
+						<!-- Relevance Score with visual bar -->
+						{#if currentCitation.relevancePercentage !== undefined}
+							<div class="col-span-2">
+								<span class="font-medium text-gray-500">Relevance Score:</span>
+								<div class="flex items-center gap-3 mt-1">
+									<div class="flex-1 bg-gray-700 rounded-full h-3">
+										<div
+											class="h-3 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500"
+											style="width: {currentCitation.relevancePercentage}%"
+										></div>
+									</div>
+									<span class="text-gray-400 font-medium">{currentCitation.relevancePercentage}%</span>
+								</div>
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/if}
+			
+			<!-- View Source Link -->
 			{#if currentCitation.url}
-				<div>
+				<div class="pt-2 border-t border-gray-700">
 					<a
 						href={currentCitation.url}
 						target="_blank"
 						rel="noopener noreferrer"
-						class="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+						class="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2 transition-colors"
 					>
-						View Source
-						<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+						View Full Source
+						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
 							<path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
 							<path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
 						</svg>
 					</a>
-				</div>
-			{/if}
-			
-			{#if currentCitation.metadata}
-				<div class="pt-2 border-t border-gray-700">
-					{#if currentCitation.metadata.authors && currentCitation.metadata.authors.length > 0}
-						<div class="mb-1">
-							<span class="text-xs font-medium text-gray-500">Authors:</span>
-							<span class="text-xs text-gray-400 ml-1">
-								{currentCitation.metadata.authors.join(', ')}
-							</span>
-						</div>
-					{/if}
-					
-					{#if currentCitation.metadata.publicationDate}
-						<div class="mb-1">
-							<span class="text-xs font-medium text-gray-500">Published:</span>
-							<span class="text-xs text-gray-400 ml-1">
-								{currentCitation.metadata.publicationDate}
-							</span>
-						</div>
-					{/if}
-					
-					{#if currentCitation.metadata.sourceType}
-						<div class="mb-1">
-							<span class="text-xs font-medium text-gray-500">Type:</span>
-							<span class="text-xs text-gray-400 ml-1 capitalize">
-								{currentCitation.metadata.sourceType}
-							</span>
-						</div>
-					{/if}
-					
-					{#if currentCitation.metadata.relevanceScore !== undefined}
-						<div>
-							<span class="text-xs font-medium text-gray-500">Relevance:</span>
-							<span class="text-xs text-gray-400 ml-1">
-								{Math.round(currentCitation.metadata.relevanceScore * 100)}%
-							</span>
-						</div>
-					{/if}
 				</div>
 			{/if}
 		</div>

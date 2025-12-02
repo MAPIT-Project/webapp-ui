@@ -1,6 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import type { Writable, Readable } from 'svelte/store';
 import type { Citation } from '$lib/types/schema';
+import { processRawCitationData } from '$lib/utils/citationConverter';
 
 export interface StreamingMessage {
   id: string;
@@ -133,13 +134,13 @@ function createStreamingConversationStore() {
       followUpSuggestions: metadata.follow_up_suggestions || [],
       discussedProjects: metadata.projects_discussed || [],
       contextUsed: metadata.context_used || false,
-      messages: state.messages.map(msg => 
-        msg.id === messageId 
-          ? { 
-              ...msg, 
-              isStreaming: false, 
+      messages: state.messages.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              isStreaming: false,
               isComplete: true,
-              citations: metadata.citations || []
+              citations: processRawCitationData(metadata.citations || [])
             }
           : msg
       )
