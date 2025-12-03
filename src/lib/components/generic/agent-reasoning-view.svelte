@@ -1,5 +1,6 @@
 <script lang="ts">
   import { slide } from 'svelte/transition';
+  import { afterUpdate } from 'svelte';
   import type { StreamingEventData } from '$lib/clients/streamingConversationClient';
   import { TOOL_DISPLAY_CONFIG } from '$lib/config/toolDisplayConfig';
   import BudgetCalculationResult from '$lib/components/tools/budget-calculation-result.svelte';
@@ -10,11 +11,19 @@
   export let hasContent: boolean = false;
 
   let expanded = true;
+  let containerRef: HTMLElement;
   
   // Auto-collapse when content starts appearing
   $: if (hasContent) {
     expanded = false;
   }
+
+  // Auto-scroll to bottom when new events arrive
+  afterUpdate(() => {
+    if (expanded && containerRef) {
+      containerRef.scrollTo({ top: containerRef.scrollHeight, behavior: 'smooth' });
+    }
+  });
 
   function getIcon(type: string) {
     switch (type) {
@@ -39,7 +48,7 @@
   }
 </script>
 
-<div class="agent-reasoning bg-[#1a1a1a] border border-[#333] rounded-md overflow-hidden text-xs font-mono my-4 shadow-lg">
+<div class="agent-reasoning bg-[#1a1a1a] border border-[#333] rounded-md overflow-hidden text-xs font-mono mb-4 shadow-lg">
   <button 
     class="w-full px-3 py-2 bg-[#111] hover:bg-[#222] text-left flex justify-between items-center text-gray-400 transition-colors"
     on:click={() => expanded = !expanded}
@@ -56,7 +65,11 @@
   </button>
 
   {#if expanded}
-    <div class="p-3 space-y-3 max-h-80 overflow-y-auto bg-[#0f0f0f]" transition:slide|local>
+    <div 
+      class="p-3 space-y-3 max-h-80 overflow-y-auto bg-[#0f0f0f]" 
+      transition:slide|local 
+      bind:this={containerRef}
+    >
       {#if events.length === 0 && isProcessing}
          <div class="text-gray-500 pl-2 animate-pulse">Initializing agent...</div>
       {/if}
@@ -76,9 +89,17 @@
           
           <div class="text-gray-300 pl-6">
             {#if event.type === 'agent_thinking'}
-              <p class="italic text-gray-400 leading-relaxed">"{event.thought}"</p>
+              <div class="flex flex-col gap-1">
+                <p class="italic text-gray-400 leading-relaxed">"{event.thought}"</p>
+                {#if event.action}
+                    <span class="text-[9px] uppercase tracking-wider text-blue-500 font-semibold">Action: {event.action}</span>
+                {/if}
+              </div>
             {:else if event.type === 'tool_call'}
               <div class="flex flex-col gap-2 mt-1 bg-[#1a1a1a] p-2 rounded border border-[#333]">
+                {#if event.reasoning}
+                    <div class="text-[10px] text-gray-500 italic border-b border-[#333] pb-1 mb-1">{event.reasoning}</div>
+                {/if}
                 <span class="font-bold text-blue-400 flex items-center gap-2">
                     {#if TOOL_DISPLAY_CONFIG[event.tool_name]}
                         <span class="text-base">{TOOL_DISPLAY_CONFIG[event.tool_name].icon}</span>
@@ -88,14 +109,28 @@
                     {/if}
                 </span>
                 {#if event.parameters}
-                  <pre class="text-[10px] text-gray-500 overflow-x-auto custom-scrollbar">{JSON.stringify(event.parameters, null, 2)}</pre>
+                  <details class="group/params mt-1">
+                    <summary class="cursor-pointer text-[10px] text-gray-500 hover:text-gray-300 select-none flex items-center gap-1 outline-none list-none">
+                        <span class="transform transition-transform duration-200 group-open/params:rotate-90 inline-block">▶</span>
+                        <span>View Parameters</span>
+                    </summary>
+                    <pre class="text-[10px] text-gray-500 overflow-x-auto custom-scrollbar mt-1 bg-[#151515] p-2 rounded border border-[#333]">{JSON.stringify(event.parameters, null, 2)}</pre>
+                  </details>
                 {/if}
               </div>
             {:else if event.type === 'tool_result'}
               <div class="flex flex-col gap-1 mt-1">
-                <span class="font-bold text-[10px] {event.success !== false ? 'text-green-400' : 'text-red-400'}">
-                  {event.success !== false ? 'SUCCESS' : 'FAILED'}
-                </span>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-[10px] {event.success !== false ? 'text-green-400' : 'text-red-400'}">
+                    {event.success !== false ? 'SUCCESS' : 'FAILED'}
+                    </span>
+                    {#if event.result_count !== undefined}
+                        <span class="text-[9px] text-gray-500">• {event.result_count} results</span>
+                    {/if}
+                    {#if event.execution_time_ms}
+                        <span class="text-[9px] text-gray-500">• {event.execution_time_ms}ms</span>
+                    {/if}
+                </div>
                 
                 {#if event.success !== false}
                     {@const parsedResult = tryParseResult(event.result_summary)}
@@ -137,5 +172,12 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #333;
     border-radius: 2px;
+  }
+
+  details > summary {
+    list-style: none;
+  }
+  details > summary::-webkit-details-marker {
+    display: none;
   }
 </style>

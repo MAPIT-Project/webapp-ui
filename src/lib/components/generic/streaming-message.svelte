@@ -336,19 +336,35 @@
 								</div>
 							{/if}
 						</div>
-						<!-- Footer action row (does not affect bubble width) -->
-						<div class="mt-1 flex justify-end opacity-0 translate-y-1 group-hover/ai:opacity-100 group-hover/ai:translate-y-0 transition-all duration-150 select-none">
-							<button
-								class="flex items-center rounded-md bg-white/5 p-1 text-[11px] text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
-								onclick={async () => { await copyMessage(message.text); }}
-								aria-label={copied ? 'Copied' : 'Copy message'}
-							>
-								{#if copied}
-									<Icon name="check" className="text-emerald-300 text-xs" />
-								{:else}
-									<Icon name="content_copy" className="text-gray-300 text-xs" />
+						<!-- Action Row: Feedback & Copy -->
+						<div class="mt-1 flex items-start justify-between gap-4 min-h-[28px]">
+							<!-- Left: Feedback (AI only) -->
+							<div>
+								{#if message.sender === 'ai' && message.isComplete && conversationId}
+									<FeedbackWidget 
+										conversationId={conversationId}
+										messageId={message.id}
+										toolsUsed={toolsUsed}
+										responseTimeMs={responseTimeMs}
+										className="mt-0"
+									/>
 								{/if}
-							</button>
+							</div>
+
+							<!-- Right: Copy Button -->
+							<div class="flex justify-end opacity-0 translate-y-1 group-hover/ai:opacity-100 group-hover/ai:translate-y-0 transition-all duration-150 select-none">
+								<button
+									class="flex items-center rounded-md bg-white/5 p-1 text-[11px] text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+									onclick={async () => { await copyMessage(message.text); }}
+									aria-label={copied ? 'Copied' : 'Copy message'}
+								>
+									{#if copied}
+										<Icon name="check" className="text-emerald-300 text-xs" />
+									{:else}
+										<Icon name="content_copy" className="text-gray-300 text-xs" />
+									{/if}
+								</button>
+							</div>
 						</div>
 
 						<!-- Sources toggle button - only show if citations exist and message is complete -->
@@ -405,16 +421,6 @@
 									</div>
 								</div>
 							</div>
-						{/if}
-
-						<!-- Feedback Widget -->
-						{#if message.sender === 'ai' && message.isComplete && conversationId}
-							<FeedbackWidget 
-								conversationId={conversationId}
-								messageId={message.id}
-								toolsUsed={toolsUsed}
-								responseTimeMs={responseTimeMs}
-							/>
 						{/if}
 					</div>
 				{/if}

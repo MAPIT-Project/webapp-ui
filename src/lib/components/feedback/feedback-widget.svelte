@@ -8,6 +8,7 @@
   export let messageId: string | number;
   export let toolsUsed: string[] = [];
   export let responseTimeMs: number | undefined = undefined;
+  export let className: string = '';
 
   let submitted = false;
   let showDetailed = false;
@@ -52,7 +53,7 @@
   }
 </script>
 
-<div class="mt-2 flex flex-col items-start gap-2">
+<div class="flex flex-col items-start gap-2 {className}">
   {#if !submitted && !showDetailed}
     <div class="flex items-center gap-2" transition:fade>
       <button

@@ -1,7 +1,7 @@
 import type { Citation } from '$lib/types/schema';
 
 export interface StreamingEventData {
-  type: 'progress' | 'token' | 'complete' | 'error' | 'status' | 'response' | 'agent_thinking' | 'tool_call' | 'tool_result' | 'agent_iteration';
+  type: 'progress' | 'token' | 'complete' | 'error' | 'status' | 'response' | 'agent_thinking' | 'tool_call' | 'tool_result' | 'agent_iteration' | 'conversation_name';
   stage?: string;
   message?: string;
   content?: string;
@@ -17,13 +17,20 @@ export interface StreamingEventData {
   // V3 specific fields
   iteration?: number;
   thought?: string;
+  action?: string; // agent_thinking action
   tool_name?: string;
   parameters?: any;
+  reasoning?: string; // tool_call reasoning
   success?: boolean;
   result_summary?: string;
+  result_count?: number; // tool_result count
+  execution_time_ms?: number; // tool_result time
   total_iterations?: number;
   needs_more_info?: boolean;
   tools_called?: string[];
+  // Conversation naming
+  name?: string;
+  conversation_id?: number;
   [key: string]: any;
 }
 
@@ -38,7 +45,8 @@ export class StreamingConversationClient {
     onToken?: (content: string) => void,
     onComplete?: (metadata: any) => void,
     onError?: (error: string) => void,
-    onAgentEvent?: (event: StreamingEventData) => void
+    onAgentEvent?: (event: StreamingEventData) => void,
+    onConversationName?: (name: string, conversationId: number) => void
   ): Promise<void> {
 
     // Close any existing connection
@@ -128,6 +136,12 @@ export class StreamingConversationClient {
                   );
                   break;
                 
+                case 'conversation_name':
+                  if (data.name && data.conversation_id) {
+                    onConversationName?.(data.name, data.conversation_id);
+                  }
+                  break;
+
                 case 'agent_thinking':
                 case 'tool_call':
                 case 'tool_result':

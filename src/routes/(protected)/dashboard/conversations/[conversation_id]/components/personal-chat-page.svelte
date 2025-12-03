@@ -644,6 +644,12 @@ if (
 				(event) => {
 					// Handle V3 agent events
 					streamingConversationStore.addAgentEvent(event);
+				},
+				(name, id) => {
+					// Handle conversation name update
+					if (id.toString() === chatId.toString()) {
+						handleSaveConversationName(name);
+					}
 				}
 			);
 
@@ -795,13 +801,6 @@ if (
 								</div>
 							{/if}
 						{/each}
-
-						<!-- Processing stage indicator -->
-						{#if $streamingConversationStore.currentStage}
-							<div class="animate-fadeInUp mb-4">
-								<ProcessingStageIndicator stage={$streamingConversationStore.currentStage} />
-							</div>
-						{/if}
 
 						<!-- Typing indicator with modern styling -->
 						{#if isSending}
