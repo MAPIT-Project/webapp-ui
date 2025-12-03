@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/generic/icon.svelte';
+	import AgentReasoningView from '$lib/components/generic/agent-reasoning-view.svelte';
 	import type { MessageWithSuggestions } from '$lib/types/schema';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
@@ -8,9 +9,27 @@
 	import type { Citation } from '$lib/types/schema';
 	import type { EnhancedCitation } from '$lib/utils/citationConverter';
 	import CitationSources from '$lib/components/generic/citation-sources.svelte';
+	import FeedbackWidget from '$lib/components/feedback/feedback-widget.svelte';
 
 	let copied = $state(false);
 	let showSources = $state(false);
+	
+	// Extract metrics for feedback
+	let toolsUsed = $derived.by(() => {
+		if (message.logsPhases) {
+			try {
+				const parsed = JSON.parse(message.logsPhases);
+				return parsed.tools_used || [];
+			} catch (e) { return []; }
+		}
+		return [];
+	});
+	
+	let responseTimeMs = $derived.by(() => {
+		if (message.logsTotalProcessingTimeMs) return message.logsTotalProcessingTimeMs;
+		if (message.processingTime) return Number(message.processingTime) * 1000;
+		return undefined;
+	});
 
 	async function copyMessage(text: string) {
 		try {
@@ -202,6 +221,55 @@
 	function toggleSources() {
 		showSources = !showSources;
 	}
+
+	function getAgentEventsFromLogs(logsPhases: string | null | undefined): any[] {
+		if (!logsPhases) return [];
+		try {
+			const parsed = JSON.parse(logsPhases);
+			// Check if it's the V3 format with reasoning_steps
+			if (parsed.reasoning_steps && Array.isArray(parsed.reasoning_steps)) {
+				return parsed.reasoning_steps.flatMap((step: any) => {
+					const events = [];
+					// Thought
+					if (step.thought) {
+						events.push({
+							type: 'agent_thinking',
+							stage: 'reasoning',
+							iteration: step.step,
+							thought: step.thought
+						});
+					}
+					// Tool Call (Action)
+					if (step.action === 'call_tools' && step.tools_called) {
+						step.tools_called.forEach((tool: string) => {
+							events.push({
+								type: 'tool_call',
+								stage: 'executing_tool',
+								tool_name: tool,
+								iteration: step.step
+							});
+						});
+					}
+					// Tool Result (Observation)
+					if (step.observation) {
+						events.push({
+							type: 'tool_result',
+							stage: 'tool_complete',
+							result_summary: typeof step.observation === 'string' && step.observation.length > 100 
+								? step.observation.substring(0, 100) + '...' 
+								: JSON.stringify(step.observation).substring(0, 100) + '...',
+							success: true,
+							iteration: step.step
+						});
+					}
+					return events;
+				});
+			}
+			return [];
+		} catch (e) { return []; }
+	}
+
+	let agentEvents = $derived(getAgentEventsFromLogs(message.logsPhases || (message as any).logs_phases));
 </script>
 
 <div class="group relative {isGrouped ? 'mt-0.5' : 'mt-8 pt-4'} animate-[fadeInUp_0.3s_ease-out]">
@@ -272,6 +340,17 @@
 				{:else}
 					<!-- Normal AI response -->
 					<div class="group/ai relative inline-block max-w-[85ch] align-top">
+						<!-- Agent Reasoning View (V3) -->
+						{#if agentEvents && agentEvents.length > 0}
+							<div class="mb-2">
+								<AgentReasoningView 
+									events={agentEvents}
+									isProcessing={false}
+									hasContent={true}
+								/>
+							</div>
+						{/if}
+
 						<!-- Bubble -->
 						<div
 							class="rounded-lg border-0 px-2 text-gray-100 {isGrouped
@@ -407,6 +486,16 @@
 									</div>
 								</div>
 							{/if}
+						{/if}
+
+						<!-- Feedback Widget -->
+						{#if message.sender === 'ai'}
+							<FeedbackWidget 
+								conversationId={message.conversationId}
+								messageId={message.id}
+								toolsUsed={toolsUsed}
+								responseTimeMs={responseTimeMs}
+							/>
 						{/if}
 					</div>
 				{/if}

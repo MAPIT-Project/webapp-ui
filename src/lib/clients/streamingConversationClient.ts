@@ -1,7 +1,7 @@
 import type { Citation } from '$lib/types/schema';
 
 export interface StreamingEventData {
-  type: 'progress' | 'token' | 'complete' | 'error' | 'status' | 'response';
+  type: 'progress' | 'token' | 'complete' | 'error' | 'status' | 'response' | 'agent_thinking' | 'tool_call' | 'tool_result' | 'agent_iteration';
   stage?: string;
   message?: string;
   content?: string;
@@ -14,6 +14,16 @@ export interface StreamingEventData {
   file_type?: 'docx' | 'xlsx' | 'zip';
   file_name?: string;
   package_contents?: string[];
+  // V3 specific fields
+  iteration?: number;
+  thought?: string;
+  tool_name?: string;
+  parameters?: any;
+  success?: boolean;
+  result_summary?: string;
+  total_iterations?: number;
+  needs_more_info?: boolean;
+  tools_called?: string[];
   [key: string]: any;
 }
 
@@ -27,7 +37,8 @@ export class StreamingConversationClient {
     onProgress?: (stage: string, message: string, extras?: any) => void,
     onToken?: (content: string) => void,
     onComplete?: (metadata: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
+    onAgentEvent?: (event: StreamingEventData) => void
   ): Promise<void> {
 
     // Close any existing connection
@@ -115,6 +126,13 @@ export class StreamingConversationClient {
                       intentConfidence: (data as any).intent_confidence
                     }
                   );
+                  break;
+                
+                case 'agent_thinking':
+                case 'tool_call':
+                case 'tool_result':
+                case 'agent_iteration':
+                  onAgentEvent?.(data);
                   break;
 
                 case 'response':

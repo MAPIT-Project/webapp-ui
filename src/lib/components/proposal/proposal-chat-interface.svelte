@@ -1,6 +1,7 @@
 <script lang="ts">
   import { streamingConversationStore } from '$lib/stores/streamingConversationStore';
   import { streamingClient } from '$lib/clients/streamingConversationClient';
+  import AgentReasoningView from '$lib/components/generic/agent-reasoning-view.svelte';
   import { 
     proposalStore, 
     currentSection, 
@@ -127,6 +128,11 @@
         targetSectionId = '';
         currentStreamingMessageId = '';
         onError(error);
+      },
+
+      // onAgentEvent
+      (event) => {
+        streamingConversationStore.addAgentEvent(event);
       }
     );
   }
@@ -294,6 +300,16 @@
         {/if}
       </div>
     {/each}
+
+    <!-- Agent Reasoning View -->
+    {#if $streamingConversationStore.agentEvents && $streamingConversationStore.agentEvents.length > 0}
+      <div class="mb-4">
+        <AgentReasoningView 
+          events={$streamingConversationStore.agentEvents} 
+          isProcessing={$streamingConversationStore.isProcessing} 
+        />
+      </div>
+    {/if}
 
     <!-- Processing stage indicator -->
     {#if $streamingConversationStore.currentStage}

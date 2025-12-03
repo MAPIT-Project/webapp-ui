@@ -27,6 +27,7 @@
 	import EmptyState from './EmptyState.svelte';
 	import LoadingState from './LoadingState.svelte';
 	import ProcessingStageIndicator from '$lib/components/generic/processing-stage-indicator.svelte';
+	import AgentReasoningView from '$lib/components/generic/agent-reasoning-view.svelte';
 	import Icon from '$lib/components/generic/icon.svelte';
 
 	type DisplayMessage =
@@ -95,7 +96,16 @@
 				pMsg.sender === 'ai' &&
 				pMsg.text.trim() === streamMsg.text.trim()
 			))
-			.map(m => ({ type: 'streaming' as const, data: m }));
+			.map(m => ({ 
+				type: 'streaming' as const, 
+				data: {
+					...m,
+					// Pass agent events from store to the streaming message
+					agentEvents: m.sender === 'ai' && m.isStreaming 
+						? $streamingConversationStore.agentEvents 
+						: m.agentEvents
+				}
+			}));
 			
 		return [...persisted, ...streaming].sort((a, b) => {
 			const timeA = new Date(a.type === 'persisted' ? a.data.createdAt : a.data.timestamp).getTime();
@@ -630,6 +640,10 @@ if (
 
 					// Also set the error in the store for UI display
 					streamingConversationStore.setError(error);
+				},
+				(event) => {
+					// Handle V3 agent events
+					streamingConversationStore.addAgentEvent(event);
 				}
 			);
 
@@ -777,7 +791,7 @@ if (
 								</div>
 							{:else}
 								<div id={"stream-msg-" + message.id} class="animate-fadeInUp">
-									<StreamingMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} />
+									<StreamingMessage {message} {isGrouped} isLastInGroup={isLastInGroupFlag} conversationId={chatId} />
 								</div>
 							{/if}
 						{/each}

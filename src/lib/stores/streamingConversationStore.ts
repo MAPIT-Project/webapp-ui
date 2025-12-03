@@ -11,6 +11,7 @@ export interface StreamingMessage {
   isStreaming?: boolean;
   isComplete?: boolean;
   citations?: Citation[];
+  agentEvents?: any[];
 }
 
 export interface ProcessingStage {
@@ -35,6 +36,7 @@ export interface StreamingConversationState {
   followUpSuggestions: string[];
   discussedProjects: any[];
   contextUsed: boolean;
+  agentEvents: any[];
 }
 
 function createStreamingConversationStore() {
@@ -45,7 +47,8 @@ function createStreamingConversationStore() {
     isProcessing: false,
     followUpSuggestions: [],
     discussedProjects: [],
-    contextUsed: false
+    contextUsed: false,
+    agentEvents: []
   });
 
   return {
@@ -99,6 +102,7 @@ function createStreamingConversationStore() {
       update(state => ({
         ...state,
         isProcessing: true,
+        agentEvents: [],
         messages: [...state.messages, {
           id: messageId,
           text: '',
@@ -115,6 +119,11 @@ function createStreamingConversationStore() {
     updateStage: (stage: ProcessingStage) => update(state => ({
       ...state,
       currentStage: stage
+    })),
+
+    addAgentEvent: (event: any) => update(state => ({
+      ...state,
+      agentEvents: [...state.agentEvents, { ...event, timestamp: new Date().toISOString() }]
     })),
     
     appendToAIMessage: (messageId: string, content: string) => update(state => ({
@@ -140,7 +149,9 @@ function createStreamingConversationStore() {
               ...msg,
               isStreaming: false,
               isComplete: true,
-              citations: processRawCitationData(metadata.citations || [])
+              citations: processRawCitationData(metadata.citations || []),
+              agentEvents: state.agentEvents,
+              metadata: metadata // Save full metadata for feedback/metrics
             }
           : msg
       )
@@ -172,7 +183,8 @@ function createStreamingConversationStore() {
       isProcessing: false,
       followUpSuggestions: [],
       discussedProjects: [],
-      contextUsed: false
+      contextUsed: false,
+      agentEvents: []
     })
   };
 }

@@ -17,7 +17,7 @@ export const POST: RequestHandler = async ({ params, request, fetch, cookies }) 
     }
     
     // Forward the request to your FastAPI backend
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/v2/conversation/${conversationId}/message/stream`;
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversationId}/message/stream`;
     
     const body = JSON.stringify(requestBody);
     
@@ -213,6 +213,44 @@ async function saveAIMessage(conversationId: string, text: string, metadata: any
       messageData.logs_projects_processed = metadata.logs.projects_processed;
       messageData.logs_success = metadata.logs.success;
       messageData.logs_average_relevance_score = metadata.logs.average_relevance_score?.toString();
+    } else if (metadata.metadata) {
+      // Handle V3 metadata format (wrapped in a metadata property)
+      const v3Meta = metadata.metadata;
+      
+      // Map V3 fields to existing columns where possible
+      if (v3Meta.processing_time_ms) {
+        messageData.logs_total_processing_time_ms = v3Meta.processing_time_ms;
+      }
+      
+      // Store reasoning steps and other V3 info in logs_phases as JSON
+      const logsPhasesData = {
+        architecture: v3Meta.architecture,
+        iterations: v3Meta.iterations,
+        tools_used: v3Meta.tools_used,
+        reasoning_steps: v3Meta.reasoning_steps,
+        confidence: v3Meta.confidence
+      };
+      messageData.logs_phases = JSON.stringify(logsPhasesData);
+      
+      // Assume success if we got here
+      messageData.logs_success = true;
+    } else {
+      // Handle V3 metadata format (unwrapped)
+      if (metadata.processing_time_ms) {
+        messageData.logs_total_processing_time_ms = metadata.processing_time_ms;
+      }
+      
+      if (metadata.reasoning_steps || metadata.architecture) {
+        const logsPhasesData = {
+            architecture: metadata.architecture,
+            iterations: metadata.iterations,
+            tools_used: metadata.tools_used,
+            reasoning_steps: metadata.reasoning_steps,
+            confidence: metadata.confidence
+        };
+        messageData.logs_phases = JSON.stringify(logsPhasesData);
+        messageData.logs_success = true;
+      }
     }
 
     const { data, error } = await supabase.from('message').insert([messageData]).select().single();

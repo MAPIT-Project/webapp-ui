@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/generic/icon.svelte';
+	import AgentReasoningView from './agent-reasoning-view.svelte';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
 	import { renderTextWithCitationSpans } from '$lib/utils/citationRenderer';
@@ -7,6 +8,7 @@
 	import type { Citation, ProgressMessage, ExportResponse } from '$lib/types/schema';
 	import ProgressIndicator from './progress-indicator.svelte';
 	import DownloadButton from './download-button.svelte';
+	import FeedbackWidget from '$lib/components/feedback/feedback-widget.svelte';
 
 	let copied = $state(false);
 	let showSources = $state(false);
@@ -33,15 +35,38 @@
 		isStreaming?: boolean;
 		isComplete?: boolean;
 		citations?: Citation[];
+		agentEvents?: any[];
+		metadata?: any;
+		downloadUrl?: string;
+		fileType?: 'docx' | 'xlsx' | 'zip';
+		fileName?: string;
+		packageContents?: string[];
 	}
 
 	interface Props {
 		message: StreamingMessage;
 		isGrouped: boolean;
 		isLastInGroup: boolean;
+        conversationId?: string | number;
 	}
 
-	let { message, isGrouped, isLastInGroup }: Props = $props();
+	let { message, isGrouped, isLastInGroup, conversationId }: Props = $props();
+
+    // Derived metrics for feedback
+    let toolsUsed = $derived.by(() => {
+        if (message.metadata?.tools_used) return message.metadata.tools_used;
+        // Fallback to agent events
+        if (message.agentEvents) {
+            const tools = new Set<string>();
+            message.agentEvents.forEach(e => {
+                if (e.type === 'tool_call') tools.add(e.tool_name);
+            });
+            return Array.from(tools);
+        }
+        return [];
+    });
+
+    let responseTimeMs = $derived(message.metadata?.processing_time_ms || message.metadata?.logs?.total_processing_time_ms);
 
 	// Helper functions
 	function formatMessageTime(date: Date | string): string {
@@ -282,6 +307,17 @@
 				{:else}
 					<!-- Normal AI response -->
 					<div class="group/ai relative inline-block w-full align-top">
+						<!-- Agent Reasoning View (V3) -->
+						{#if message.agentEvents && message.agentEvents.length > 0}
+							<div class="mb-2">
+								<AgentReasoningView 
+									events={message.agentEvents}
+									isProcessing={message.isStreaming && !message.text}
+									hasContent={message.text.length > 0}
+								/>
+							</div>
+						{/if}
+
 						<!-- Bubble -->
 						<div
 							class="rounded-lg border-0 px-2 text-gray-100 {isGrouped
@@ -369,6 +405,16 @@
 									</div>
 								</div>
 							</div>
+						{/if}
+
+						<!-- Feedback Widget -->
+						{#if message.sender === 'ai' && message.isComplete && conversationId}
+							<FeedbackWidget 
+								conversationId={conversationId}
+								messageId={message.id}
+								toolsUsed={toolsUsed}
+								responseTimeMs={responseTimeMs}
+							/>
 						{/if}
 					</div>
 				{/if}
