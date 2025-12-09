@@ -1,42 +1,37 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { scale, fade } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	import { profileStore } from '$lib/stores/profileStore';
 	import { conversationStore } from '$lib/stores/conversationStore';
 	import { proposalService } from '$lib/clients/proposalService';
-	import { getCurrentClient } from '$lib/clients/clientService';
 	import {
 		getUserCollaborationItemsOnly,
-		getIsLoadingUserCollaborations,
 		fetchUserCollaborations
 	} from '$lib/stores/collaborationStore.svelte';
 	import type { Proposal } from '$lib/types/proposal';
 	import Icon from '$lib/components/generic/icon.svelte';
 
+	// --- State ---
 	let greeting = $state('');
 	let isLoaded = $state(false);
 	let stats = $state({
 		totalConversations: 0,
 		activeCollaborations: 0,
 		totalProposals: 0,
-		draftProposals: 0,
-		thisWeekMessages: 0,
-		todayActivity: 0
+		pendingTasks: 0
 	});
 
-	// Real data from stores
-	let proposals = $state<Proposal[]>([]);
 	let recentActivity = $state<Array<{
-		type: 'conversation' | 'collaboration' | 'proposal' | 'message';
+		type: 'conversation' | 'collaboration' | 'proposal';
 		title: string;
+		subtitle?: string;
 		time: string;
 		icon: string;
 		link?: string;
+		status?: 'active' | 'draft' | 'completed';
 	}>>([]);
-	let isLoadingProposals = $state(true);
-	let isLoadingActivity = $state(true);
 
-	// Get greeting based on time of day
+	// --- Helpers ---
 	function getGreeting() {
 		const hour = new Date().getHours();
 		if (hour < 12) return 'Good morning';
@@ -44,409 +39,283 @@
 		return 'Good evening';
 	}
 
-	// Load dashboard statistics and data
+	// --- Data Loading ---
 	async function loadDashboardData() {
 		try {
-			// Load conversations
-			await conversationStore.loadConversations();
-			
-			// Load proposals
-			const proposalsData = await proposalService.getProposals();
-			if (proposalsData) {
-				proposals = proposalsData;
-			}
-			isLoadingProposals = false;
-			
-			// Load collaborations
-			await fetchUserCollaborations();
-			
-			// Calculate real stats
+			const [_, proposalsData] = await Promise.all([
+				conversationStore.loadConversations(),
+				proposalService.getProposals(),
+				fetchUserCollaborations()
+			]);
+
 			const conversations = $conversationStore.conversations;
 			const collaborations = getUserCollaborationItemsOnly();
-			const draftProposals = proposals.filter(p => p.status === 'draft').length;
+			const proposals = proposalsData || [];
 			
+			// Calculate stats
 			stats = {
 				totalConversations: conversations.length,
 				activeCollaborations: collaborations.length,
 				totalProposals: proposals.length,
-				draftProposals: draftProposals,
-				thisWeekMessages: Math.floor(Math.random() * 50) + 10, // This would need a real API
-				todayActivity: Math.floor(Math.random() * 8) + 2 // This would need a real API
+				pendingTasks: 3 // Mock for now
 			};
-			
-			// Generate recent activity from real data
+
+			// Build Activity Feed
 			const activity: typeof recentActivity = [];
-			
-			// Add recent conversations
-			conversations.slice(0, 2).forEach(conv => {
-				activity.push({
-					type: 'conversation',
-					title: `Conversation: ${conv.name}`,
-					time: 'Recently',
-					icon: 'chat',
-					link: `/dashboard/conversations/${conv.id}`
-				});
-			});
-			
-			// Add recent proposals
-			proposals.slice(0, 2).forEach(prop => {
+
+			// 1. Recent Proposals
+			proposals.slice(0, 3).forEach(p => {
 				activity.push({
 					type: 'proposal',
-					title: `Proposal: ${prop.proposal_title}`,
-					time: 'Recently',
+					title: p.proposal_title,
+					subtitle: 'Proposal Draft',
+					time: 'Updated recently',
 					icon: 'description',
-					link: `/dashboard/proposals/${prop.proposal_id}/edit`
+					link: `/dashboard/proposals/${p.proposal_id}/edit`,
+					status: p.status as 'draft' | 'active' | 'completed' || 'draft'
 				});
 			});
-			
-			// Add collaboration activity
-			if (collaborations.length > 0) {
+
+			// 2. Recent Conversations
+			conversations.slice(0, 3).forEach(c => {
 				activity.push({
-					type: 'collaboration',
-					title: `Active in ${collaborations.length} collaboration${collaborations.length > 1 ? 's' : ''}`,
-					time: 'Active now',
-					icon: 'group',
-					link: '/dashboard/collaborations'
+					type: 'conversation',
+					title: c.name || 'Untitled Chat',
+					subtitle: 'AI Conversation',
+					time: 'Recent', // In real app, parse timestamp
+					icon: 'chat',
+					link: `/dashboard/conversations/${c.id}`,
+					status: 'active'
 				});
-			}
-			
+			});
+
+			// Sort or interleave (simple slice for now)
 			recentActivity = activity.slice(0, 5);
-			isLoadingActivity = false;
-			
+
 		} catch (error) {
-			console.error('Error loading dashboard data:', error);
-			isLoadingProposals = false;
-			isLoadingActivity = false;
+			console.error('Dashboard load error:', error);
+		} finally {
+			isLoaded = true;
 		}
 	}
 
 	onMount(async () => {
 		greeting = getGreeting();
 		await loadDashboardData();
-
-		// Simulate loading for smooth animation
-		setTimeout(() => {
-			isLoaded = true;
-		}, 200);
 	});
 
-	// Use only the first name from the profile store for a more personal greeting
+	// Derived User Name
 	let userName = $derived(
 		$profileStore.loading
-			? 'User'
-			: $profileStore.firstName
-				? $profileStore.firstName
-				: $profileStore.email?.split('@')[0] || 'User'
+			? 'Researcher'
+			: $profileStore.firstName || $profileStore.email?.split('@')[0] || 'Researcher'
 	);
-	
-	// Quick action handlers
-	function handleNewConversation() {
-		window.location.href = '/dashboard/conversations';
-	}
-	
-	function handleNewProposal() {
-		window.location.href = '/dashboard/proposals';
-	}
-	
-	function handleViewCollaborations() {
-		window.location.href = '/dashboard/collaborations';
-	}
+
+	// Navigation Handlers
+	const nav = (url: string) => window.location.href = url;
 </script>
 
-<div class="mx-auto max-w-6xl p-4 sm:p-6" style="background-color: #121212; min-height: 100vh;">
+<div class="min-h-screen w-full bg-gradient-to-b from-[#1A1A1A] to-[#161616] text-[#F5F5F5] font-sans selection:bg-[#3B82F6] selection:text-white p-6 sm:p-8 lg:p-10 overflow-x-hidden">
+	
 	{#if isLoaded}
-		<!-- Header Section -->
-		<div class="mb-8" in:scale={{ duration: 300, start: 0.95 }}>
-			<h1 class="text-3xl font-bold text-[#E0E0E0] sm:text-4xl" style="font-family: Inter, sans-serif;">{greeting}, {userName}</h1>
-			<p class="mt-2 text-base text-[#B0B0B0] sm:text-lg" style="font-family: Inter, sans-serif;">
-				Welcome back to your personal workspace
-			</p>
-		</div>
-
-		<!-- Statistics Cards -->
-		<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" in:scale={{ duration: 300, delay: 100, start: 0.95 }}>
-			<div class="rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-4 shadow-lg transition-all hover:border-[#2196F3] hover:scale-105">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-[#2196F3] text-xs sm:text-sm font-medium">Conversations</p>
-						<p class="text-white text-xl sm:text-2xl font-bold">{stats.totalConversations}</p>
-					</div>
-					<div class="bg-[#2196F3]/20 p-2 rounded-lg">
-						<Icon name="chat" className="h-5 w-5 text-[#2196F3]" />
-					</div>
-				</div>
-			</div>
+		<div in:fade={{ duration: 400 }}>
 			
-			<div class="rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-4 shadow-lg transition-all hover:border-[#2196F3] hover:scale-105">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-[#2196F3] text-xs sm:text-sm font-medium">Collaborations</p>
-						<p class="text-white text-xl sm:text-2xl font-bold">{stats.activeCollaborations}</p>
-					</div>
-					<div class="bg-[#2196F3]/20 p-2 rounded-lg">
-						<Icon name="group" className="h-5 w-5 text-[#2196F3]" />
-					</div>
+			<!-- Header Section -->
+			<header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4">
+				<div>
+					<div class="text-[#3B82F6] text-sm font-medium mb-2 tracking-wide uppercase">Research Dashboard</div>
+					<h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">
+						{greeting}, <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-[#9ca3af]">{userName}</span>
+					</h1>
+					<p class="mt-2 text-[#B0B0B0] text-lg font-light">Here is what's happening with your projects today.</p>
 				</div>
-			</div>
-			
-			<div class="rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-4 shadow-lg transition-all hover:border-[#2196F3] hover:scale-105">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-[#2196F3] text-xs sm:text-sm font-medium">Proposals</p>
-						<p class="text-white text-xl sm:text-2xl font-bold">{stats.totalProposals}</p>
-					</div>
-					<div class="bg-[#2196F3]/20 p-2 rounded-lg">
-						<Icon name="description" className="h-5 w-5 text-[#2196F3]" />
-					</div>
+				
+				<!-- Date Display -->
+				<div class="hidden md:block text-right">
+					<p class="text-2xl font-light text-white">{new Date().toLocaleDateString('en-GB', { weekday: 'long' })}</p>
+					<p class="text-[#757575]">{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
 				</div>
-			</div>
-			
-			<div class="rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-4 shadow-lg transition-all hover:border-[#2196F3] hover:scale-105">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-[#2196F3] text-xs sm:text-sm font-medium">Drafts</p>
-						<p class="text-white text-xl sm:text-2xl font-bold">{stats.draftProposals}</p>
-					</div>
-					<div class="bg-[#2196F3]/20 p-2 rounded-lg">
-						<Icon name="edit_note" className="h-5 w-5 text-[#2196F3]" />
-					</div>
-				</div>
-			</div>
-		</div>
+			</header>
 
-		<!-- Main Action Cards -->
-		<div
-			class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3"
-			in:scale={{ duration: 300, delay: 150, start: 0.95 }}
-		>
-			<div
-				class="group rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-6 shadow-lg transition-all hover:border-[#2196F3]"
-			>
-				<div class="mb-4 flex items-center">
-					<div
-						class="mr-4 rounded-xl bg-gradient-to-r from-[#2196F3] to-[#42A5F5] p-3 transition-transform group-hover:scale-110"
+			<!-- Stats Overview (Glass Cards) -->
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+				{#each [
+					{ label: 'Active Proposals', value: stats.totalProposals, icon: 'description', color: 'text-blue-400', bg: 'bg-blue-400/10' },
+					{ label: 'Collaborations', value: stats.activeCollaborations, icon: 'group', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+					{ label: 'Conversations', value: stats.totalConversations, icon: 'chat', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+					{ label: 'Pending Tasks', value: stats.pendingTasks, icon: 'schedule', color: 'text-orange-400', bg: 'bg-orange-400/10' }
+				] as stat, i}
+					<div 
+						class="relative overflow-hidden rounded-2xl border border-[#404040]/40 bg-[#1E1E1E]/60 backdrop-blur-md p-5 transition-all duration-300 hover:-translate-y-1 hover:bg-[#1E1E1E]/80 hover:shadow-lg hover:shadow-black/20 group"
+						in:fly={{ y: 20, delay: i * 50 }}
 					>
-						<Icon name="chat" className="h-6 w-6 text-white" />
-					</div>
-					<div>
-						<h2 class="text-xl font-semibold text-[#E0E0E0]" style="font-family: Inter, sans-serif;">My Conversations</h2>
-						<p class="text-sm text-[#B0B0B0]">Chat with AI assistants</p>
-					</div>
-				</div>
-				<p class="mb-4 text-sm text-[#E0E0E0]">
-					Start private conversations with AI to get help with research, writing, analysis, and answer any questions you have.
-				</p>
-				<button
-					onclick={handleNewConversation}
-					class="inline-flex w-full items-center justify-center rounded-lg bg-[#2196F3] px-4 py-3 font-medium text-white transition-all hover:bg-[#42A5F5]"
-				>
-					Start Conversation
-					<Icon name="arrow_forward" className="ml-2 h-4 w-4" />
-				</button>
-			</div>
-
-			<div
-				class="group rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-6 shadow-lg transition-all hover:border-[#2196F3]"
-			>
-				<div class="mb-4 flex items-center">
-					<div
-						class="mr-4 rounded-xl bg-gradient-to-r from-[#2196F3] to-[#42A5F5] p-3 transition-transform group-hover:scale-110"
-					>
-						<Icon name="description" className="h-6 w-6 text-white" />
-					</div>
-					<div>
-						<h2 class="text-xl font-semibold text-[#E0E0E0]" style="font-family: Inter, sans-serif;">My Proposals</h2>
-						<p class="text-sm text-[#B0B0B0]">Create and manage proposals</p>
-					</div>
-				</div>
-				<p class="mb-4 text-sm text-[#E0E0E0]">
-					Create new proposals or continue working on existing ones with AI assistance and collaborative tools.
-				</p>
-				<button
-					onclick={handleNewProposal}
-					class="inline-flex w-full items-center justify-center rounded-lg bg-[#2196F3] px-4 py-3 font-medium text-white transition-all hover:bg-[#42A5F5]"
-				>
-					Manage Proposals
-					<Icon name="arrow_forward" className="ml-2 h-4 w-4" />
-				</button>
-			</div>
-
-			<div
-				class="group rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-6 shadow-lg transition-all hover:border-[#2196F3]"
-			>
-				<div class="mb-4 flex items-center">
-					<div
-						class="mr-4 rounded-xl bg-gradient-to-r from-[#2196F3] to-[#42A5F5] p-3 transition-transform group-hover:scale-110"
-					>
-						<Icon name="group" className="h-6 w-6 text-white" />
-					</div>
-					<div>
-						<h2 class="text-xl font-semibold text-[#E0E0E0]" style="font-family: Inter, sans-serif;">My Collaborations</h2>
-						<p class="text-sm text-[#B0B0B0]">Team up and work together</p>
-					</div>
-				</div>
-				<p class="mb-4 text-sm text-[#E0E0E0]">
-					Join or create collaborative workspaces to share ideas, documents, and have team discussions with AI assistance.
-				</p>
-				<button
-					onclick={handleViewCollaborations}
-					class="inline-flex w-full items-center justify-center rounded-lg bg-[#2196F3] px-4 py-3 font-medium text-white transition-all hover:bg-[#42A5F5]"
-				>
-					Explore Collaborations
-					<Icon name="arrow_forward" className="ml-2 h-4 w-4" />
-				</button>
-			</div>
-		</div>
-
-		<!-- Recent Activity and Quick Tips -->
-		<div
-			class="grid grid-cols-1 gap-6 lg:grid-cols-3"
-			in:scale={{ duration: 300, delay: 200, start: 0.95 }}
-		>
-			<!-- Recent Activity -->
-			<div class="rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-6 shadow-lg lg:col-span-2">
-				<h2 class="mb-6 flex items-center text-xl font-semibold text-[#E0E0E0]" style="font-family: Inter, sans-serif;">
-					<div class="mr-3 rounded-lg bg-gradient-to-r from-[#2196F3] to-[#42A5F5] p-2">
-						<Icon name="bolt" className="h-5 w-5 text-white" />
-					</div>
-					Recent Activity
-				</h2>
-				<div class="space-y-4">
-					{#if isLoadingActivity}
-						<div class="flex items-center justify-center py-8">
-							<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2196F3]"></div>
+						<div class="flex justify-between items-start mb-4">
+							<div class={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}>
+								<Icon name={stat.icon} className="w-6 h-6" iconSize="xl" />
+							</div>
+							<span class="text-2xl font-bold text-white tracking-tight">{stat.value}</span>
 						</div>
-					{:else if recentActivity.length === 0}
-						<div class="text-center py-8">
-							<Icon name="info" className="h-12 w-12 text-[#757575] mx-auto mb-3" />
-							<p class="text-[#B0B0B0]">No recent activity yet. Start a conversation or create a proposal!</p>
+						<p class="text-[#B0B0B0] text-sm font-medium">{stat.label}</p>
+					</div>
+				{/each}
+			</div>
+
+			<!-- Main Content Grid -->
+			<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+				
+				<!-- Left Column: Recent Activity & Projects -->
+				<div class="lg:col-span-2 space-y-8">
+					
+					<!-- Quick Action Bar (Search-like) -->
+					<div class="relative group">
+						<div class="absolute inset-0 bg-gradient-to-r from-[#3B82F6] to-[#A855F7] rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
+						<div class="relative flex items-center bg-[#1E1E1E] border border-[#404040]/50 rounded-xl p-1 pr-2 shadow-xl">
+							<div class="p-3 text-[#757575]">
+								<Icon name="search" className="w-5 h-5" iconSize="xl" />
+							</div>
+							<input 
+								type="text" 
+								placeholder="Search projects, finding opportunities, or ask AI..." 
+								class="w-full bg-transparent border-none text-white placeholder-[#757575] focus:ring-0 text-base h-10"
+							/>
+							<button class="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+								Search
+							</button>
 						</div>
-					{:else}
-						{#each recentActivity as activity, index}
-							<a
-								href={activity.link || '#'}
-								class="block rounded-lg border border-[#3A3A3A] bg-[#2C2C2C] p-4 transition-all hover:border-[#2196F3] hover:bg-[#3A3A3A]"
-								in:fade={{ delay: index * 50 }}
-							>
-								<div class="flex items-start">
-									<div class="mt-1 flex-shrink-0">
-										{#if activity.type === 'conversation'}
-											<div class="rounded-lg bg-[#2196F3]/20 p-2 text-[#2196F3]">
-												<Icon name="chat" className="h-4 w-4" />
-											</div>
-										{:else if activity.type === 'collaboration'}
-											<div class="rounded-lg bg-[#2196F3]/20 p-2 text-[#2196F3]">
-												<Icon name="group" className="h-4 w-4" />
-											</div>
-										{:else if activity.type === 'proposal'}
-											<div class="rounded-lg bg-[#2196F3]/20 p-2 text-[#2196F3]">
-												<Icon name="description" className="h-4 w-4" />
-											</div>
-										{:else}
-											<div class="rounded-lg bg-[#4CAF50]/20 p-2 text-[#4CAF50]">
-												<Icon name="smart_toy" className="h-4 w-4" />
-											</div>
-										{/if}
-									</div>
-									<div class="ml-3 flex-1">
-										<p class="font-medium text-[#E0E0E0]">{activity.title}</p>
-										<p class="mt-1 text-xs text-[#757575]">{activity.time}</p>
-									</div>
+					</div>
+
+					<!-- Recent Activity Section -->
+					<div>
+						<div class="flex items-center justify-between mb-6">
+							<h2 class="text-xl font-semibold text-white flex items-center gap-2">
+								<Icon name="history" className="w-5 h-5 text-[#3B82F6]" iconSize="xl" />
+								Recent Activity
+							</h2>
+							<button 
+                                class="text-sm text-[#3B82F6] hover:text-blue-300 transition-colors"
+                                onclick={() => nav('/dashboard/proposals')}
+                            >
+                                View All
+                            </button>
+						</div>
+						
+						<div class="space-y-4">
+							{#if recentActivity.length === 0}
+								<div class="p-8 rounded-2xl border border-[#404040]/30 bg-[#1E1E1E]/40 text-center">
+									<p class="text-[#757575]">No recent activity found.</p>
+									<button onclick={() => nav('/dashboard/proposals')} class="mt-4 text-[#3B82F6] text-sm font-medium hover:underline">Create your first proposal</button>
 								</div>
-							</a>
-						{/each}
-					{/if}
-				</div>
-			</div>
-
-			<!-- Quick Tips -->
-			<div class="rounded-xl border border-[#2C2C2C] bg-[#1E1E1E] p-6 shadow-lg">
-				<h2 class="mb-6 flex items-center text-xl font-semibold text-[#E0E0E0]" style="font-family: Inter, sans-serif;">
-					<div class="mr-3 rounded-lg bg-gradient-to-r from-[#2196F3] to-[#42A5F5] p-2">
-						<Icon name="lightbulb" className="h-5 w-5 text-white" />
-					</div>
-					Quick Tips
-				</h2>
-				<div class="space-y-4">
-					<div
-						class="rounded-lg border border-[#2196F3]/20 bg-gradient-to-r from-[#2196F3]/10 to-[#42A5F5]/10 p-4"
-					>
-						<div class="flex items-start">
-							<div class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#2196F3]">
-								<Icon name="chat" className="h-5 w-5" />
-							</div>
-							<div class="ml-3">
-								<p class="text-sm font-medium text-[#E0E0E0]">Use @mapit in chats</p>
-								<p class="mt-1 text-xs text-[#B0B0B0]">
-									Type @mapit followed by your question to get AI assistance in any chat.
-								</p>
-							</div>
-						</div>
-					</div>
-
-					<div
-						class="rounded-lg border border-[#4CAF50]/20 bg-gradient-to-r from-[#4CAF50]/10 to-emerald-500/10 p-4"
-					>
-						<div class="flex items-start">
-							<div class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#4CAF50]">
-								<Icon name="keyboard" className="h-5 w-5" />
-							</div>
-							<div class="ml-3">
-								<p class="text-sm font-medium text-[#E0E0E0]">Keyboard shortcuts</p>
-								<p class="mt-1 text-xs text-[#B0B0B0]">
-									Press <kbd class="rounded bg-[#3A3A3A] px-1 py-0.5 text-xs">?</kbd> anywhere to view shortcuts.
-								</p>
-							</div>
-						</div>
-					</div>
-
-					<div
-						class="rounded-lg border border-[#2196F3]/20 bg-gradient-to-r from-[#2196F3]/10 to-[#42A5F5]/10 p-4"
-					>
-						<div class="flex items-start">
-							<div class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#2196F3]">
-								<Icon name="group_add" className="h-5 w-5" />
-							</div>
-							<div class="ml-3">
-								<p class="text-sm font-medium text-[#E0E0E0]">Invite team members</p>
-								<p class="mt-1 text-xs text-[#B0B0B0]">
-									Create collaborations and invite colleagues to work together.
-								</p>
-							</div>
+							{:else}
+								{#each recentActivity as item, i}
+									<a 
+										href={item.link || '#'}
+										class="block group relative rounded-xl border border-[#333333] bg-[#1E1E1E]/60 p-4 transition-all hover:bg-[#252525] hover:border-[#3B82F6]/50"
+										in:fly={{ y: 10, delay: 200 + (i * 50) }}
+									>
+										<div class="flex items-center gap-4">
+											<div class="h-12 w-12 rounded-full bg-[#2A2A2A] flex items-center justify-center border border-[#333] group-hover:border-[#3B82F6]/30 transition-colors">
+												<Icon name={item.icon} className="w-5 h-5 text-[#B0B0B0] group-hover:text-[#3B82F6]" iconSize="xl" />
+											</div>
+											<div class="flex-1 min-w-0">
+												<h3 class="text-white font-medium truncate group-hover:text-[#3B82F6] transition-colors">{item.title}</h3>
+												<p class="text-sm text-[#757575] truncate">{item.subtitle} • {item.time}</p>
+											</div>
+											<div class="hidden sm:block">
+												<Icon name="arrow_forward" className="w-5 h-5 text-[#404040] group-hover:text-[#3B82F6] -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" iconSize="xl" />
+											</div>
+										</div>
+									</a>
+								{/each}
+							{/if}
 						</div>
 					</div>
 				</div>
+
+				<!-- Right Column: Actions & Assistant -->
+				<div class="space-y-6">
+					
+					<!-- Quick Actions Card -->
+					<div class="rounded-2xl border border-[#404040]/40 bg-[#1E1E1E]/80 backdrop-blur-md p-6">
+						<h3 class="text-white font-semibold mb-4">Quick Actions</h3>
+						<div class="space-y-3">
+							<button 
+								onclick={() => nav('/dashboard/conversations')}
+								class="w-full flex items-center gap-3 p-3 rounded-xl bg-[#2A2A2A] hover:bg-[#333] border border-[#333] hover:border-[#3B82F6]/50 transition-all group text-left"
+							>
+								<div class="p-2 rounded-lg bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+									<Icon name="chat_bubble_outline" className="w-5 h-5" iconSize="xl" />
+								</div>
+								<div>
+									<div class="text-sm font-medium text-white">New Chat</div>
+									<div class="text-xs text-[#757575]">Ask AI about anything</div>
+								</div>
+							</button>
+
+							<button 
+								onclick={() => nav('/dashboard/proposals')}
+								class="w-full flex items-center gap-3 p-3 rounded-xl bg-[#2A2A2A] hover:bg-[#333] border border-[#333] hover:border-[#A855F7]/50 transition-all group text-left"
+							>
+								<div class="p-2 rounded-lg bg-purple-500/10 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+									<Icon name="add_circle_outline" className="w-5 h-5" iconSize="xl" />
+								</div>
+								<div>
+									<div class="text-sm font-medium text-white">Create Proposal</div>
+									<div class="text-xs text-[#757575]">Start a new grant draft</div>
+								</div>
+							</button>
+
+							<button 
+								onclick={() => nav('/dashboard/organization')}
+								class="w-full flex items-center gap-3 p-3 rounded-xl bg-[#2A2A2A] hover:bg-[#333] border border-[#333] hover:border-[#10B981]/50 transition-all group text-left"
+							>
+								<div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+									<Icon name="search" className="w-5 h-5" iconSize="xl" />
+								</div>
+								<div>
+									<div class="text-sm font-medium text-white">Find Funding</div>
+									<div class="text-xs text-[#757575]">Search opportunities</div>
+								</div>
+							</button>
+						</div>
+					</div>
+
+					<!-- AI Assistant Widget -->
+					<div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#2563EB] p-6 text-white shadow-lg shadow-blue-900/20">
+						<div class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white opacity-10 blur-2xl"></div>
+						
+						<div class="relative z-10">
+							<div class="flex items-center gap-2 mb-3">
+								<Icon name="auto_awesome" className="w-5 h-5" iconSize="xl" />
+								<h3 class="font-bold text-lg">AI Assistant</h3>
+							</div>
+							<p class="text-blue-100 text-sm mb-4 leading-relaxed">
+								Need help analyzing a call document or drafting a section? I'm here to assist.
+							</p>
+							<button 
+								onclick={() => nav('/dashboard/conversations')}
+								class="w-full py-2.5 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors shadow-sm"
+							>
+								Ask Mapit AI
+							</button>
+						</div>
+					</div>
+				</div>
+
 			</div>
+
 		</div>
 	{:else}
-		<!-- Enhanced Loading State -->
-		<div class="mx-auto max-w-6xl p-4 sm:p-6" style="background-color: #121212; min-height: 100vh;">
-			<div class="animate-pulse">
-				<!-- Header skeleton -->
-				<div class="mb-8">
-					<div class="mb-2 h-10 w-80 rounded-lg bg-[#2C2C2C]"></div>
-					<div class="h-5 w-64 rounded bg-[#2C2C2C]"></div>
-				</div>
-
-				<!-- Stats skeleton -->
-				<div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-					{#each Array(4) as _, i}
-						<div class="h-24 rounded-xl bg-[#1E1E1E] border border-[#2C2C2C] p-4"></div>
-					{/each}
-				</div>
-
-				<!-- Cards skeleton -->
-				<div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-					<div class="h-56 rounded-xl bg-[#1E1E1E] border border-[#2C2C2C]"></div>
-					<div class="h-56 rounded-xl bg-[#1E1E1E] border border-[#2C2C2C]"></div>
-					<div class="h-56 rounded-xl bg-[#1E1E1E] border border-[#2C2C2C]"></div>
-				</div>
-
-				<!-- Bottom section skeleton -->
-				<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-					<div class="h-80 rounded-xl bg-[#1E1E1E] border border-[#2C2C2C] lg:col-span-2"></div>
-					<div class="h-80 rounded-xl bg-[#1E1E1E] border border-[#2C2C2C]"></div>
-				</div>
+		<!-- Skeleton Loader -->
+		<div class="animate-pulse space-y-8">
+			<div class="h-20 w-1/3 bg-[#2C2C2C] rounded-xl"></div>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+				{#each Array(4) as _}
+					<div class="h-32 bg-[#2C2C2C] rounded-2xl border border-[#333]"></div>
+				{/each}
+			</div>
+			<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+				<div class="lg:col-span-2 h-96 bg-[#2C2C2C] rounded-2xl"></div>
+				<div class="h-96 bg-[#2C2C2C] rounded-2xl"></div>
 			</div>
 		</div>
 	{/if}
