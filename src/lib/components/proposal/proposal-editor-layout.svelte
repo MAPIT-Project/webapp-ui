@@ -63,15 +63,15 @@
     : 'col-span-3');
 </script>
 
-<div class="proposal-editor-layout h-screen flex flex-col bg-gray-900">
+<div class="proposal-editor-layout h-screen flex flex-col bg-gradient-to-b from-[#1A1A1A] to-[#161616]">
   <!-- Header -->
-  <header class="border-b border-gray-800 bg-gray-800/50 backdrop-blur-sm px-4 py-3 z-10">
+  <header class="border-b border-[#40404033] bg-[#1E1E1E]/70 backdrop-blur-md px-4 py-3 z-10">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <Icon name="description" className="text-purple-500 text-xl" />
-        <h1 class="text-lg font-semibold text-white">Proposal Editor</h1>
+        <Icon name="description" className="text-[#3B82F6] text-xl" />
+        <h1 class="text-lg font-semibold text-[#F5F5F5]">Proposal Editor</h1>
         {#if title}
-          <span class="text-sm text-gray-400">
+          <span class="text-sm text-[#B0B0B0]">
             {title}
           </span>
         {/if}
@@ -79,12 +79,12 @@
       
       <!-- Mobile tab switcher -->
       {#if isMobileView}
-        <div class="flex bg-gray-800 rounded-lg p-1">
+        <div class="flex bg-[#1E1E1E] border border-[#40404033] rounded-lg p-1">
           <button
             class="px-3 py-1 rounded text-sm font-medium transition-colors {
               activeTab === 'chat' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-[#3B82F6] text-white' 
+                : 'text-[#B0B0B0] hover:text-[#F5F5F5]'
             }"
             onclick={() => switchToTab('chat')}
           >
@@ -93,8 +93,8 @@
           <button
             class="px-3 py-1 rounded text-sm font-medium transition-colors {
               activeTab === 'document' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-[#3B82F6] text-white' 
+                : 'text-[#B0B0B0] hover:text-[#F5F5F5]'
             }"
             onclick={() => switchToTab('document')}
           >
@@ -105,7 +105,7 @@
       
       <!-- Error display -->
       {#if error}
-        <div class="flex items-center gap-2 text-red-400 text-sm">
+        <div class="flex items-center gap-2 text-[#F44336] text-sm">
           <Icon name="error" />
           <span>{error}</span>
         </div>
@@ -116,7 +116,7 @@
   <!-- Main content area -->
   <main class="flex-1 overflow-hidden {layoutClass}">
     <!-- Chat Panel -->
-    <div class="{chatPanelClass} border-r border-gray-800 bg-gray-800/30 flex flex-col">
+    <div class="{chatPanelClass} border-r border-[#40404033] bg-[#1A1A1A]/30 flex flex-col">
       <!-- Chat Interface -->
       <div class="flex-1 flex flex-col min-h-0">
         <ProposalChatInterface />
@@ -124,7 +124,7 @@
     </div>
 
     <!-- Document Panel -->
-    <div class="{documentPanelClass} bg-gray-900 flex flex-col">
+    <div class="{documentPanelClass} bg-transparent flex flex-col">
       <ProposalDocumentViewer />
     </div>
   </main>

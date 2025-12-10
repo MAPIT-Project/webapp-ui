@@ -20,53 +20,60 @@
 
   // Calculate indentation based on level and custom indentation
   $: indentStyle = `padding-left: ${(level * 16 + indentation * 8)}px`;
-  $: statusColorClass = getStatusColor(section.status);
+  
+  // Custom status colors mapping to Design.json
+  $: statusColorClass = getStatusColorClass(section.status);
   $: statusIcon = getStatusIcon(section.status);
+
+  function getStatusColorClass(status: string) {
+      switch(status) {
+          case 'complete': return 'text-[#4CAF50]';
+          case 'draft': return 'text-[#FFC107]';
+          default: return 'text-[#6B7280]';
+      }
+  }
 </script>
 
 <div 
-  class="nav-item {active ? 'active' : ''} hover:bg-gray-800 cursor-pointer transition-colors duration-200"
+  class="nav-item {active ? 'active' : ''} hover:bg-[#2A2A2A] cursor-pointer transition-all duration-200 group"
   style={indentStyle}
   onclick={handleClick}
   role="button"
   tabindex="0"
   onkeydown={(e) => e.key === 'Enter' && handleClick()}
 >
-  <div class="flex items-center gap-2 py-2 px-3">
+  <div class="flex items-center gap-2 py-2.5 px-3">
     <!-- Status icon -->
-    <span class="{statusColorClass} text-sm font-medium">
+    <span class="{statusColorClass} text-xs transition-transform group-hover:scale-110">
       {statusIcon}
     </span>
     
     <!-- Section name -->
-    <span class="flex-1 text-sm text-gray-300 {active ? 'text-white font-medium' : ''}">
+    <span class="flex-1 text-xs tracking-wide {active ? 'text-white font-semibold' : 'text-[#B0B0B0] group-hover:text-[#F5F5F5]'} transition-colors truncate">
       {section.section_name}
     </span>
     
     <!-- Word count -->
-    <span class="text-xs text-gray-500 font-mono">
-      [{formatWordCount(section.word_count)}]
+    <span class="text-[10px] {active ? 'text-[#93C5FD]' : 'text-[#6B7280]'} font-mono opacity-80">
+      {formatWordCount(section.word_count)}
     </span>
   </div>
 </div>
 
 <style>
   .nav-item {
-    border-radius: 4px;
-    margin: 1px 0;
+    border-radius: 6px;
+    margin: 2px 0;
+    border-left: 2px solid transparent;
   }
   
   .nav-item.active {
-    background-color: rgba(139, 92, 246, 0.2); /* Purple with opacity */
-    border-left: 3px solid #8b5cf6; /* Purple */
-  }
-  
-  .nav-item:hover {
-    background-color: rgba(55, 65, 81, 0.5); /* Gray with opacity */
+    background-color: rgba(59, 130, 246, 0.1); /* Blue with opacity */
+    border-left-color: #3B82F6; /* Blue */
   }
   
   .nav-item:focus {
-    outline: 2px solid #8b5cf6;
-    outline-offset: 2px;
+    outline: none;
+    background-color: rgba(59, 130, 246, 0.05);
   }
 </style>

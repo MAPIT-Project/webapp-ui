@@ -71,22 +71,22 @@
   }
 </script>
 
-<div class="proposal-chat-interface h-full flex flex-col bg-gray-900">
+<div class="proposal-chat-interface h-full flex flex-col bg-transparent">
   <!-- Header with Quick Actions -->
-  <div class="border-b border-gray-800 p-4 bg-gray-800/50">
-    <h3 class="text-sm font-semibold text-gray-300 mb-3">Quick Actions</h3>
+  <div class="border-b border-[#40404033] p-4 bg-[#1E1E1E]/30">
+    <h3 class="text-xs font-semibold text-[#B0B0B0] uppercase tracking-wider mb-3">Quick Actions</h3>
     <div class="grid grid-cols-1 gap-2">
       {#each PROPOSAL_QUICK_ACTIONS as action}
         <button
-          class="flex items-center gap-3 p-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg transition-colors text-left disabled:opacity-50"
+          class="flex items-center gap-3 p-3 bg-[#1E1E1E] hover:bg-[#2A2A2A] border border-[#4F4F4F] rounded-xl transition-all duration-200 text-left disabled:opacity-50 group"
           onclick={() => handleQuickAction(action)}
           disabled={$isProcessing}
         >
-          <span class="text-sm">{action.icon}</span>
+          <span class="text-[#3B82F6] group-hover:text-white transition-colors">{action.icon}</span>
           <div class="flex-1 min-w-0">
-            <div class="text-xs font-medium text-white truncate">{action.label}</div>
+            <div class="text-xs font-medium text-[#F5F5F5] truncate">{action.label}</div>
             {#if action.description}
-              <div class="text-xs text-gray-400 truncate">{action.description}</div>
+              <div class="text-[10px] text-[#B0B0B0] truncate">{action.description}</div>
             {/if}
           </div>
         </button>
@@ -95,46 +95,51 @@
   </div>
   
   <!-- Messages Container -->
-  <div class="flex-1 overflow-y-auto p-4 space-y-4" bind:this={messagesContainer} onscroll={updateScrollDownVisibility}>
+  <div class="flex-1 overflow-y-auto p-4 space-y-6" bind:this={messagesContainer} onscroll={updateScrollDownVisibility}>
     {#each $messages as message (message.id)}
       <div class="flex flex-col gap-2">
         <div class="flex items-start gap-3 {message.role === 'user' ? 'flex-row-reverse' : ''}">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 {message.role === 'user' ? 'bg-purple-600' : 'bg-gray-700'}">
+          <!-- Avatar -->
+          <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[#4F4F4F] shadow-sm
+            {message.role === 'user' ? 'bg-[#3B82F6] border-[#2563EB]' : 'bg-[#1E1E1E]'}">
             {#if message.role === 'user'}
-              <span class="text-xs">You</span>
+              <span class="text-xs font-bold text-white">You</span>
             {:else}
-              <span class="text-xs">AI</span>
+              <span class="text-xs font-bold text-[#3B82F6]">AI</span>
             {/if}
           </div>
           
           <div class="flex-1 max-w-[85%]">
             <!-- Message Bubble -->
-            <div class="bg-gray-800 rounded-lg p-3 text-white {message.role === 'user' ? 'bg-purple-900/50 border border-purple-700/50' : 'bg-gray-800 border border-gray-700'}">
-              <div class="text-sm whitespace-pre-wrap">{message.content}</div>
+            <div class="rounded-2xl p-4 shadow-sm backdrop-blur-sm
+              {message.role === 'user' 
+                ? 'bg-[#3B82F6]/10 border border-[#3B82F6]/30 text-[#93C5FD]' 
+                : 'bg-[#1E1E1E] border border-[#4F4F4F] text-[#F5F5F5]'}">
+              <div class="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
             </div>
 
             <!-- Thinking / Tool Logs (Only for Assistant) -->
             {#if message.role === 'assistant' && ((message.thinking && message.thinking.length > 0) || (message.toolCalls && message.toolCalls.length > 0))}
-              <div class="mt-2 text-xs space-y-1">
+              <div class="mt-3 pl-2 text-xs space-y-2 border-l-2 border-[#40404033] ml-2">
                 {#if message.thinking}
                   {#each message.thinking as thought}
-                    <div class="flex items-start gap-2 text-gray-500 italic">
-                      <span class="opacity-50">💭</span>
-                      <span>{thought.thought}</span>
+                    <div class="flex items-start gap-2 text-[#6B7280]">
+                      <span class="opacity-70">💭</span>
+                      <span class="italic">{thought.thought}</span>
                     </div>
                   {/each}
                 {/if}
                 {#if message.toolCalls}
                   {#each message.toolCalls as tool}
-                    <div class="flex items-start gap-2 text-blue-400/80">
-                      <span class="opacity-50">🛠️</span>
-                      <span>Called <code>{tool.tool_name}</code></span>
+                    <div class="flex items-start gap-2 text-[#3B82F6]/80">
+                      <span class="opacity-70">🛠️</span>
+                      <span>Called <code class="px-1 py-0.5 bg-[#1E1E1E] border border-[#4F4F4F] rounded text-[#3B82F6]">{tool.tool_name}</code></span>
                     </div>
                   {/each}
                 {/if}
                 {#if message.sectionsAffected && message.sectionsAffected.length > 0}
-                   <div class="flex items-start gap-2 text-green-400/80">
-                      <span class="opacity-50">📝</span>
+                   <div class="flex items-start gap-2 text-[#4CAF50]/80">
+                      <span class="opacity-70">📝</span>
                       <span>Updated: {message.sectionsAffected.join(', ')}</span>
                     </div>
                 {/if}
@@ -148,13 +153,13 @@
     <!-- Transient Thinking Indicator -->
     {#if $isProcessing && $currentThought}
       <div class="flex items-start gap-3">
-        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
-          <span class="animate-pulse">⏳</span>
+        <div class="w-8 h-8 rounded-full bg-[#1E1E1E] border border-[#4F4F4F] flex items-center justify-center shrink-0">
+          <span class="animate-pulse text-xs">AI</span>
         </div>
-        <div class="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3">
-          <div class="flex items-center gap-2 text-gray-400 text-sm italic">
-            <span class="animate-spin w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full"></span>
-            <span>{$currentThought}</span>
+        <div class="bg-[#1E1E1E]/50 border border-[#3B82F6]/30 rounded-xl p-3">
+          <div class="flex items-center gap-3 text-[#B0B0B0] text-sm">
+            <div class="w-4 h-4 border-2 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
+            <span class="italic">{$currentThought}</span>
           </div>
         </div>
       </div>
@@ -164,22 +169,22 @@
   {#if showScrollDown}
     <button
       onclick={scrollToBottom}
-      class="absolute bottom-20 right-4 z-40 w-8 h-8 rounded-full bg-gray-700 text-gray-300 opacity-80 hover:opacity-100 shadow-md transition-colors transition-opacity hover:bg-gray-600 focus:outline-none flex items-center justify-center border border-gray-600"
+      class="absolute bottom-24 right-6 z-40 w-10 h-10 rounded-full bg-[#1E1E1E] text-[#F5F5F5] border border-[#4F4F4F] shadow-lg hover:bg-[#2A2A2A] transition-all flex items-center justify-center"
     >
       <Icon name="arrow_down" />
     </button>
   {/if}
   
   <!-- Input Area -->
-  <div class="p-4 border-t border-gray-800 bg-gray-800/50">
-    <div class="flex gap-2">
+  <div class="p-4 border-t border-[#40404033] bg-[#1E1E1E]/30 backdrop-blur-sm">
+    <div class="flex gap-3">
       <input
         bind:this={inputElement}
         type="text"
         onkeypress={(e) => e.key === 'Enter' && handleSendMessage(e.currentTarget.value)}
         placeholder={$isProcessing ? "AI is working..." : "Ask to write or improve a section..."}
         disabled={$isProcessing}
-        class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 disabled:opacity-50"
+        class="flex-1 px-4 py-3 bg-[#1F2937]/50 border border-[#3B82F6]/50 rounded-xl text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 disabled:opacity-50 transition-all"
       />
       <button 
         onclick={() => {
@@ -189,7 +194,7 @@
           }
         }}
         disabled={$isProcessing}
-        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        class="px-5 py-3 bg-[#3B82F6] text-white rounded-xl hover:bg-[#2563EB] shadow-lg shadow-blue-900/20 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
       >
         {#if $isProcessing}
           <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

@@ -7,6 +7,7 @@
   import type { SessionSection } from '$lib/types/proposal-session';
   import SectionNavItem from './section-nav-item.svelte';
   import Icon from '$lib/components/generic/icon.svelte';
+  import { renderMarkdown } from '$lib/utils/markdownRenderer';
 
   // Derived store values
   let storeState: any;
@@ -76,10 +77,10 @@
   }
 
   function getQualityScoreColor(score: number | null): string {
-    if (!score) return 'text-gray-500';
-    if (score >= 4.0) return 'text-green-500'; // Assuming 5-point scale now
-    if (score >= 2.5) return 'text-yellow-500';
-    return 'text-red-500';
+    if (!score) return 'text-[#6B7280]';
+    if (score >= 4.0) return 'text-[#4CAF50]'; 
+    if (score >= 2.5) return 'text-[#FFC107]';
+    return 'text-[#F44336]';
   }
 
   function getQualityScoreLabel(score: number | null): string {
@@ -90,17 +91,17 @@
   }
 </script>
 
-<div class="proposal-viewer h-full flex flex-col bg-gray-900 text-white">
+<div class="proposal-viewer h-full flex flex-col bg-transparent text-[#F5F5F5]">
   <!-- Header with title and progress -->
-  <div class="border-b border-gray-800 p-4 bg-gray-800/50 backdrop-blur-sm">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-xl font-semibold text-white">
+  <div class="border-b border-[#40404033] p-6 bg-[#1E1E1E]/50 backdrop-blur-sm">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-[#F5F5F5] tracking-tight">
         {storeState?.title || 'Untitled Proposal'}
       </h2>
       <div class="flex items-center gap-4 text-sm">
         {#if loading}
-             <div class="flex items-center gap-2 text-yellow-400">
-                <div class="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+             <div class="flex items-center gap-2 text-[#FFC107]">
+                <div class="w-4 h-4 border-2 border-[#FFC107] border-t-transparent rounded-full animate-spin"></div>
                 <span>Syncing...</span>
              </div>
         {/if}
@@ -109,17 +110,17 @@
     
     <!-- Progress bar -->
     <div class="space-y-2">
-    <div class="flex justify-between text-sm">
-        <span class="text-gray-400">Overall Progress</span>
-        <span class="text-gray-300">{progress.completion_percentage.toFixed(0)}%</span>
+    <div class="flex justify-between text-sm font-medium">
+        <span class="text-[#B0B0B0]">Overall Progress</span>
+        <span class="text-[#F5F5F5]">{progress.completion_percentage.toFixed(0)}%</span>
     </div>
-    <div class="w-full bg-gray-700 rounded-full h-2">
+    <div class="w-full bg-[#2A2A2A] rounded-full h-2 overflow-hidden shadow-inner">
         <div 
-        class="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+        class="bg-gradient-to-r from-[#3B82F6] to-[#2563EB] h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
         style="width: {progress.completion_percentage}%"
         ></div>
     </div>
-    <div class="flex justify-between text-xs text-gray-500">
+    <div class="flex justify-between text-xs text-[#6B7280]">
         <span>{progress.completed_sections} of {progress.total_sections} sections</span>
         <span>{progress.total_words} words (~{progress.estimated_pages} pages)</span>
     </div>
@@ -128,25 +129,25 @@
 
   <div class="flex flex-1 overflow-hidden">
     <!-- Navigation Sidebar -->
-    <div class="w-80 border-r border-gray-800 bg-gray-800/30 overflow-y-auto">
+    <div class="w-80 border-r border-[#40404033] bg-[#1A1A1A]/30 overflow-y-auto">
       <div class="p-4 space-y-6">
         {#each Object.entries(PROPOSAL_SECTIONS) as [categoryKey, categoryData]}
           {@const categorySections = Object.values(sections).filter(s => s.section_id.startsWith(`${categoryKey}.`))}
           {@const categoryProgress = calculateCategoryProgress(categorySections)}
           
-          <div class="space-y-2">
-            <div class="flex items-center justify-between px-3 py-1">
-              <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between px-3">
+              <h3 class="text-xs font-bold text-[#B0B0B0] uppercase tracking-wider">
                 {categoryData.name}
               </h3>
-              <span class="text-xs text-gray-500">
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-[#2A2A2A] text-[#B0B0B0]">
                 {categoryProgress}%
               </span>
             </div>
             
-            <div class="w-full bg-gray-700 rounded-full h-1 mb-3">
+            <div class="w-full bg-[#2A2A2A] rounded-full h-1 mb-2 mx-3 w-[calc(100%-1.5rem)]">
               <div 
-                class="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full transition-all duration-300"
+                class="bg-[#3B82F6] h-1 rounded-full transition-all duration-300 opacity-80"
                 style="width: {categoryProgress}%"
               ></div>
             </div>
@@ -171,84 +172,98 @@
     </div>
 
     <!-- Section Content -->
-    <div class="flex-1 overflow-y-auto bg-gray-900">
+    <div class="flex-1 overflow-y-auto bg-transparent relative">
       {#if loading && !currentSectionData}
         <div class="flex items-center justify-center h-full">
           <div class="text-center space-y-4">
-            <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p class="text-gray-400">Loading proposal...</p>
+            <div class="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="text-[#B0B0B0]">Loading proposal...</p>
           </div>
         </div>
       {:else if currentSectionData}
-        <div id="section-{currentSectionData.section_id}" class="p-6 max-w-4xl mx-auto">
+        <div id="section-{currentSectionData.section_id}" class="p-8 max-w-5xl mx-auto">
           <!-- Section Header -->
-          <div class="mb-6 pb-4 border-b border-gray-800">
-            <div class="flex items-center justify-between">
-              <h1 class="text-2xl font-bold text-white mb-2">
+          <div class="mb-8 pb-6 border-b border-[#40404033]">
+            <div class="flex items-center justify-between mb-4">
+              <h1 class="text-3xl font-bold text-[#F5F5F5] tracking-tight">
                 {currentSectionData.section_name}
               </h1>
-              <div class="flex items-center gap-4 text-sm">
-                <!-- Lock Status -->
-                {#if currentSectionData.lock_status !== 'unlocked'}
-                     <div class="flex items-center gap-2 text-yellow-500 animate-pulse">
-                        <span class="text-xs font-bold uppercase">Locked by AI</span>
+              
+              <!-- Status Badges -->
+              <div class="flex items-center gap-2">
+                 {#if currentSectionData.lock_status !== 'unlocked'}
+                     <div class="flex items-center gap-2 px-3 py-1 bg-[#FFC107]/10 border border-[#FFC107]/30 rounded-full text-[#FFC107] text-xs font-medium animate-pulse">
+                        <Icon name="lock" className="w-3 h-3" />
+                        <span>GENERATING</span>
                      </div>
                 {/if}
-
-                <!-- Quality Score -->
-                <div class="flex items-center gap-2">
-                  <span class="text-gray-400">Quality:</span>
-                  <span class="{getQualityScoreColor(currentSectionData.quality_score)} font-medium">
-                    {getQualityScoreLabel(currentSectionData.quality_score)}
-                     {#if currentSectionData.quality_score}
-                        ({currentSectionData.quality_score.toFixed(1)}/5)
-                     {/if}
-                  </span>
-                </div>
                 
-                <!-- Word Count -->
-                <div class="flex items-center gap-2 text-gray-400">
-                  <Icon name="text_fields" />
-                  <span>{currentSectionData.word_count} words</span>
-                </div>
-                
-                <!-- Status -->
-                <div class="flex items-center gap-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-medium 
-                    {currentSectionData.status === 'complete' ? 'bg-green-900/50 text-green-400' : ''}
-                    {currentSectionData.status === 'draft' ? 'bg-yellow-900/50 text-yellow-400' : ''}
-                    {currentSectionData.status === 'empty' ? 'bg-gray-800 text-gray-500' : ''}
-                  ">
-                    {currentSectionData.status}
-                  </span>
-                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-medium border
+                  {currentSectionData.status === 'complete' ? 'bg-[#4CAF50]/10 border-[#4CAF50]/30 text-[#4CAF50]' : ''}
+                  {currentSectionData.status === 'draft' ? 'bg-[#FFC107]/10 border-[#FFC107]/30 text-[#FFC107]' : ''}
+                  {currentSectionData.status === 'empty' ? 'bg-[#2A2A2A] border-[#4F4F4F] text-[#B0B0B0]' : ''}
+                ">
+                  {currentSectionData.status.toUpperCase()}
+                </span>
               </div>
             </div>
-            
-            <!-- Action Bar -->
-            <div class="flex items-center gap-3 mt-4">
-                <button 
-                    class="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-300 transition-colors border border-gray-700"
-                    onclick={toggleEdit}
-                    disabled={currentSectionData.lock_status !== 'unlocked'}
-                >
-                    {isEditing ? 'Save Changes' : 'Edit Manually'}
-                </button>
-                {#if isEditing}
+
+            <!-- Metadata Bar -->
+            <div class="flex items-center justify-between text-sm bg-[#1E1E1E] p-4 rounded-xl border border-[#4F4F4F]">
+                <!-- Quality Score -->
+                <div class="flex items-center gap-3">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] uppercase text-[#6B7280] font-bold tracking-wider">Quality Score</span>
+                    <div class="flex items-center gap-2">
+                        <span class="{getQualityScoreColor(currentSectionData.quality_score)} font-bold text-lg">
+                            {currentSectionData.quality_score ? currentSectionData.quality_score.toFixed(1) : '-'}
+                        </span>
+                        <span class="text-[#B0B0B0] text-xs">/ 5.0</span>
+                        <span class="text-[#6B7280] text-xs ml-1">({getQualityScoreLabel(currentSectionData.quality_score)})</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="w-px h-8 bg-[#4F4F4F]"></div>
+
+                <!-- Word Count -->
+                <div class="flex items-center gap-3">
+                   <div class="flex flex-col">
+                    <span class="text-[10px] uppercase text-[#6B7280] font-bold tracking-wider">Word Count</span>
+                    <div class="flex items-center gap-2 text-[#F5F5F5]">
+                        <Icon name="text_fields" className="text-[#3B82F6]" />
+                        <span class="font-medium">{currentSectionData.word_count} words</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="w-px h-8 bg-[#4F4F4F]"></div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
                     <button 
-                        class="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs text-red-400 transition-colors border border-gray-700"
-                        onclick={cancelEdit}
+                        class="px-3 py-2 bg-[#2A2A2A] hover:bg-[#333333] rounded-lg text-xs text-[#B0B0B0] hover:text-white transition-colors border border-[#4F4F4F]"
+                        onclick={toggleEdit}
+                        disabled={currentSectionData.lock_status !== 'unlocked'}
                     >
-                        Cancel
+                        {isEditing ? 'Save' : 'Edit'}
                     </button>
-                {/if}
-                <button 
-                    class="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs text-blue-400 transition-colors border border-gray-700"
-                    onclick={handleEvaluate}
-                    disabled={!currentSectionData.content || currentSectionData.lock_status !== 'unlocked'}
-                >
-                    Evaluate Section
-                </button>
+                    {#if isEditing}
+                        <button 
+                            class="px-3 py-2 bg-transparent hover:bg-[#2A2A2A] rounded-lg text-xs text-[#F44336] transition-colors"
+                            onclick={cancelEdit}
+                        >
+                            Cancel
+                        </button>
+                    {/if}
+                    <button 
+                        class="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] rounded-lg text-xs text-white transition-colors shadow-lg shadow-blue-900/20 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        onclick={handleEvaluate}
+                        disabled={!currentSectionData.content || currentSectionData.lock_status !== 'unlocked'}
+                    >
+                        Evaluate
+                    </button>
+                </div>
             </div>
           </div>
 
@@ -257,17 +272,23 @@
             {#if isEditing}
                 <textarea 
                     bind:value={editContent} 
-                    class="w-full h-[600px] bg-gray-800 text-gray-200 p-4 rounded-lg font-mono text-sm border border-gray-700 focus:outline-none focus:border-purple-500"
+                    class="w-full h-[600px] bg-[#1A1A1A] text-[#E5E7EB] p-6 rounded-xl font-mono text-sm border border-[#4F4F4F] focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] leading-relaxed resize-none shadow-inner"
+                    placeholder="Start typing..."
                 ></textarea>
             {:else if currentSectionData.content}
-              <div class="bg-gray-800/50 rounded-lg p-6 border border-gray-700 min-h-[200px]">
-                {@html currentSectionData.content}
+              <div class="bg-[#1E1E1E] rounded-xl p-8 border border-[#4F4F4F] shadow-sm min-h-[300px]">
+                {@html renderMarkdown(currentSectionData.content)}
               </div>
             {:else}
-              <div class="bg-gray-800/30 rounded-lg p-12 border-2 border-dashed border-gray-700 text-center">
-                <Icon name="description" className="text-4xl text-gray-600 mb-4" />
-                <h3 class="text-lg font-medium text-gray-400 mb-2">No content yet</h3>
-                <p class="text-gray-500">Use the chat interface to start writing this section.</p>
+              <div class="bg-[#1E1E1E]/30 rounded-xl p-16 border-2 border-dashed border-[#4F4F4F] text-center flex flex-col items-center">
+                <div class="w-16 h-16 rounded-full bg-[#2A2A2A] flex items-center justify-center mb-4">
+                    <Icon name="description" className="text-3xl text-[#6B7280]" />
+                </div>
+                <h3 class="text-lg font-medium text-[#F5F5F5] mb-2">No content yet</h3>
+                <p class="text-[#B0B0B0] max-w-sm">Use the chat interface to ask the AI to draft this section based on the call requirements.</p>
+                <div class="mt-6 flex gap-3">
+                     <span class="px-3 py-1 bg-[#2A2A2A] rounded text-xs text-[#6B7280] font-mono">"Write the objectives..."</span>
+                </div>
               </div>
             {/if}
           </div>
@@ -275,8 +296,11 @@
       {:else}
         <div class="flex items-center justify-center h-full">
           <div class="text-center space-y-4">
-            <Icon name="description" className="text-4xl text-gray-600" />
-            <p class="text-gray-400">Select a section to view its content</p>
+             <div class="w-20 h-20 bg-[#1E1E1E] rounded-full flex items-center justify-center mx-auto border border-[#4F4F4F]">
+                <Icon name="description" className="text-4xl text-[#3B82F6]" />
+             </div>
+            <h3 class="text-xl font-medium text-[#F5F5F5]">Select a Section</h3>
+            <p class="text-[#B0B0B0]">Choose a section from the sidebar to view or edit.</p>
           </div>
         </div>
       {/if}
@@ -285,74 +309,71 @@
 </div>
 
 <style>
-  /* Custom prose styles for dark theme */
+  /* Custom prose styles for dark theme to match Design.json */
   :global(.prose-invert) {
-    color: #e5e7eb;
+    color: #E5E7EB;
   }
   
   :global(.prose-invert h1) {
-    color: #f9fafb;
-    border-bottom-color: #374151;
+    color: #F5F5F5;
+    font-weight: 700;
   }
   
   :global(.prose-invert h2) {
-    color: #f9fafb;
-    border-bottom-color: #374151;
+    color: #F5F5F5;
+    font-weight: 600;
+    margin-top: 2em;
+    border-bottom: 1px solid #40404033;
+    padding-bottom: 0.5em;
   }
   
   :global(.prose-invert h3) {
-    color: #f9fafb;
+    color: #E5E7EB;
+    font-weight: 600;
   }
   
   :global(.prose-invert p) {
-    color: #d1d5db;
+    color: #D1D5DB;
+    line-height: 1.75;
   }
   
   :global(.prose-invert strong) {
-    color: #f9fafb;
+    color: #F5F5F5;
   }
   
   :global(.prose-invert blockquote) {
-    border-left-color: #8b5cf6;
-    background-color: rgba(139, 92, 246, 0.1);
-    color: #e5e7eb;
+    border-left-color: #3B82F6;
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #E5E7EB;
+    padding: 1rem;
+    border-radius: 0 0.5rem 0.5rem 0;
   }
   
   :global(.prose-invert code) {
-    background-color: #374151;
-    color: #f9fafb;
+    background-color: #2A2A2A;
+    color: #93C5FD;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
   }
-  
+
   :global(.prose-invert pre) {
-    background-color: #1f2937;
-    color: #e5e7eb;
+    background-color: #1A1A1A;
+    border: 1px solid #4F4F4F;
   }
   
   :global(.prose-invert a) {
-    color: #8b5cf6;
+    color: #3B82F6;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.3);
   }
   
   :global(.prose-invert a:hover) {
-    color: #a78bfa;
+    color: #60A5FA;
+    border-bottom-color: #60A5FA;
   }
   
   :global(.prose-invert ul > li::marker) {
-    color: #9ca3af;
-  }
-  
-  :global(.prose-invert ol > li::marker) {
-    color: #9ca3af;
-  }
-  
-  :global(.prose-invert table) {
-    border-color: #374151;
-  }
-  
-  :global(.prose-invert thead) {
-    border-bottom-color: #374151;
-  }
-  
-  :global(.prose-invert tbody tr) {
-    border-bottom-color: #374151;
+    color: #6B7280;
   }
 </style>

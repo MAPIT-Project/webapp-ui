@@ -21,9 +21,14 @@ export function renderMarkdown(text: string): string {
       .replace(/^[\s\uFEFF\xA0]+/, '')
       .replace(/\n{3,}/g, '\n\n');
 
-    // Parse markdown and sanitize HTML
+    // Parse markdown
     const parsed = marked.parse(cleaned) as string;
-    let sanitized = DOMPurify.sanitize(parsed) as string;
+
+    // Sanitize HTML (Client-side only)
+    let sanitized = parsed;
+    if (typeof window !== 'undefined') {
+      sanitized = DOMPurify.sanitize(parsed) as string;
+    }
 
     // Post-process to add target="_blank" to all links
     sanitized = sanitized.replace(
