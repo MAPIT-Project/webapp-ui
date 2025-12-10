@@ -1,47 +1,33 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { 
-    proposalStore, 
-    loadProposal, 
-    getSection, 
-    refreshProgress, 
-    setError, 
-    clearError,
-    currentSection
-  } from '$lib/stores/proposalStore';
-  import { proposalService } from '$lib/clients/proposalService';
-  import { streamingConversationStore } from '$lib/stores/streamingConversationStore';
-  import type { ProposalSection } from '$lib/types/proposal';
+    proposalSessionStore
+  } from '$lib/stores/proposalSessionStore';
   import ProposalDocumentViewer from './proposal-document-viewer.svelte';
   import ProposalChatInterface from './proposal-chat-interface.svelte';
   import Icon from '$lib/components/generic/icon.svelte';
-  import { PROPOSAL_QUICK_ACTIONS } from '$lib/types/proposal';
-  import type { QuickAction } from '$lib/types/proposal';
 
   interface Props {
     proposalId: number;
-    conversationId: number;
-    userId: string;
+    conversationId?: number;
+    userId?: string;
   }
 
-  let { proposalId, conversationId, userId }: Props = $props();
+  // Props are kept for compatibility but largely handled by store initialization
+  let { proposalId }: Props = $props();
 
   let isMobileView = $state(false);
   let activeTab = $state<'chat' | 'document'>('chat');
-  let eventSource: EventSource | null = null;
+  
+  // Store values
+  let storeState: any;
+  let error: string | null = null;
+  let title: string | null = null;
 
-  // Subscribe to store values
-  let proposal: any;
-  let error: string | null;
-  let currentSectionData: ProposalSection | null;
-
-  proposalStore.subscribe(state => {
-    proposal = state.proposal;
+  proposalSessionStore.subscribe(state => {
+    storeState = state;
     error = state.error;
-  });
-
-  currentSection.subscribe(value => {
-    currentSectionData = value;
+    title = state.title;
   });
 
   // Check for mobile view
@@ -58,79 +44,9 @@
     };
   });
 
-  // Load proposal on mount
-  onMount(async () => {
-    await loadProposal(proposalId);
-    
-    // Set up real-time events
-    eventSource = proposalService.setupProposalEvents(proposalId, {
-      onSectionUpdated: (sectionId: string, content: string) => {
-        // Update the section in the store
-        const section = getSection(sectionId);
-        if (section) {
-          // We would need to update the store, but for now just log
-          console.log(`Section ${sectionId} updated`);
-        }
-      },
-      onProgressUpdated: () => {
-        refreshProgress();
-      }
-    });
-  });
-
-  // Cleanup on unmount
-  $effect(() => {
-    return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
-    };
-  });
-
-  async function handleMessageSent() {
-    // Refresh proposal after message is sent
-    await refreshProgress();
-  }
-
-  function handleError(error: string) {
-    setError(error);
-  }
-
-  function handleQuickAction(action: QuickAction) {
-    // Add the action as a message to the conversation
-    const message = getActionMessage(action.action);
-    if (message) {
-      // This will be handled by the streaming conversation interface
-      // We need to trigger the message send programmatically
-      const inputElement = document.querySelector('.proposal-chat-interface input') as HTMLInputElement;
-      if (inputElement) {
-        inputElement.value = message;
-        // Trigger the send button click
-        const sendButton = document.querySelector('.proposal-chat-interface button') as HTMLButtonElement;
-        if (sendButton) {
-          sendButton.click();
-        }
-      }
-    }
-  }
-
-  function getActionMessage(action: string): string {
-    const sectionName = currentSectionData?.section_name || 'current section';
-    
-    switch (action) {
-      case 'draft_next':
-        return 'Draft the next section of the proposal';
-      case 'improve':
-        return `Improve the ${sectionName} section`;
-      case 'be_specific':
-        return `Make the ${sectionName} section more specific and add measurable KPIs`;
-      case 'add_examples':
-        return `Add relevant examples to the ${sectionName} section`;
-      case 'compliance':
-        return `Check the ${sectionName} section for compliance with requirements`;
-      default:
-        return '';
-    }
+  function clearError() {
+    // proposalSessionStore.clearError(); // If we add this action
+    // For now, simple reactivity or manual store update if exposed
   }
 
   function switchToTab(tab: 'chat' | 'document') {
@@ -154,9 +70,9 @@
       <div class="flex items-center gap-3">
         <Icon name="description" className="text-purple-500 text-xl" />
         <h1 class="text-lg font-semibold text-white">Proposal Editor</h1>
-        {#if proposal}
+        {#if title}
           <span class="text-sm text-gray-400">
-            {proposal.call_id}
+            {title}
           </span>
         {/if}
       </div>
@@ -192,12 +108,6 @@
         <div class="flex items-center gap-2 text-red-400 text-sm">
           <Icon name="error" />
           <span>{error}</span>
-          <button
-            class="ml-2 text-gray-400 hover:text-white"
-            onclick={() => clearError()}
-          >
-            <Icon name="close" />
-          </button>
         </div>
       {/if}
     </div>
@@ -207,35 +117,9 @@
   <main class="flex-1 overflow-hidden {layoutClass}">
     <!-- Chat Panel -->
     <div class="{chatPanelClass} border-r border-gray-800 bg-gray-800/30 flex flex-col">
-      <!-- Quick Actions -->
-      <div class="p-4 border-b border-gray-700">
-        <h3 class="text-sm font-semibold text-gray-300 mb-3">Quick Actions</h3>
-        <div class="grid grid-cols-1 gap-2">
-          {#each PROPOSAL_QUICK_ACTIONS as action}
-            <button
-              class="flex items-center gap-3 p-3 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg transition-colors text-left disabled:opacity-50"
-              onclick={() => handleQuickAction(action)}
-              disabled={$streamingConversationStore.isProcessing}
-            >
-              <span class="text-lg">{action.icon}</span>
-              <div class="flex-1">
-                <div class="text-sm font-medium text-white">{action.label}</div>
-                {#if action.description}
-                  <div class="text-xs text-gray-400">{action.description}</div>
-                {/if}
-              </div>
-            </button>
-          {/each}
-        </div>
-      </div>
-      
       <!-- Chat Interface -->
       <div class="flex-1 flex flex-col min-h-0">
-        <ProposalChatInterface
-          conversationId={conversationId}
-          onMessageSent={handleMessageSent}
-          onError={handleError}
-        />
+        <ProposalChatInterface />
       </div>
     </div>
 

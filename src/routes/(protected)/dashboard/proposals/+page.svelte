@@ -16,6 +16,7 @@
   let newProposalAcronym = $state('');
   let newProposalType = $state('RIA');
   let isCreatingProposal = $state(false);
+  let isFetchingCall = $state(false);
 
   // Load proposals on mount
   onMount(async () => {
@@ -45,6 +46,27 @@
 
   function handleNewProposal() {
     showNewProposalDialog = true;
+  }
+
+  async function handleFetchCall() {
+    if (!newProposalCallId.trim()) return;
+
+    isFetchingCall = true;
+    error = null;
+
+    try {
+      const callData = await proposalService.lookupCall(newProposalCallId);
+      if (callData) {
+        newProposalTitle = callData.title;
+        newProposalType = callData.type;
+      } else {
+        error = 'Call not found. Please enter details manually.';
+      }
+    } catch (err) {
+      console.error('Error fetching call:', err);
+    } finally {
+      isFetchingCall = false;
+    }
   }
 
   async function handleCreateProposal() {
@@ -263,21 +285,35 @@
         
         <div class="space-y-4">
           <div>
+            <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Call ID *</label>
+            <div class="flex gap-2">
+              <input
+                type="text"
+                bind:value={newProposalCallId}
+                placeholder="Enter call ID (e.g., HORIZON-CL5-2025-D3-01)"
+                class="flex-1 px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
+              />
+              <button
+                class="px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#B0B0B0] hover:bg-[#3A3A3A] hover:text-[#E0E0E0] transition-colors flex items-center gap-2"
+                onclick={handleFetchCall}
+                disabled={isFetchingCall}
+                title="Fetch call details from EU Portal"
+              >
+                {#if isFetchingCall}
+                  <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                {:else}
+                  <Icon name="search" className="w-4 h-4" />
+                {/if}
+              </button>
+            </div>
+          </div>
+
+          <div>
             <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Proposal Title *</label>
             <input
               type="text"
               bind:value={newProposalTitle}
               placeholder="Enter proposal title"
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
-            />
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Call ID *</label>
-            <input
-              type="text"
-              bind:value={newProposalCallId}
-              placeholder="Enter call ID"
               class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
             />
           </div>

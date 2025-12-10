@@ -183,6 +183,24 @@ export class ProposalService {
   }
 
   /**
+   * Lookup call details (simulates external API check)
+   */
+  async lookupCall(callId: string): Promise<{ title: string; type: string } | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/proposal-document/lookup-call?call_id=${encodeURIComponent(callId)}`);
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error looking up call:', error);
+      return null;
+    }
+  }
+
+  /**
    * Stream proposal editing through conversation API
    */
   async streamProposalEdit(
