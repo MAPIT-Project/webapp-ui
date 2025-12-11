@@ -55,17 +55,17 @@
 </script>
 
 {#if isLoading}
-  <div class="h-screen flex items-center justify-center bg-gray-900 text-white">
+  <div class="h-screen flex items-center justify-center bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414]">
     <div class="flex flex-col items-center gap-4">
-      <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-      <p class="text-gray-400">Initializing editor...</p>
+      <div class="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-[#B0B0B0]">Initializing editor...</p>
     </div>
   </div>
 {:else if error}
-  <div class="h-screen flex items-center justify-center bg-gray-900 text-white">
+  <div class="h-screen flex items-center justify-center bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414]">
     <div class="text-center">
-      <h2 class="text-xl font-bold text-red-500 mb-2">Error</h2>
-      <p class="text-gray-400">{error}</p>
+      <h2 class="text-xl font-bold text-[#F44336] mb-2">Error</h2>
+      <p class="text-[#B0B0B0]">{error}</p>
     </div>
   </div>
 {:else}

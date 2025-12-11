@@ -238,6 +238,10 @@ function createProposalSessionStore() {
 
                 case 'agent_complete':
                   msg.sectionsAffected = event.result.sections_affected;
+                  // Fallback: if no tokens were streamed, use the final answer
+                  if (!msg.content && event.result.answer) {
+                    msg.content = event.result.answer;
+                  }
                   return { 
                     ...store, 
                     currentThought: null,

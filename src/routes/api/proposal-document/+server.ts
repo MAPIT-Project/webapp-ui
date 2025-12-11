@@ -1,29 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { Proposal } from '$lib/types/proposal';
-
-// Mock proposals data for testing
-let mockProposals: Proposal[] = [
-  {
-    proposal_id: 123,
-    call_id: 'HORIZON-CL3-2025-02-CS-ECCC-01',
-    proposal_title: 'AI-Powered Cybersecurity Platform',
-    proposal_acronym: 'AICP',
-    proposal_type: 'RIA',
-    status: 'draft',
-    created_at: '2025-10-11T10:00:00Z',
-    updated_at: '2025-10-11T14:30:00Z',
-    sections: [],
-    progress: {
-      total_sections: 8,
-      completed_sections: 3,
-      completion_percentage: 37.5,
-      total_words: 2450,
-      estimated_pages: 4.9,
-      average_quality: 0.83
-    }
-  }
-];
+import { mockProposals } from '$lib/server/mockData';
 
 // Generate a new proposal ID
 function generateNewProposalId(): number {
@@ -32,8 +10,6 @@ function generateNewProposalId(): number {
 
 // GET /api/proposal-document - Get all proposals
 export const GET: RequestHandler = async () => {
-  // In a real implementation, you would fetch from database
-  // For now, return mock data
   return json(mockProposals);
 };
 
@@ -58,7 +34,7 @@ export const POST: RequestHandler = async ({ request }) => {
       status: 'draft',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      sections: [],
+      sections: [], // Initialize with empty sections or default template
       progress: {
         total_sections: 12,
         completed_sections: 0,
@@ -69,7 +45,7 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     };
     
-    // Add to our mock data
+    // Add to our shared mock data
     mockProposals.push(newProposal);
     
     return json({

@@ -177,15 +177,19 @@
   
   <!-- Input Area -->
   <div class="p-4 border-t border-[#40404033] bg-[#1E1E1E]/30 backdrop-blur-sm">
-    <div class="flex gap-3">
+    <div class="relative mx-auto max-w-4xl">
+       <div
+            class="relative rounded-2xl border border-gray-600/30 bg-[#2A2A2A]/50 backdrop-blur-sm transition-all focus-within:border-gray-600/50 focus-within:ring-2 focus-within:ring-gray-600/50"
+        >
       <input
         bind:this={inputElement}
         type="text"
         onkeypress={(e) => e.key === 'Enter' && handleSendMessage(e.currentTarget.value)}
         placeholder={$isProcessing ? "AI is working..." : "Ask to write or improve a section..."}
         disabled={$isProcessing}
-        class="flex-1 px-4 py-3 bg-[#1F2937]/50 border border-[#3B82F6]/50 rounded-xl text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 disabled:opacity-50 transition-all"
+        class="w-full rounded-2xl bg-transparent px-4 py-3 pr-12 text-gray-200 placeholder-gray-500 focus:outline-none"
       />
+      
       <button 
         onclick={() => {
           if (inputElement?.value) {
@@ -193,15 +197,31 @@
             inputElement.value = '';
           }
         }}
-        disabled={$isProcessing}
-        class="px-5 py-3 bg-[#3B82F6] text-white rounded-xl hover:bg-[#2563EB] shadow-lg shadow-blue-900/20 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+        disabled={$isProcessing || !inputElement?.value?.trim()}
+        class="absolute right-2 top-1/2 -translate-y-1/2 transform rounded-xl border px-2 py-2 transition-all duration-200 {inputElement?.value?.trim() && !$isProcessing
+						? 'border-blue-500/30 bg-blue-500/20 text-blue-300 hover:border-blue-400 hover:text-blue-200'
+						: 'border-gray-600/50 text-gray-500'}"
       >
         {#if $isProcessing}
-          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+           <!-- Simple spinner for processing state -->
+          <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
         {:else}
-          <Icon name="send" />
+            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+            </svg>
         {/if}
       </button>
+      </div>
+       <!-- Input hint -->
+		<div class="mt-2 text-center">
+			<p class="text-xs text-gray-600">
+				{#if $isProcessing}
+					AI is generating content...
+				{:else}
+					Press Enter to send • AI can make mistakes, verify important information
+				{/if}
+			</p>
+		</div>
     </div>
   </div>
 </div>
