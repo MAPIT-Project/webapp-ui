@@ -17,19 +17,19 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 			}
 		});
 
-		// Get auth session
-		const { data: authData, error: authError } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (authError) {
-			return json({ error: 'Auth error', details: authError.message }, { status: 500 });
+		if (userError) {
+			return json({ error: 'Auth error', details: userError.message }, { status: 500 });
 		}
 
-		if (!authData.session) {
+		if (!user) {
 			return json({ error: 'No active session' }, { status: 401 });
 		}
 
-		const userId = authData.session.user.id;
-		const userEmail = authData.session.user.email;
+		const userId = user.id;
+		const userEmail = user.email;
 
 		if (!userEmail) {
 			return json({ error: 'User email not found' }, { status: 400 });

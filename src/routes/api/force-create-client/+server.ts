@@ -26,10 +26,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			}
 		});
 
-		// Get auth session to verify user
-		const { data: authData } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (!authData.session?.user || authData.session.user.id !== auth_id) {
+		if (userError || !user || user.id !== auth_id) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 

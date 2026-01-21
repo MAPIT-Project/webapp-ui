@@ -60,13 +60,22 @@ const supabaseHandle: Handle = async ({ event, resolve }) => {
 			}
 		});
 
+		// Use getUser() instead of getSession() for secure server-side authentication
+		// getUser() validates the JWT against the Supabase Auth server
 		const {
-			data: { session }
-		} = await supabase.auth.getSession();
+			data: { user },
+			error: userError
+		} = await supabase.auth.getUser();
 
 		event.locals.supabase = supabase;
-		event.locals.session = session;
-		event.locals.user = session?.user ?? null;
+		// Create a minimal session object with the authenticated user
+		// The user from getUser() is verified against the Supabase Auth server
+		event.locals.session = user ? { 
+			user,
+			// Session expiry is handled by Supabase automatically via getUser() which will fail if expired
+			expires_at: Math.floor(Date.now() / 1000) + 3600 // Default 1 hour, but getUser() is the real check
+		} : null;
+		event.locals.user = user ?? null;
 	} catch (error) {
 		console.error('Error in supabaseHandle:', error);
 		// Continue without authentication if there's an error

@@ -32,9 +32,10 @@
 		// Handle async initialization
 		(async () => {
 			const {
-				data: { session: clientSession }
-			} = await supabase.auth.getSession();
-			if (!clientSession) {
+				data: { user: clientUser },
+				error: userError
+			} = await supabase.auth.getUser();
+			if (userError || !clientUser) {
 				console.error('[Sidebar onMount] No active client-side session.');
 			}
 			// Fetch collaborations when the sidebar mounts

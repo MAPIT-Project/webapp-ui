@@ -17,13 +17,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
 			}
 		});
 
-		const { data: authData } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (!authData.session?.user) {
+		if (userError || !user) {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
-		const userId = authData.session.user.id;
+		const userId = user.id;
 
 		const { data, error } = await supabase
 			.from('client')
@@ -65,14 +66,15 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			}
 		});
 
-		const { data: authData } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (!authData.session?.user) {
+		if (userError || !user) {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
-		const userId = authData.session.user.id;
-		const userEmail = authData.session.user.email;
+		const userId = user.id;
+		const userEmail = user.email;
 
 		if (!userEmail) {
 			return json({ error: 'User email not found' }, { status: 400 });

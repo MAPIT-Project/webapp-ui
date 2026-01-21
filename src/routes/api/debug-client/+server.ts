@@ -17,24 +17,24 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 			}
 		});
 
-		// Get auth session
-		const { data: authData, error: authError } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (authError) {
+		if (userError) {
 			return json(
 				{
 					error: 'Auth error',
-					details: authError.message
+					details: userError.message
 				},
 				{ status: 500 }
 			);
 		}
 
-		if (!authData.session) {
+		if (!user) {
 			return json({ error: 'No active session' }, { status: 401 });
 		}
 
-		const userId = authData.session.user.id;
+		const userId = user.id;
 
 		// Check if client exists
 		const { data: clientData, error: clientError } = await supabase
@@ -49,7 +49,7 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 			success: true,
 			session: {
 				user_id: userId,
-				email: authData.session.user.email
+				email: user.email
 			},
 			client: {
 				found: hasClient,

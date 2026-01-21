@@ -17,13 +17,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
 			}
 		});
 
-		const { data: authData } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (!authData.session?.user) {
+		if (userError || !user) {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
-		const authId = authData.session.user.id;
+		const authId = user.id;
 
 		// 1. Get the client_id from the auth_id
 		const { data: clientRecord, error: clientError } = await supabase

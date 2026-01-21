@@ -17,31 +17,34 @@
 			// Ensure we have a client record
 			await ensureClientExists();
 
-			// Get the current session with a fresh request
-			const { data, error: sessionError } = await supabase.auth.getSession();
+			// Get the current user with a fresh request (secure)
+			const { data: userData, error: userError } = await supabase.auth.getUser();
 
-			if (sessionError) {
-				error = 'Error getting session: ' + sessionError.message;
-				console.error('Session error:', sessionError);
+			if (userError) {
+				error = 'Error getting user: ' + userError.message;
+				console.error('User error:', userError);
 				return;
 			}
 
-			if (!data.session) {
+			if (!userData.user) {
 				error = 'No active session found';
 				return;
 			}
 
+			// Get session for token info (needed for API authorization)
+			const { data: sessionData } = await supabase.auth.getSession();
+			
 			// Retrieve token info for debugging
-			tokenInfo = {
-				expires_at: new Date(data.session.expires_at * 1000).toLocaleString(),
-				token_preview: data.session.access_token.substring(0, 10) + '...'
-			};
+			tokenInfo = sessionData.session ? {
+				expires_at: new Date(sessionData.session.expires_at * 1000).toLocaleString(),
+				token_preview: sessionData.session.access_token.substring(0, 10) + '...'
+			} : null;
 
 			// Call our test API
 			const response = await fetch('/api/test_rls', {
-				headers: {
-					Authorization: `Bearer ${data.session.access_token}`
-				}
+				headers: sessionData.session ? {
+					Authorization: `Bearer ${sessionData.session.access_token}`
+				} : {}
 			});
 
 			apiResult = await response.json();

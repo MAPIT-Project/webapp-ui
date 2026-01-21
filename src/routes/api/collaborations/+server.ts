@@ -19,14 +19,15 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			}
 		});
 
-		const { data: authData } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (!authData.session?.user) {
+		if (userError || !user) {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
 		// Get current client
-		const userId = authData.session.user.id;
+		const userId = user.id;
 		const { data: client } = await supabase
 			.from('client')
 			.select('*')
@@ -123,14 +124,15 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			}
 		});
 
-		const { data: authData } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (!authData.session?.user) {
+		if (userError || !user) {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
 		// Get current client
-		const userId = authData.session.user.id;
+		const userId = user.id;
 		const { data: client } = await supabase
 			.from('client')
 			.select('*')
@@ -205,14 +207,15 @@ export const DELETE: RequestHandler = async ({ url, cookies }) => {
 			}
 		});
 
-		const { data: authData } = await supabase.auth.getSession();
+		// Use getUser() for secure server-side authentication
+		const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-		if (!authData.session?.user) {
+		if (userError || !user) {
 			return json({ error: 'No authenticated user found' }, { status: 401 });
 		}
 
 		// Get current client
-		const userId = authData.session.user.id;
+		const userId = user.id;
 		const { data: client } = await supabase
 			.from('client')
 			.select('*')

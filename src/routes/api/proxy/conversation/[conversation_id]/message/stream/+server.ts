@@ -135,9 +135,10 @@ async function saveUserMessage(conversationId: string, text: string, cookies: an
       }
     });
 
-    const { data: authData } = await supabase.auth.getSession();
+    // Use getUser() for secure server-side authentication
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (!authData.session?.user) {
+    if (userError || !user) {
       console.error('No authenticated user found when saving user message');
       return;
     }
@@ -176,9 +177,10 @@ async function saveAIMessage(conversationId: string, text: string, metadata: any
       }
     });
 
-    const { data: authData } = await supabase.auth.getSession();
+    // Use getUser() for secure server-side authentication
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (!authData.session?.user) {
+    if (userError || !user) {
       console.error('No authenticated user found when saving AI message');
       return;
     }

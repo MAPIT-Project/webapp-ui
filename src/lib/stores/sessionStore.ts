@@ -7,12 +7,12 @@ export const user = writable<User | null>(null);
 
 // Initialize user state
 export async function initializeSession() {
-	// Get current session data
-	const { data } = await supabase.auth.getSession();
+	// Use getUser() for secure authentication check
+	const { data: { user: currentUser }, error } = await supabase.auth.getUser();
 
-	// Set user if session exists
-	if (data.session?.user) {
-		user.set(data.session.user);
+	// Set user if authenticated
+	if (!error && currentUser) {
+		user.set(currentUser);
 	}
 
 	// Subscribe to auth state changes
