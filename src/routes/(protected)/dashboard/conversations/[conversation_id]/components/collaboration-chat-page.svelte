@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { onDestroy } from 'svelte';
 	import Icon from '$lib/components/generic/icon.svelte';
 	import type { Conversation } from '$lib/types/schema';
 	import type { CollaborationMessage } from '$lib/clients/collaborationService';
@@ -90,6 +89,11 @@
 			loadMessages(chatId);
 			loadConversationDetails(chatId);
 			setupRealtimeSubscription(chatId);
+
+			// Cleanup when effect re-runs or component is destroyed
+			return () => {
+				collaborationRealtimeService.unsubscribeFromConversation(chatId);
+			};
 		}
 	});
 
@@ -102,13 +106,6 @@
 			setTimeout(() => {
 				messagesContainer.scrollTop = messagesContainer.scrollHeight;
 			}, 10);
-		}
-	});
-
-	// Cleanup on destroy
-	onDestroy(() => {
-		if (chatId) {
-			collaborationRealtimeService.unsubscribeFromConversation(chatId);
 		}
 	});
 

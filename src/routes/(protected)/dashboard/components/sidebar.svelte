@@ -9,7 +9,6 @@
 		fetchUserCollaborations,
 		getIsLoadingUserCollaborations
 	} from '$lib/stores/collaborationStore.svelte';
-	import { onDestroy } from 'svelte';
 	import { supabase } from '$lib/clients/supabaseClient';
 
 	interface Props {
@@ -56,12 +55,13 @@
 		};
 
 		document.addEventListener('click', _clickOutsideHandler);
-	});
 
-	onDestroy(() => {
-		if (_clickOutsideHandler) {
-			document.removeEventListener('click', _clickOutsideHandler);
-		}
+		// Cleanup runs when the effect is destroyed (component unmount)
+		return () => {
+			if (_clickOutsideHandler) {
+				document.removeEventListener('click', _clickOutsideHandler);
+			}
+		};
 	});
 
 	// Use derived state from the store via the new getter
