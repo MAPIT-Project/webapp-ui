@@ -3,23 +3,13 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
-	// Reactive state derived from store
-	let searchQuery = $state('');
-	let searchResults = $state<any[]>([]);
-	let isSearching = $state(false);
-	let totalResultsCount = $state(0);
-	let searchInput: HTMLInputElement | undefined = $state();
+	// Use $derived with store auto-subscription ($searchStore)
+	let searchQuery = $derived($searchStore.query);
+	let searchResults = $derived($searchStore.results);
+	let isSearching = $derived($searchStore.isSearching);
+	let totalResultsCount = $derived($searchStore.totalCount || $searchStore.results.length);
 
-	// Subscribe to store reactively
-	$effect(() => {
-		const unsub = searchStore.subscribe((state) => {
-			searchQuery = state.query;
-			searchResults = state.results;
-			isSearching = state.isSearching;
-			totalResultsCount = state.totalCount || searchResults.length;
-		});
-		return unsub;
-	});
+	let searchInput: HTMLInputElement | undefined = $state();
 
 	// Props
 	interface Props {
