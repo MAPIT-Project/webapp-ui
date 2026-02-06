@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Sidebar from './components/sidebar.svelte';
 	import { sidebarExpanded } from '$lib/stores/sidebarStore';
-	import { onMount } from 'svelte';
 	import { user } from '$lib/stores/sessionStore';
 	import { profileStore } from '$lib/stores/profileStore';
 	import { supabase } from '$lib/clients/supabaseClient';
@@ -21,8 +20,9 @@
 		window.location.href = '/login';
 	}
 
-	let clientLoading = true;
-	let clientError = null;
+	let clientLoading = $state(true);
+	let clientError = $state(null);
+	let initialized = $state(false);
 
 	// Load user profile data
 	async function loadUserProfile() {
@@ -53,23 +53,28 @@
 	}
 
 	// Create client record if one doesn't exist
-	onMount(async () => {
-		if ($user) {
-			try {
-				const client = await ensureClientExists($user.email?.split('@')[0]);
-				if (!client) {
-					console.error('Failed to create or find client record');
-					clientError = 'Failed to initialize user data';
-				} else {
-					// Load user profile information
-					await loadUserProfile();
+	// Using $effect instead of onMount so it reacts when $user becomes available
+	$effect(() => {
+		const currentUser = $user;
+		if (currentUser && !initialized) {
+			initialized = true;
+			(async () => {
+				try {
+					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
+					if (!client) {
+						console.error('Failed to create or find client record');
+						clientError = 'Failed to initialize user data';
+					} else {
+						// Load user profile information
+						await loadUserProfile();
+					}
+				} catch (err) {
+					console.error('Error during client initialization:', err);
+					clientError = 'Error setting up user account';
+				} finally {
+					clientLoading = false;
 				}
-			} catch (err) {
-				console.error('Error during client initialization:', err);
-				clientError = 'Error setting up user account';
-			} finally {
-				clientLoading = false;
-			}
+			})();
 		}
 	});
 </script>
