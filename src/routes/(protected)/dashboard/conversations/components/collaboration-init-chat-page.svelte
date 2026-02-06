@@ -54,14 +54,12 @@
 		}
 	];
 
-	// Use $effect instead of onMount — onMount doesn't fire reliably
-	// in runes-mode components with newer Vite versions
-	let initialized = false;
+	// Use $effect with explicit store subscription
 	$effect(() => {
-		const currentUser = $user;
-		if (currentUser && !initialized) {
-			initialized = true;
-			(async () => {
+		let initialized = false;
+		const unsub = user.subscribe(async (currentUser) => {
+			if (currentUser && !initialized) {
+				initialized = true;
 				try {
 					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
 					if (!client) {
@@ -75,8 +73,9 @@
 				} finally {
 					clientLoading = false;
 				}
-			})();
-		}
+			}
+		});
+		return unsub;
 	});
 
 	async function handleCreateChat(customTitle?: string) {

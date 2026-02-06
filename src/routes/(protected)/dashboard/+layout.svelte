@@ -66,15 +66,16 @@
 		}
 	}
 
-	// Use $effect instead of onMount — onMount doesn't fire reliably
-	// in runes-mode components with newer Vite versions
-	let initialized = false;
+	// Use $effect with explicit store subscription
 	$effect(() => {
-		const currentUser = $user;
-		if (currentUser && !initialized) {
-			initialized = true;
-			initializeClient(currentUser);
-		}
+		let initialized = false;
+		const unsub = user.subscribe((currentUser) => {
+			if (currentUser && !initialized) {
+				initialized = true;
+				initializeClient(currentUser);
+			}
+		});
+		return unsub;
 	});
 </script>
 
