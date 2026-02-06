@@ -10,8 +10,10 @@
 	let currentSpace: string = getSpace(); // Use getter
 
 	onMount(async () => {
-		// Initialize the session store, which will also listen for auth changes
-		await initializeSession();
+		// Initialize the session store with the server-validated user.
+		// This sets the user store immediately so child components don't
+		// have to wait for a client-side Supabase round-trip.
+		await initializeSession(data.session?.user);
 		// The server layout (+layout.server.ts) already protects the route.
 		// Session data is available via `data.session`.
 		// No need for an additional client-side redirect here.
