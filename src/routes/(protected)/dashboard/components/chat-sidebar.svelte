@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { Conversation } from '$lib/types/schema';
 	import { page } from '$app/stores';
 	import Icon from '$lib/components/generic/icon.svelte';
@@ -46,13 +45,21 @@
 		}
 	}
 
-	onMount(async () => {
-		loadWithRetry();
-		// Load current user for ownership checks
-		try {
-			currentUser = await getCurrentClient();
-		} catch (err) {
-			console.error('Error loading current user:', err);
+	// Use $effect instead of onMount — onMount doesn't fire reliably
+	// in runes-mode components with newer Vite versions
+	let sidebarInitialized = false;
+	$effect(() => {
+		if (!sidebarInitialized) {
+			sidebarInitialized = true;
+			loadWithRetry();
+			// Load current user for ownership checks
+			getCurrentClient()
+				.then((client) => {
+					currentUser = client;
+				})
+				.catch((err) => {
+					console.error('Error loading current user:', err);
+				});
 		}
 	});
 

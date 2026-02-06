@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Sidebar from './components/sidebar.svelte';
 	import { sidebarExpanded } from '$lib/stores/sidebarStore';
-	import { onMount } from 'svelte';
 	import { user } from '$lib/stores/sessionStore';
 	import { profileStore } from '$lib/stores/profileStore';
 	import { supabase } from '$lib/clients/supabaseClient';
@@ -67,17 +66,15 @@
 		}
 	}
 
-	// Use onMount + store subscription to handle the race condition
-	// onMount never runs during SSR, so this is safe
-	onMount(() => {
-		let initialized = false;
-		const unsub = user.subscribe((currentUser) => {
-			if (currentUser && !initialized) {
-				initialized = true;
-				initializeClient(currentUser);
-			}
-		});
-		return unsub;
+	// Use $effect instead of onMount — onMount doesn't fire reliably
+	// in runes-mode components with newer Vite versions
+	let initialized = false;
+	$effect(() => {
+		const currentUser = $user;
+		if (currentUser && !initialized) {
+			initialized = true;
+			initializeClient(currentUser);
+		}
 	});
 </script>
 

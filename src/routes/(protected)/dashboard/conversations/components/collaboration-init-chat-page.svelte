@@ -6,7 +6,6 @@
 	import { createConversation } from '$lib/clients/conversationService';
 	import { conversationStore } from '$lib/stores/conversationStore';
 	import { getSpace, getAllAvailableSpaces } from '$lib/stores/collaborationStore.svelte';
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { scale, fade } from 'svelte/transition';
 	import ApiModeToggle from '../../components/api-mode-toggle.svelte';
@@ -55,20 +54,20 @@
 		}
 	];
 
-	// Create client record if one doesn't exist
-	// Using onMount + store subscription to handle the race condition
-	onMount(() => {
-		let initialized = false;
-		const unsub = user.subscribe(async (currentUser) => {
-			if (currentUser && !initialized) {
-				initialized = true;
+	// Use $effect instead of onMount — onMount doesn't fire reliably
+	// in runes-mode components with newer Vite versions
+	let initialized = false;
+	$effect(() => {
+		const currentUser = $user;
+		if (currentUser && !initialized) {
+			initialized = true;
+			(async () => {
 				try {
 					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
 					if (!client) {
 						console.error('Failed to create or find client record');
 						clientError = 'Failed to initialize user data';
 					}
-					// Fetch available AI providers
 					await fetchAvailableProviders();
 				} catch (err) {
 					console.error('Error during client initialization:', err);
@@ -76,9 +75,8 @@
 				} finally {
 					clientLoading = false;
 				}
-			}
-		});
-		return unsub;
+			})();
+		}
 	});
 
 	async function handleCreateChat(customTitle?: string) {
