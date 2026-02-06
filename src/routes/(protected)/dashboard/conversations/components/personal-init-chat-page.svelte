@@ -13,11 +13,22 @@
 	let clientLoading: boolean = $state(true);
 	let clientError: string | null = $state(null);
 	let showCapabilities = $state(false);
+	let jsLoaded = $state(false);
+
+	// DIAGNOSTIC: This runs at module level — if you don't see this, JS isn't loading at all
+	console.log('[DIAG] personal-init-chat-page MODULE LOADED');
+
+	// DIAGNOSTIC: This $effect runs after hydration — if you see this but not onMount, there's a hydration issue
+	$effect(() => {
+		console.log('[DIAG] personal-init-chat-page $effect RAN — hydration is working');
+		jsLoaded = true;
+	});
 
 	// Create client record if one doesn't exist
 	// Using onMount + store subscription to handle the race condition
 	// (user store may not be set yet when onMount fires)
 	onMount(() => {
+		console.log('[DIAG] personal-init-chat-page onMount FIRED');
 		let initialized = false;
 		console.log('Initializing personal chat page');
 		const unsub = user.subscribe(async (currentUser) => {
@@ -45,6 +56,11 @@
 		return unsub;
 	});
 </script>
+
+<!-- DIAGNOSTIC: visible indicator — remove after debugging -->
+<div style="position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:9999;padding:8px 16px;border-radius:0 0 8px 8px;font-size:14px;font-weight:bold;{jsLoaded ? 'background:green;color:white' : 'background:red;color:white'}">
+	{jsLoaded ? 'JS HYDRATED' : 'SSR ONLY — JS NOT RUNNING'}
+</div>
 
 <div
 	class="relative flex h-full min-h-screen w-full bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#121212]"
