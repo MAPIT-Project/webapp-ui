@@ -19,8 +19,10 @@
 	// (user store may not be set yet when onMount fires)
 	onMount(() => {
 		let initialized = false;
+		console.log('Initializing personal chat page');
 		const unsub = user.subscribe(async (currentUser) => {
 			if (currentUser && !initialized) {
+				console.log('User is set, creating client record');
 				initialized = true;
 				try {
 					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
@@ -36,6 +38,8 @@
 				} finally {
 					clientLoading = false;
 				}
+			} else {
+				console.log('User is not set, skipping client record creation');
 			}
 		});
 		return unsub;
