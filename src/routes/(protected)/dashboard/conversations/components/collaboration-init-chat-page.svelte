@@ -6,6 +6,7 @@
 	import { createConversation } from '$lib/clients/conversationService';
 	import { conversationStore } from '$lib/stores/conversationStore';
 	import { getSpace, getAllAvailableSpaces } from '$lib/stores/collaborationStore.svelte';
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { scale, fade } from 'svelte/transition';
 	import ApiModeToggle from '../../components/api-mode-toggle.svelte';
@@ -17,7 +18,6 @@
 	let chatTitle: string = $state('');
 	let isCreatingChat: boolean = $state(false);
 	let titleError: string | null = $state(null);
-	let initialized = $state(false);
 
 	// Get current collaboration info
 	let currentSpaceName = $derived(() => {
@@ -56,12 +56,12 @@
 	];
 
 	// Create client record if one doesn't exist
-	// Using $effect instead of onMount so it reacts when $user becomes available
-	$effect(() => {
-		const currentUser = $user;
-		if (currentUser && !initialized) {
-			initialized = true;
-			(async () => {
+	// Using onMount + store subscription to handle the race condition
+	onMount(() => {
+		let initialized = false;
+		const unsub = user.subscribe(async (currentUser) => {
+			if (currentUser && !initialized) {
+				initialized = true;
 				try {
 					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
 					if (!client) {
@@ -76,8 +76,9 @@
 				} finally {
 					clientLoading = false;
 				}
-			})();
-		}
+			}
+		});
+		return unsub;
 	});
 
 	async function handleCreateChat(customTitle?: string) {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Sidebar from './components/sidebar.svelte';
 	import { sidebarExpanded } from '$lib/stores/sidebarStore';
+	import { onMount } from 'svelte';
 	import { user } from '$lib/stores/sessionStore';
 	import { profileStore } from '$lib/stores/profileStore';
 	import { supabase } from '$lib/clients/supabaseClient';
@@ -21,16 +22,13 @@
 	}
 
 	let clientLoading = $state(true);
-	let clientError = $state(null);
-	let initialized = $state(false);
+	let clientError: string | null = $state(null);
 
 	// Load user profile data
-	async function loadUserProfile() {
-		if (!$user?.id) return;
-
+	async function loadUserProfile(userId: string) {
 		try {
 			profileStore.setLoading(true);
-			const client = await getClientByAuthId($user.id);
+			const client = await getClientByAuthId(userId);
 
 			if (client) {
 				profileStore.setProfile({
@@ -52,30 +50,34 @@
 		}
 	}
 
-	// Create client record if one doesn't exist
-	// Using $effect instead of onMount so it reacts when $user becomes available
-	$effect(() => {
-		const currentUser = $user;
-		if (currentUser && !initialized) {
-			initialized = true;
-			(async () => {
-				try {
-					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
-					if (!client) {
-						console.error('Failed to create or find client record');
-						clientError = 'Failed to initialize user data';
-					} else {
-						// Load user profile information
-						await loadUserProfile();
-					}
-				} catch (err) {
-					console.error('Error during client initialization:', err);
-					clientError = 'Error setting up user account';
-				} finally {
-					clientLoading = false;
-				}
-			})();
+	async function initializeClient(currentUser: any) {
+		try {
+			const client = await ensureClientExists(currentUser.email?.split('@')[0]);
+			if (!client) {
+				console.error('Failed to create or find client record');
+				clientError = 'Failed to initialize user data';
+			} else {
+				await loadUserProfile(currentUser.id);
+			}
+		} catch (err) {
+			console.error('Error during client initialization:', err);
+			clientError = 'Error setting up user account';
+		} finally {
+			clientLoading = false;
 		}
+	}
+
+	// Use onMount + store subscription to handle the race condition
+	// onMount never runs during SSR, so this is safe
+	onMount(() => {
+		let initialized = false;
+		const unsub = user.subscribe((currentUser) => {
+			if (currentUser && !initialized) {
+				initialized = true;
+				initializeClient(currentUser);
+			}
+		});
+		return unsub;
 	});
 </script>
 

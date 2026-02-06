@@ -4,6 +4,7 @@
 
 	import { user } from '$lib/stores/sessionStore';
 	import { ensureClientExists } from '$lib/clients/clientService';
+	import { onMount } from 'svelte';
 	import { scale, fade } from 'svelte/transition';
 	import AIProviderSelector from '../../components/ai-provider-selector.svelte';
 	import { fetchAvailableProviders } from '$lib/stores/aiProviderStore';
@@ -12,15 +13,15 @@
 	let clientLoading: boolean = $state(true);
 	let clientError: string | null = $state(null);
 	let showCapabilities = $state(false);
-	let initialized = $state(false);
 
 	// Create client record if one doesn't exist
-	// Using $effect instead of onMount so it reacts when $user becomes available
-	$effect(() => {
-		const currentUser = $user;
-		if (currentUser && !initialized) {
-			initialized = true;
-			(async () => {
+	// Using onMount + store subscription to handle the race condition
+	// (user store may not be set yet when onMount fires)
+	onMount(() => {
+		let initialized = false;
+		const unsub = user.subscribe(async (currentUser) => {
+			if (currentUser && !initialized) {
+				initialized = true;
 				try {
 					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
 					if (!client) {
@@ -35,8 +36,9 @@
 				} finally {
 					clientLoading = false;
 				}
-			})();
-		}
+			}
+		});
+		return unsub;
 	});
 </script>
 
