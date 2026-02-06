@@ -5,5 +5,8 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	optimizeDeps: {
 		include: ['@supabase/auth-helpers-sveltekit']
+	},
+	server: {
+		allowedHosts: ['mapit.work']
 	}
 });
