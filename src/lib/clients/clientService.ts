@@ -49,7 +49,9 @@ export async function createClientWithUserId(
  * Check if client exists for the authenticated user, if not create one
  */
 export async function ensureClientExists(firstName?: string, lastName?: string) {
+	console.log('[CLIENT SERVICE] ensureClientExists called with:', firstName, lastName);
 	try {
+		console.log('[CLIENT SERVICE] POSTing to /api/client...');
 		const response = await fetch('/api/client', {
 			method: 'POST',
 			headers: {
@@ -61,16 +63,18 @@ export async function ensureClientExists(firstName?: string, lastName?: string) 
 			})
 		});
 
+		console.log('[CLIENT SERVICE] /api/client response status:', response.status);
 		const result = await response.json();
 
 		if (!response.ok) {
-			console.error('Error ensuring client exists:', result.error);
+			console.error('[CLIENT SERVICE] Error ensuring client exists:', result.error);
 			return null;
 		}
 
+		console.log('[CLIENT SERVICE] Client ensured:', result.client?.id);
 		return result.client as Client;
 	} catch (error) {
-		console.error('Error in ensureClientExists:', error);
+		console.error('[CLIENT SERVICE] Error in ensureClientExists:', error);
 		return null;
 	}
 }

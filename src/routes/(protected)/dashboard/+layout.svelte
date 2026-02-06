@@ -67,11 +67,15 @@
 	}
 
 	// Use $effect with explicit store subscription
+	console.log('[DASHBOARD LAYOUT] Script executed');
 	$effect(() => {
+		console.log('[DASHBOARD LAYOUT] $effect FIRED');
 		let initialized = false;
 		const unsub = user.subscribe((currentUser) => {
+			console.log('[DASHBOARD LAYOUT] user.subscribe callback — currentUser:', currentUser?.email ?? 'NULL');
 			if (currentUser && !initialized) {
 				initialized = true;
+				console.log('[DASHBOARD LAYOUT] Initializing client for:', currentUser.email);
 				initializeClient(currentUser);
 			}
 		});

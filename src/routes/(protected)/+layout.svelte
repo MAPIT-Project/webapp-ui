@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, afterUpdate } from 'svelte';
 	import { initializeSession } from '$lib/stores/sessionStore';
 	import type { LayoutData } from './$types';
 	import { getSpace, setSpace } from '$lib/stores/collaborationStore.svelte';
@@ -8,10 +8,31 @@
 
 	let loading = true;
 	let currentSpace: string = getSpace();
+	let sessionInitStarted = false;
 
-	onMount(async () => {
+	console.log('[PROTECTED LAYOUT] Script executed. data.session exists:', !!data.session, 'data.session?.user:', data.session?.user?.email);
+
+	async function doInit() {
+		if (sessionInitStarted) return;
+		sessionInitStarted = true;
+		console.log('[PROTECTED LAYOUT] doInit() — calling initializeSession with user:', data.session?.user?.email);
 		await initializeSession(data.session?.user);
+		console.log('[PROTECTED LAYOUT] initializeSession completed. loading = false');
 		loading = false;
+	}
+
+	onMount(() => {
+		console.log('[PROTECTED LAYOUT] onMount FIRED');
+		doInit();
+	});
+
+	// Safety net: afterUpdate is a legacy lifecycle hook that runs after every state change.
+	// If onMount somehow doesn't fire, this will catch it on the first render.
+	afterUpdate(() => {
+		if (!sessionInitStarted) {
+			console.warn('[PROTECTED LAYOUT] afterUpdate — onMount did NOT fire! Running doInit as fallback.');
+			doInit();
+		}
 	});
 
 	function switchToPersonalSpace() {

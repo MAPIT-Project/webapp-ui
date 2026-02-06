@@ -13,26 +13,32 @@
 	let clientError: string | null = $state(null);
 	let showCapabilities = $state(false);
 
-	// Use $effect with explicit store subscription — $user auto-subscription
-	// doesn't track properly as an $effect dependency in Svelte 5 + newer Vite
+	console.log('[PERSONAL INIT] Script executed');
+
 	$effect(() => {
+		console.log('[PERSONAL INIT] $effect FIRED');
 		let initialized = false;
 		const unsub = user.subscribe(async (currentUser) => {
+			console.log('[PERSONAL INIT] user.subscribe callback — currentUser:', currentUser?.email ?? 'NULL');
 			if (currentUser && !initialized) {
 				initialized = true;
+				console.log('[PERSONAL INIT] Starting client initialization for:', currentUser.email);
 				try {
 					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
+					console.log('[PERSONAL INIT] ensureClientExists result:', !!client);
 					if (!client) {
-						console.error('Failed to create or find client record');
+						console.error('[PERSONAL INIT] Failed to create or find client record');
 						clientError = 'Failed to initialize user data';
 					}
-					// Fetch available AI providers
+					console.log('[PERSONAL INIT] Fetching AI providers...');
 					await fetchAvailableProviders();
+					console.log('[PERSONAL INIT] AI providers fetched');
 				} catch (err) {
-					console.error('Error during client initialization:', err);
+					console.error('[PERSONAL INIT] Error during client initialization:', err);
 					clientError = 'Error setting up user account';
 				} finally {
 					clientLoading = false;
+					console.log('[PERSONAL INIT] clientLoading set to false');
 				}
 			}
 		});

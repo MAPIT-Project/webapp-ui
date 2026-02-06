@@ -48,9 +48,12 @@
 	// Use $effect instead of onMount — onMount doesn't fire reliably
 	// in runes-mode components with newer Vite versions
 	let sidebarInitialized = false;
+	console.log('[CHAT SIDEBAR] Script executed');
 	$effect(() => {
+		console.log('[CHAT SIDEBAR] $effect FIRED, sidebarInitialized:', sidebarInitialized);
 		if (!sidebarInitialized) {
 			sidebarInitialized = true;
+			console.log('[CHAT SIDEBAR] Starting loadWithRetry and getCurrentClient');
 			loadWithRetry();
 			// Load current user for ownership checks
 			getCurrentClient()

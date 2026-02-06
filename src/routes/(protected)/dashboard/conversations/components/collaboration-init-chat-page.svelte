@@ -54,24 +54,32 @@
 		}
 	];
 
-	// Use $effect with explicit store subscription
+	console.log('[COLLAB INIT] Script executed');
+
 	$effect(() => {
+		console.log('[COLLAB INIT] $effect FIRED');
 		let initialized = false;
 		const unsub = user.subscribe(async (currentUser) => {
+			console.log('[COLLAB INIT] user.subscribe callback — currentUser:', currentUser?.email ?? 'NULL');
 			if (currentUser && !initialized) {
 				initialized = true;
+				console.log('[COLLAB INIT] Starting client initialization for:', currentUser.email);
 				try {
 					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
+					console.log('[COLLAB INIT] ensureClientExists result:', !!client);
 					if (!client) {
-						console.error('Failed to create or find client record');
+						console.error('[COLLAB INIT] Failed to create or find client record');
 						clientError = 'Failed to initialize user data';
 					}
+					console.log('[COLLAB INIT] Fetching AI providers...');
 					await fetchAvailableProviders();
+					console.log('[COLLAB INIT] AI providers fetched');
 				} catch (err) {
-					console.error('Error during client initialization:', err);
+					console.error('[COLLAB INIT] Error during client initialization:', err);
 					clientError = 'Error setting up user account';
 				} finally {
 					clientLoading = false;
+					console.log('[COLLAB INIT] clientLoading set to false');
 				}
 			}
 		});

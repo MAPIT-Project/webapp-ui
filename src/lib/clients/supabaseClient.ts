@@ -1,6 +1,8 @@
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createBrowserClient } from '@supabase/ssr';
 
+console.log('[SUPABASE CLIENT] Initializing with URL:', PUBLIC_SUPABASE_URL);
+
 // Validate environment variables
 if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
 	throw new Error('Missing Supabase environment variables. Please check your .env file.');
