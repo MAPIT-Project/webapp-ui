@@ -1,9 +1,14 @@
 import type { Client } from '$lib/server/db/schema';
 
+// In-memory client cache to avoid redundant network requests
+let _cachedClient: Client | null = null;
+
 /**
- * Get the client data for the currently authenticated user
+ * Get the client data for the currently authenticated user (uses cache)
  */
-export async function getCurrentClient() {
+export async function getCurrentClient(forceRefresh = false): Promise<Client | null> {
+	if (!forceRefresh && _cachedClient) return _cachedClient;
+
 	try {
 		const response = await fetch('/api/client', {
 			method: 'GET'
@@ -16,7 +21,8 @@ export async function getCurrentClient() {
 			return null;
 		}
 
-		return result.client as Client | null;
+		_cachedClient = result.client as Client | null;
+		return _cachedClient;
 	} catch (error) {
 		console.error('Error in getCurrentClient:', error);
 		return null;
@@ -46,12 +52,13 @@ export async function createClientWithUserId(
 }
 
 /**
- * Check if client exists for the authenticated user, if not create one
+ * Check if client exists for the authenticated user, if not create one (uses cache)
  */
 export async function ensureClientExists(firstName?: string, lastName?: string) {
-	console.log('[CLIENT SERVICE] ensureClientExists called with:', firstName, lastName);
+	// Return cached client if we already have one
+	if (_cachedClient) return _cachedClient;
+
 	try {
-		console.log('[CLIENT SERVICE] POSTing to /api/client...');
 		const response = await fetch('/api/client', {
 			method: 'POST',
 			headers: {
@@ -63,7 +70,6 @@ export async function ensureClientExists(firstName?: string, lastName?: string) 
 			})
 		});
 
-		console.log('[CLIENT SERVICE] /api/client response status:', response.status);
 		const result = await response.json();
 
 		if (!response.ok) {
@@ -71,8 +77,8 @@ export async function ensureClientExists(firstName?: string, lastName?: string) 
 			return null;
 		}
 
-		console.log('[CLIENT SERVICE] Client ensured:', result.client?.id);
-		return result.client as Client;
+		_cachedClient = result.client as Client;
+		return _cachedClient;
 	} catch (error) {
 		console.error('[CLIENT SERVICE] Error in ensureClientExists:', error);
 		return null;

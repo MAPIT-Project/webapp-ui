@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { useDemo } from './apiModeStore';
 
 // Available AI providers with version
@@ -60,12 +60,18 @@ function getHighestVersion(versions: string[]): string {
 	); // Fallback to V4 if no versions found
 }
 
-// Function to fetch available providers
-export async function fetchAvailableProviders(): Promise<void> {
+// Function to fetch available providers (skips fetch if already loaded unless forced)
+export async function fetchAvailableProviders(forceRefresh = false): Promise<void> {
+	// Skip if providers are already loaded and we're not forcing a refresh
+	if (!forceRefresh) {
+		const current = get(availableProviders);
+		if (current) return;
+	}
+
 	isLoadingProviders.set(true);
 
 	try {
-		const response = await fetch('/api/providers'); // Changed to relative path for our backend proxy
+		const response = await fetch('/api/providers');
 
 		if (!response.ok) {
 			throw new Error(`Failed to fetch providers: ${response.status}`);

@@ -81,7 +81,7 @@
 					class="group flex items-center gap-4 rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] p-4 text-left transition-all hover:border-[#3B82F6]/40 hover:bg-[#1E1E1E]/80"
 				>
 					<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] transition-colors group-hover:bg-[#3B82F6] group-hover:text-white">
-						<Icon name="add" className="w-5 h-5" iconSize="xl" />
+						<Icon name="add" iconSize="xl" />
 					</div>
 					<div class="min-w-0">
 						<span class="text-sm font-medium text-white block">New conversation</span>
@@ -94,7 +94,7 @@
 					class="group flex items-center gap-4 rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] p-4 text-left transition-all hover:border-[#A855F7]/40 hover:bg-[#1E1E1E]/80"
 				>
 					<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#A855F7]/10 text-[#A855F7] transition-colors group-hover:bg-[#A855F7] group-hover:text-white">
-						<Icon name="description" className="w-5 h-5" iconSize="xl" />
+						<Icon name="description" iconSize="xl" />
 					</div>
 					<div class="min-w-0">
 						<span class="text-sm font-medium text-white block">New proposal</span>
@@ -107,7 +107,7 @@
 					class="group flex items-center gap-4 rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] p-4 text-left transition-all hover:border-[#10B981]/40 hover:bg-[#1E1E1E]/80"
 				>
 					<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#10B981]/10 text-[#10B981] transition-colors group-hover:bg-[#10B981] group-hover:text-white">
-						<Icon name="groups" className="w-5 h-5" iconSize="xl" />
+						<Icon name="groups" iconSize="xl" />
 					</div>
 					<div class="min-w-0">
 						<span class="text-sm font-medium text-white block">Workspaces</span>
@@ -131,7 +131,7 @@
 					{#if conversations.length === 0}
 						<div class="rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] p-8 text-center">
 							<div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[#2A2A2A]">
-								<Icon name="chat_bubble_outline" className="w-5 h-5 text-[#6B7280]" iconSize="xl" />
+								<Icon name="chat_bubble_outline" iconSize="xl" />
 							</div>
 							<p class="text-sm text-[#6B7280] mb-3">No conversations yet</p>
 							<button
@@ -150,7 +150,7 @@
 									in:fly={{ y: 8, delay: 150 + i * 40, duration: 250 }}
 								>
 									<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#2A2A2A] text-[#6B7280] group-hover:text-[#3B82F6] transition-colors">
-										<Icon name="chat" className="w-4 h-4" iconSize="sm" />
+										<Icon name="chat" iconSize="sm" />
 									</div>
 									<span class="flex-1 truncate text-sm text-[#B0B0B0] group-hover:text-white transition-colors">
 										{conv.name || 'Untitled'}
@@ -174,7 +174,7 @@
 					{#if proposals.length === 0}
 						<div class="rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] p-8 text-center">
 							<div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[#2A2A2A]">
-								<Icon name="description" className="w-5 h-5 text-[#6B7280]" iconSize="xl" />
+								<Icon name="description" iconSize="xl" />
 							</div>
 							<p class="text-sm text-[#6B7280] mb-3">No proposals yet</p>
 							<button
@@ -193,7 +193,7 @@
 									in:fly={{ y: 8, delay: 150 + i * 40, duration: 250 }}
 								>
 									<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#2A2A2A] text-[#6B7280] group-hover:text-[#A855F7] transition-colors">
-										<Icon name="description" className="w-4 h-4" iconSize="sm" />
+										<Icon name="description" iconSize="sm" />
 									</div>
 									<div class="flex-1 min-w-0">
 										<span class="block truncate text-sm text-[#B0B0B0] group-hover:text-white transition-colors">

@@ -1,8 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/generic/icon.svelte';
 
-	import { user } from '$lib/stores/sessionStore';
-	import { ensureClientExists } from '$lib/clients/clientService';
 	import { createConversation } from '$lib/clients/conversationService';
 	import { conversationStore } from '$lib/stores/conversationStore';
 	import { getSpace, getAllAvailableSpaces } from '$lib/stores/collaborationStore.svelte';
@@ -12,8 +10,6 @@
 	import AIProviderSelector from '../../components/ai-provider-selector.svelte';
 	import { fetchAvailableProviders } from '$lib/stores/aiProviderStore';
 
-	let clientLoading: boolean = $state(true);
-	let clientError: string | null = $state(null);
 	let chatTitle: string = $state('');
 	let isCreatingChat: boolean = $state(false);
 	let titleError: string | null = $state(null);
@@ -54,36 +50,12 @@
 		}
 	];
 
-	console.log('[COLLAB INIT] Script executed');
-
+	// Fire-and-forget: fetch providers in background (cached if already loaded)
+	let _collabInitDone = false;
 	$effect(() => {
-		console.log('[COLLAB INIT] $effect FIRED');
-		let initialized = false;
-		const unsub = user.subscribe(async (currentUser) => {
-			console.log('[COLLAB INIT] user.subscribe callback — currentUser:', currentUser?.email ?? 'NULL');
-			if (currentUser && !initialized) {
-				initialized = true;
-				console.log('[COLLAB INIT] Starting client initialization for:', currentUser.email);
-				try {
-					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
-					console.log('[COLLAB INIT] ensureClientExists result:', !!client);
-					if (!client) {
-						console.error('[COLLAB INIT] Failed to create or find client record');
-						clientError = 'Failed to initialize user data';
-					}
-					console.log('[COLLAB INIT] Fetching AI providers...');
-					await fetchAvailableProviders();
-					console.log('[COLLAB INIT] AI providers fetched');
-				} catch (err) {
-					console.error('[COLLAB INIT] Error during client initialization:', err);
-					clientError = 'Error setting up user account';
-				} finally {
-					clientLoading = false;
-					console.log('[COLLAB INIT] clientLoading set to false');
-				}
-			}
-		});
-		return unsub;
+		if (_collabInitDone) return;
+		_collabInitDone = true;
+		fetchAvailableProviders();
 	});
 
 	async function handleCreateChat(customTitle?: string) {
@@ -191,52 +163,8 @@
 				></div>
 			</div>
 
-			{#if clientLoading}
-				<div class="flex flex-col items-center gap-6" in:fade={{ duration: 300 }}>
-					<!-- Enhanced loading animation -->
-					<div class="relative">
-						<div
-							class="h-16 w-16 animate-spin rounded-full border-4 border-gray-700/30 border-t-purple-500"
-						></div>
-						<div
-							class="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-r-blue-500"
-							style="animation-direction: reverse; animation-duration: 1.5s;"
-						></div>
-					</div>
-					<div class="text-center">
-						<h3 class="mb-2 text-xl font-semibold text-[#E0E0E0]">Setting up team workspace</h3>
-						<p class="text-[#B0B0B0]">Initializing collaboration tools...</p>
-					</div>
-				</div>
-			{:else if clientError}
-				<div class="w-full max-w-md" in:scale={{ duration: 300, start: 0.95 }}>
-					<div
-						class="rounded-2xl border border-[#F44336]/50 bg-[#1E1E1E] p-6 shadow-xl backdrop-blur-sm"
-					>
-						<div class="flex items-start gap-4">
-							<div class="rounded-xl bg-red-500/20 p-3">
-								<Icon name="error" iconClass="text-red-400 w-6 h-6" />
-							</div>
-							<div class="flex-1">
-								<h3 class="mb-2 text-lg font-semibold text-[#F44336]">Setup Error</h3>
-								<p class="mb-4 text-sm leading-relaxed text-[#F44336]">{clientError}</p>
-								<button
-									class="w-full rounded-xl bg-[#8A2BE2] px-4 py-3 font-medium text-[#FFFFFF] transition-all hover:bg-[#A052E8]"
-									onclick={() => window.location.reload()}
-								>
-									<div class="flex items-center justify-center gap-2">
-										<Icon name="refresh" iconClass="w-4 h-4" />
-										Try Again
-									</div>
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			{:else}
-				<div
+			<div
 					class="flex w-full max-w-4xl flex-col items-center"
-					in:fade={{ duration: 400, delay: 100 }}
 				>
 					<!-- Welcome Section -->
 					<div class="mb-8 text-center" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
@@ -362,7 +290,6 @@
                         </div>
                     </div> -->
 				</div>
-			{/if}
 		</div>
 	</div>
 </div>
