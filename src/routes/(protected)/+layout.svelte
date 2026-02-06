@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { onMount, afterUpdate } from 'svelte';
-	import { initializeSession } from '$lib/stores/sessionStore';
+	import { user, initializeSession } from '$lib/stores/sessionStore';
 	import type { LayoutData } from './$types';
 	import { getSpace, setSpace } from '$lib/stores/collaborationStore.svelte';
 
@@ -8,32 +7,28 @@
 
 	let loading = true;
 	let currentSpace: string = getSpace();
-	let sessionInitStarted = false;
 
 	console.log('[PROTECTED LAYOUT] Script executed. data.session exists:', !!data.session, 'data.session?.user:', data.session?.user?.email);
 
-	async function doInit() {
-		if (sessionInitStarted) return;
-		sessionInitStarted = true;
-		console.log('[PROTECTED LAYOUT] doInit() — calling initializeSession with user:', data.session?.user?.email);
-		await initializeSession(data.session?.user);
-		console.log('[PROTECTED LAYOUT] initializeSession completed. loading = false');
-		loading = false;
+	// BYPASS ALL LIFECYCLE HOOKS — they don't fire in this component.
+	// Set user store directly from server-provided session data.
+	// This runs during both SSR and CSR, but the downstream $effect
+	// subscriptions only fire on the client, which is what we want.
+	if (data.session?.user) {
+		console.log('[PROTECTED LAYOUT] Setting user store IMMEDIATELY from server data:', data.session.user.email);
+		user.set(data.session.user);
 	}
 
-	onMount(() => {
-		console.log('[PROTECTED LAYOUT] onMount FIRED');
-		doInit();
-	});
-
-	// Safety net: afterUpdate is a legacy lifecycle hook that runs after every state change.
-	// If onMount somehow doesn't fire, this will catch it on the first render.
-	afterUpdate(() => {
-		if (!sessionInitStarted) {
-			console.warn('[PROTECTED LAYOUT] afterUpdate — onMount did NOT fire! Running doInit as fallback.');
-			doInit();
-		}
-	});
+	// Also kick off the full session initialization (client-side auth refresh,
+	// onAuthStateChange listener). This is async but we don't need to wait for it
+	// — the user store is already set above, so child components can proceed.
+	if (typeof window !== 'undefined') {
+		console.log('[PROTECTED LAYOUT] Running initializeSession in browser');
+		initializeSession(data.session?.user).then(() => {
+			console.log('[PROTECTED LAYOUT] initializeSession completed. loading = false');
+			loading = false;
+		});
+	}
 
 	function switchToPersonalSpace() {
 		setSpace('personal');
