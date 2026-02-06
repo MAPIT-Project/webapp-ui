@@ -63,24 +63,10 @@
 	const examples = [
 		{
 			icon: 'science',
-			text: 'Tell me about funding opportunities in clean energy research',
+			text: 'What is the structure of the Horizon Europe programme? ',
 			shade: 'dark',
 			color: '#10B981', // Emerald
 			category: 'Research'
-		},
-		{
-			icon: 'health_and_safety',
-			text: 'What are the latest trends in AI for healthcare?',
-			shade: 'medium',
-			color: '#3B82F6', // Blue
-			category: 'Healthcare'
-		},
-		{
-			icon: 'eco',
-			text: 'Help me draft a proposal outline for sustainable agriculture',
-			shade: 'dark',
-			color: '#8B5CF6', // Purple
-			category: 'Agriculture'
 		},
 		{
 			icon: 'public',
@@ -88,7 +74,22 @@
 			shade: 'medium',
 			color: '#F59E0B', // Amber
 			category: 'Policy'
-		}
+		},
+		{
+			icon: 'health_and_safety',
+			text: 'What are instruments? (RIA, CSA, IA etc)',
+			shade: 'medium',
+			color: '#3B82F6', // Blue
+			category: 'Healthcare'
+		},
+		// {
+		// 	icon: 'eco',
+		// 	text: 'Help me draft a proposal outline for sustainable agriculture',
+		// 	shade: 'dark',
+		// 	color: '#8B5CF6', // Purple
+		// 	category: 'Agriculture'
+		// },
+		
 	];
 
 	function startWithExample(text: string) {
@@ -106,7 +107,7 @@
 
 <div class="mx-auto w-full max-w-4xl" in:scale={{ duration: 300, start: 0.98 }}>
 	<!-- Enhanced Input Section -->
-	<form onsubmit={handleSubmit} class="relative mb-8" in:fade={{ duration: 200 }}>
+	<form onsubmit={handleSubmit} class="relative mb-6" in:fade={{ duration: 200 }}>
 		<div
 			class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800/50 to-gray-900/50 shadow-2xl backdrop-blur-sm"
 		>
@@ -158,7 +159,7 @@
 	{/if}
 
 	<!-- Example chips redesigned -->
-	<div class="space-y-2 pt-6">
+	<div class="space-y-2">
 		<div class="relative overflow-hidden" in:scale={{ duration: 200, delay: 120, start: 0.98 }}>
 			<button
 				aria-label="Previous"
