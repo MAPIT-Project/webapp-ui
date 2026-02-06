@@ -39,20 +39,19 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		// Create server-side Supabase client with proper cookie handling
 		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					console.log(`[LOGIN] Setting cookie: ${key} = ${value ? 'has_value' : 'empty'}`);
-					cookies.set(key, value, {
-						...options,
-						path: '/',
-						httpOnly: false, // Allow client access
-						secure: false, // For localhost development
-						sameSite: 'lax' // Allow cross-site requests
-					});
+				getAll() {
+					return cookies.getAll();
 				},
-				remove: (key: string, options: any) => {
-					console.log(`[LOGIN] Removing cookie: ${key}`);
-					cookies.delete(key, { ...options, path: '/' });
+				setAll(cookiesToSet) {
+					cookiesToSet.forEach(({ name, value, options }) => {
+						cookies.set(name, value, {
+							...options,
+							path: '/',
+							httpOnly: false, // Allow client access
+							secure: false, // For localhost development
+							sameSite: 'lax' // Allow cross-site requests
+						});
+					});
 				}
 			}
 		});

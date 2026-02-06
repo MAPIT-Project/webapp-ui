@@ -50,12 +50,13 @@ const supabaseHandle: Handle = async ({ event, resolve }) => {
 	try {
 		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 			cookies: {
-				get: (key) => event.cookies.get(key),
-				set: (key, value, options) => {
-					event.cookies.set(key, value, { ...options, path: '/' });
+				getAll() {
+					return event.cookies.getAll();
 				},
-				remove: (key, options) => {
-					event.cookies.delete(key, { ...options, path: '/' });
+				setAll(cookiesToSet) {
+					cookiesToSet.forEach(({ name, value, options }) =>
+						event.cookies.set(name, value, { ...options, path: '/' })
+					);
 				}
 			}
 		});
