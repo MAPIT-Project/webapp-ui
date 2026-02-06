@@ -163,149 +163,106 @@
 				{/each}
 			</div>
 
-			<!-- Main Content Grid -->
-			<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-				
-				<!-- Left Column: Recent Activity & Projects -->
-				<div class="lg:col-span-2 space-y-8">
-					
-					<!-- Quick Action Bar (Search-like) -->
-					<div class="relative group">
-						<div class="absolute inset-0 bg-gradient-to-r from-[#3B82F6] to-[#A855F7] rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
-						<div class="relative flex items-center bg-[#1E1E1E] border border-[#404040]/50 rounded-xl p-1 pr-2 shadow-xl">
-							<div class="p-3 text-[#757575]">
-								<Icon name="search" className="w-5 h-5" iconSize="xl" />
-							</div>
-							<input 
-								type="text" 
-								placeholder="Search projects, finding opportunities, or ask AI..." 
-								class="w-full bg-transparent border-none text-white placeholder-[#757575] focus:ring-0 text-base h-10"
-							/>
-							<button class="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-								Search
-							</button>
-						</div>
+			<!-- Quick Actions Row -->
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+				<button 
+					onclick={() => nav('/dashboard/conversations')}
+					class="flex items-center gap-3 p-4 rounded-2xl bg-[#1E1E1E]/60 backdrop-blur-md border border-[#404040]/40 hover:bg-[#1E1E1E]/80 hover:border-[#3B82F6]/40 hover:-translate-y-0.5 transition-all group text-left"
+				>
+					<div class="p-2.5 rounded-xl bg-blue-500/10 text-[#3B82F6] group-hover:bg-[#3B82F6] group-hover:text-white transition-colors">
+						<Icon name="chat_bubble_outline" className="w-5 h-5" iconSize="xl" />
 					</div>
-
-					<!-- Recent Activity Section -->
 					<div>
-						<div class="flex items-center justify-between mb-6">
-							<h2 class="text-xl font-semibold text-white flex items-center gap-2">
-								<Icon name="history" className="w-5 h-5 text-[#3B82F6]" iconSize="xl" />
-								Recent Activity
-							</h2>
-							<button 
-                                class="text-sm text-[#3B82F6] hover:text-blue-300 transition-colors"
-                                onclick={() => nav('/dashboard/proposals')}
-                            >
-                                View All
-                            </button>
-						</div>
-						
-						<div class="space-y-4">
-							{#if recentActivity.length === 0}
-								<div class="p-8 rounded-2xl border border-[#404040]/30 bg-[#1E1E1E]/40 text-center">
-									<p class="text-[#757575]">No recent activity found.</p>
-									<button onclick={() => nav('/dashboard/proposals')} class="mt-4 text-[#3B82F6] text-sm font-medium hover:underline">Create your first proposal</button>
-								</div>
-							{:else}
-								{#each recentActivity as item, i}
-									<a 
-										href={item.link || '#'}
-										class="block group relative rounded-xl border border-[#333333] bg-[#1E1E1E]/60 p-4 transition-all hover:bg-[#252525] hover:border-[#3B82F6]/50"
-										in:fly={{ y: 10, delay: 200 + (i * 50) }}
-									>
-										<div class="flex items-center gap-4">
-											<div class="h-12 w-12 rounded-full bg-[#2A2A2A] flex items-center justify-center border border-[#333] group-hover:border-[#3B82F6]/30 transition-colors">
-												<Icon name={item.icon} className="w-5 h-5 text-[#B0B0B0] group-hover:text-[#3B82F6]" iconSize="xl" />
-											</div>
-											<div class="flex-1 min-w-0">
-												<h3 class="text-white font-medium truncate group-hover:text-[#3B82F6] transition-colors">{item.title}</h3>
-												<p class="text-sm text-[#757575] truncate">{item.subtitle} • {item.time}</p>
-											</div>
-											<div class="hidden sm:block">
-												<Icon name="arrow_forward" className="w-5 h-5 text-[#404040] group-hover:text-[#3B82F6] -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" iconSize="xl" />
-											</div>
-										</div>
-									</a>
-								{/each}
-							{/if}
-						</div>
+						<div class="text-sm font-medium text-white">New Chat</div>
+						<div class="text-xs text-[#757575]">Ask AI about anything</div>
 					</div>
+				</button>
+
+				<button 
+					onclick={() => nav('/dashboard/proposals')}
+					class="flex items-center gap-3 p-4 rounded-2xl bg-[#1E1E1E]/60 backdrop-blur-md border border-[#404040]/40 hover:bg-[#1E1E1E]/80 hover:border-[#A855F7]/40 hover:-translate-y-0.5 transition-all group text-left"
+				>
+					<div class="p-2.5 rounded-xl bg-purple-500/10 text-[#A855F7] group-hover:bg-[#A855F7] group-hover:text-white transition-colors">
+						<Icon name="add_circle_outline" className="w-5 h-5" iconSize="xl" />
+					</div>
+					<div>
+						<div class="text-sm font-medium text-white">Create Proposal</div>
+						<div class="text-xs text-[#757575]">Start a new grant draft</div>
+					</div>
+				</button>
+
+				<button 
+					onclick={() => nav('/dashboard/collaborations')}
+					class="flex items-center gap-3 p-4 rounded-2xl bg-[#1E1E1E]/60 backdrop-blur-md border border-[#404040]/40 hover:bg-[#1E1E1E]/80 hover:border-[#10B981]/40 hover:-translate-y-0.5 transition-all group text-left"
+				>
+					<div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+						<Icon name="groups" className="w-5 h-5" iconSize="xl" />
+					</div>
+					<div>
+						<div class="text-sm font-medium text-white">Team Workspaces</div>
+						<div class="text-xs text-[#757575]">Collaborate with others</div>
+					</div>
+				</button>
+
+				<button 
+					onclick={() => nav('/dashboard/conversations')}
+					class="relative overflow-hidden flex items-center gap-3 p-4 rounded-2xl bg-[#1E1E1E]/60 backdrop-blur-md border border-[#404040]/40 hover:bg-[#1E1E1E]/80 hover:border-[#3B82F6]/40 hover:-translate-y-0.5 transition-all group text-left"
+				>
+					<div class="absolute top-0 right-0 -mt-6 -mr-6 h-20 w-20 rounded-full bg-[#3B82F6] opacity-[0.06] blur-2xl"></div>
+					<div class="p-2.5 rounded-xl bg-blue-500/10 text-[#3B82F6] group-hover:bg-[#3B82F6] group-hover:text-white transition-colors">
+						<Icon name="auto_awesome" className="w-5 h-5" iconSize="xl" />
+					</div>
+					<div>
+						<div class="text-sm font-medium text-white">AI Assistant</div>
+						<div class="text-xs text-[#757575]">Analyze docs & draft sections</div>
+					</div>
+				</button>
+			</div>
+
+			<!-- Recent Activity Section (Full Width) -->
+			<div>
+				<div class="flex items-center justify-between mb-6">
+					<h2 class="text-xl font-semibold text-white flex items-center gap-2">
+						<Icon name="history" className="w-5 h-5 text-[#3B82F6]" iconSize="xl" />
+						Recent Activity
+					</h2>
+					<button 
+						class="text-sm text-[#3B82F6] hover:text-blue-300 transition-colors"
+						onclick={() => nav('/dashboard/proposals')}
+					>
+						View All
+					</button>
 				</div>
-
-				<!-- Right Column: Actions & Assistant -->
-				<div class="space-y-6">
-					
-					<!-- Quick Actions Card -->
-					<div class="rounded-2xl border border-[#404040]/40 bg-[#1E1E1E]/80 backdrop-blur-md p-6">
-						<h3 class="text-white font-semibold mb-4">Quick Actions</h3>
-						<div class="space-y-3">
-							<button 
-								onclick={() => nav('/dashboard/conversations')}
-								class="w-full flex items-center gap-3 p-3 rounded-xl bg-[#2A2A2A] hover:bg-[#333] border border-[#333] hover:border-[#3B82F6]/50 transition-all group text-left"
-							>
-								<div class="p-2 rounded-lg bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-									<Icon name="chat_bubble_outline" className="w-5 h-5" iconSize="xl" />
-								</div>
-								<div>
-									<div class="text-sm font-medium text-white">New Chat</div>
-									<div class="text-xs text-[#757575]">Ask AI about anything</div>
-								</div>
-							</button>
-
-							<button 
-								onclick={() => nav('/dashboard/proposals')}
-								class="w-full flex items-center gap-3 p-3 rounded-xl bg-[#2A2A2A] hover:bg-[#333] border border-[#333] hover:border-[#A855F7]/50 transition-all group text-left"
-							>
-								<div class="p-2 rounded-lg bg-purple-500/10 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-									<Icon name="add_circle_outline" className="w-5 h-5" iconSize="xl" />
-								</div>
-								<div>
-									<div class="text-sm font-medium text-white">Create Proposal</div>
-									<div class="text-xs text-[#757575]">Start a new grant draft</div>
-								</div>
-							</button>
-
-							<button 
-								onclick={() => nav('/dashboard/organization')}
-								class="w-full flex items-center gap-3 p-3 rounded-xl bg-[#2A2A2A] hover:bg-[#333] border border-[#333] hover:border-[#10B981]/50 transition-all group text-left"
-							>
-								<div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-									<Icon name="search" className="w-5 h-5" iconSize="xl" />
-								</div>
-								<div>
-									<div class="text-sm font-medium text-white">Find Funding</div>
-									<div class="text-xs text-[#757575]">Search opportunities</div>
-								</div>
-							</button>
+				
+				<div class="space-y-3">
+					{#if recentActivity.length === 0}
+						<div class="p-8 rounded-2xl border border-[#404040]/30 bg-[#1E1E1E]/40 text-center">
+							<p class="text-[#757575]">No recent activity found.</p>
+							<button onclick={() => nav('/dashboard/proposals')} class="mt-4 text-[#3B82F6] text-sm font-medium hover:underline">Create your first proposal</button>
 						</div>
-					</div>
-
-					<!-- AI Assistant Widget -->
-					<div class="relative overflow-hidden rounded-2xl border border-[#404040]/40 bg-[#1E1E1E]/80 backdrop-blur-md p-6">
-						<div class="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-[#3B82F6] opacity-[0.06] blur-2xl"></div>
-						
-						<div class="relative z-10">
-							<div class="flex items-center gap-2.5 mb-3">
-								<div class="p-2 rounded-lg bg-blue-500/10 text-[#3B82F6]">
-									<Icon name="auto_awesome" className="w-5 h-5" iconSize="xl" />
-								</div>
-								<h3 class="font-semibold text-white">AI Assistant</h3>
-							</div>
-							<p class="text-[#B0B0B0] text-sm mb-5 leading-relaxed">
-								Need help analyzing a call document or drafting a section? I'm here to assist.
-							</p>
-							<button 
-								onclick={() => nav('/dashboard/conversations')}
-								class="w-full py-2.5 bg-[#3B82F6]/10 text-[#93C5FD] border border-[#3B82F6]/30 rounded-xl text-sm font-medium hover:bg-[#3B82F6]/20 hover:border-[#3B82F6]/50 transition-all"
+					{:else}
+						{#each recentActivity as item, i}
+							<a 
+								href={item.link || '#'}
+								class="block group relative rounded-xl border border-[#333333] bg-[#1E1E1E]/60 p-4 transition-all hover:bg-[#252525] hover:border-[#3B82F6]/50"
+								in:fly={{ y: 10, delay: 200 + (i * 50) }}
 							>
-								Ask Mapit AI
-							</button>
-						</div>
-					</div>
+								<div class="flex items-center gap-4">
+									<div class="h-11 w-11 rounded-full bg-[#2A2A2A] flex items-center justify-center border border-[#333] group-hover:border-[#3B82F6]/30 transition-colors">
+										<Icon name={item.icon} className="w-5 h-5 text-[#B0B0B0] group-hover:text-[#3B82F6]" iconSize="xl" />
+									</div>
+									<div class="flex-1 min-w-0">
+										<h3 class="text-white font-medium truncate group-hover:text-[#3B82F6] transition-colors">{item.title}</h3>
+										<p class="text-sm text-[#757575] truncate">{item.subtitle} • {item.time}</p>
+									</div>
+									<div class="hidden sm:block">
+										<Icon name="arrow_forward" className="w-5 h-5 text-[#404040] group-hover:text-[#3B82F6] -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" iconSize="xl" />
+									</div>
+								</div>
+							</a>
+						{/each}
+					{/if}
 				</div>
-
 			</div>
 
 		</div>
