@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { getConversationMessages, addUserMessage, addAIMessage } from '$lib/clients/conversationService';
   import { sendContextualMessage } from '$lib/clients/contextService';
   import { getConversationContext } from '$lib/clients/contextService';
@@ -188,8 +187,12 @@
     }
   }
 
-  // On mount, fetch available providers
-  onMount(() => {
+  // Fetch available providers on init
+  let _contextProvidersInit = false;
+  $effect(() => {
+    if (_contextProvidersInit) return;
+    _contextProvidersInit = true;
+    console.log('[PERSONAL CHAT CONTEXT] $effect FIRED — fetching providers');
     fetchAvailableProviders();
   });
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { onMount, onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import Icon from '$lib/components/generic/icon.svelte';
 	import type { Conversation } from '$lib/types/schema';
 	import type { CollaborationMessage } from '$lib/clients/collaborationService';
@@ -411,16 +411,19 @@
 		}
 	}
 
-	onMount(async () => {
-		// Load current user for display
-		try {
-			currentUser = await getCurrentClient();
-		} catch (err) {
-			console.error('Error loading current user:', err);
-		}
-
-		// Fetch available AI providers
-		await fetchAvailableProviders();
+	let _collabChatInit = false;
+	$effect(() => {
+		if (_collabChatInit) return;
+		_collabChatInit = true;
+		console.log('[COLLAB CHAT PAGE] $effect FIRED — loading user and providers');
+		(async () => {
+			try {
+				currentUser = await getCurrentClient();
+			} catch (err) {
+				console.error('Error loading current user:', err);
+			}
+			await fetchAvailableProviders();
+		})();
 	});
 
 	// Handle input changes for autocomplete

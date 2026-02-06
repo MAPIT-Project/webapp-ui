@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
 	import PersonalChatPage from './components/personal-chat-page.svelte';
 	import PersonalChatContext from './components/personal-chat-context.svelte';
 	import CollaborationChatPage from './components/collaboration-chat-page.svelte';

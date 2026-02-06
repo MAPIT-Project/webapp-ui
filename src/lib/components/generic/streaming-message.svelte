@@ -4,7 +4,6 @@
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
 	import { renderTextWithCitationSpans } from '$lib/utils/citationRenderer';
-	import { onMount } from 'svelte';
 	import type { Citation, ProgressMessage, ExportResponse } from '$lib/types/schema';
 	import ProgressIndicator from './progress-indicator.svelte';
 	import DownloadButton from './download-button.svelte';
@@ -188,7 +187,10 @@
 	}
 
 	// Add click event listener to the message content
-	onMount(() => {
+	let _streamingMsgInit = false;
+	$effect(() => {
+		if (_streamingMsgInit) return;
+		_streamingMsgInit = true;
 		const messageContent = document.getElementById(`streaming-message-content-${message.id}`);
 		if (messageContent) {
 			messageContent.addEventListener('click', handleCitationClick);

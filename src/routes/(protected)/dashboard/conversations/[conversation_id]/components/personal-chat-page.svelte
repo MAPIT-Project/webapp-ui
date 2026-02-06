@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
 	import {
 		getConversationMessages,
 		addUserMessage,
@@ -487,8 +486,12 @@ if (
 		}
 	}
 
-	// On mount, fetch available providers
-	onMount(() => {
+	// Fetch available providers on init
+	let _chatPageProvidersInit = false;
+	$effect(() => {
+		if (_chatPageProvidersInit) return;
+		_chatPageProvidersInit = true;
+		console.log('[PERSONAL CHAT PAGE] $effect FIRED — fetching providers');
 		fetchAvailableProviders();
 	});
 

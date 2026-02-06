@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { scale, fade } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import Modal from '$lib/components/generic/modal.svelte';
@@ -27,8 +26,12 @@
 	let newDescription = $state('');
 	let isCreating = $state(false);
 
-	onMount(async () => {
-		await loadCollaborations();
+	let _collabPageInit = false;
+	$effect(() => {
+		if (_collabPageInit) return;
+		_collabPageInit = true;
+		console.log('[COLLABORATIONS PAGE] $effect FIRED — loading collaborations');
+		loadCollaborations();
 	});
 
 	async function loadCollaborations() {

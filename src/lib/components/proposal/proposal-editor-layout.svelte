@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  // onMount removed — not compatible with runes mode
   import { 
     proposalSessionStore
   } from '$lib/stores/proposalSessionStore';
@@ -31,7 +31,11 @@
   });
 
   // Check for mobile view
-  onMount(() => {
+  let _editorLayoutInit = false;
+  $effect(() => {
+    if (_editorLayoutInit) return;
+    _editorLayoutInit = true;
+    
     const checkMobileView = () => {
       isMobileView = window.innerWidth < 768;
     };

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { getCurrentClient } from '$lib/clients/clientService';
   import { proposalService } from '$lib/clients/proposalService';
@@ -18,30 +17,35 @@
   let isCreatingProposal = $state(false);
   let isFetchingCall = $state(false);
 
-  // Load proposals on mount
-  onMount(async () => {
-    try {
-      const client = await getCurrentClient();
-      if (!client) {
-        error = 'User not authenticated';
+  // Load proposals on init
+  let _proposalsInit = false;
+  $effect(() => {
+    if (_proposalsInit) return;
+    _proposalsInit = true;
+    console.log('[PROPOSALS PAGE] $effect FIRED — loading proposals');
+    (async () => {
+      try {
+        const client = await getCurrentClient();
+        if (!client) {
+          error = 'User not authenticated';
+          isLoading = false;
+          return;
+        }
+        
+        userId = client.id.toString();
+        
+        const proposalsData = await proposalService.getProposals();
+        if (proposalsData) {
+          proposals = proposalsData;
+        }
+        
         isLoading = false;
-        return;
+      } catch (err) {
+        console.error('Error loading proposals:', err);
+        error = 'Failed to load proposals';
+        isLoading = false;
       }
-      
-      userId = client.id.toString();
-      
-      // Load proposals from API
-      const proposalsData = await proposalService.getProposals();
-      if (proposalsData) {
-        proposals = proposalsData;
-      }
-      
-      isLoading = false;
-    } catch (err) {
-      console.error('Error loading proposals:', err);
-      error = 'Failed to load proposals';
-      isLoading = false;
-    }
+    })();
   });
 
   function handleNewProposal() {

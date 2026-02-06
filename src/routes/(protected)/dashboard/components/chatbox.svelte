@@ -5,7 +5,7 @@
 	import { getSpace } from '$lib/stores/collaborationStore.svelte';
 	import { conversationStore } from '$lib/stores/conversationStore';
 	import { scale, fade } from 'svelte/transition';
-	import { onMount, tick } from 'svelte';
+	import { tick } from 'svelte';
 
 	let userInput = $state('');
 	let isProcessing = $state(false);
@@ -96,7 +96,10 @@
 		handleSubmit();
 	}
 
-	onMount(() => {
+	let _chatboxInit = false;
+	$effect(() => {
+		if (_chatboxInit) return;
+		_chatboxInit = true;
 		Promise.resolve().then(updateArrows);
 	});
 </script>

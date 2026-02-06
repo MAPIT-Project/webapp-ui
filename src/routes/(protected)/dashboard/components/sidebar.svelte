@@ -9,7 +9,7 @@
 		fetchUserCollaborations,
 		getIsLoadingUserCollaborations
 	} from '$lib/stores/collaborationStore.svelte';
-	import { onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { supabase } from '$lib/clients/supabaseClient';
 
 	interface Props {
@@ -28,31 +28,40 @@
 	let showSpaceDropdown = $state(false);
 	let dropdownElement: HTMLDivElement | undefined = $state();
 
-	onMount(() => {
-		// Handle async initialization
+	let _sidebarMounted = false;
+	let _clickOutsideHandler: ((event: MouseEvent) => void) | null = null;
+
+	$effect(() => {
+		if (_sidebarMounted) return;
+		_sidebarMounted = true;
+		console.log('[SIDEBAR] $effect FIRED — initializing sidebar');
+
 		(async () => {
 			const {
 				data: { user: clientUser },
 				error: userError
 			} = await supabase.auth.getUser();
 			if (userError || !clientUser) {
-				console.error('[Sidebar onMount] No active client-side session.');
+				console.error('[SIDEBAR] No active client-side session.');
 			}
-			// Fetch collaborations when the sidebar mounts
 			await fetchUserCollaborations();
+			console.log('[SIDEBAR] Collaborations fetched');
 		})();
 
 		// Close dropdown when clicking outside
-		const handleClickOutside = (event: MouseEvent) => {
+		_clickOutsideHandler = (event: MouseEvent) => {
 			if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 				showSpaceDropdown = false;
 			}
 		};
 
-		document.addEventListener('click', handleClickOutside);
-		return () => {
-			document.removeEventListener('click', handleClickOutside);
-		};
+		document.addEventListener('click', _clickOutsideHandler);
+	});
+
+	onDestroy(() => {
+		if (_clickOutsideHandler) {
+			document.removeEventListener('click', _clickOutsideHandler);
+		}
 	});
 
 	// Use derived state from the store via the new getter

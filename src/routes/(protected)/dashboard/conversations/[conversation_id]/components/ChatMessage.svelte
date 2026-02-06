@@ -5,7 +5,6 @@
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
 	import { renderTextWithCitationSpans } from '$lib/utils/citationRenderer';
-	import { onMount } from 'svelte';
 	import type { Citation } from '$lib/types/schema';
 	import type { EnhancedCitation } from '$lib/utils/citationConverter';
 	import CitationSources from '$lib/components/generic/citation-sources.svelte';
@@ -211,7 +210,10 @@
 	}
 
 	// Add click event listener to the message content
-	onMount(() => {
+	let _chatMsgMounted = false;
+	$effect(() => {
+		if (_chatMsgMounted) return;
+		_chatMsgMounted = true;
 		const messageContent = document.getElementById(`message-content-${message.id}`);
 		if (messageContent) {
 			messageContent.addEventListener('click', handleCitationClick);

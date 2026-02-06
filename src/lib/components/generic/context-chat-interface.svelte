@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { conversationContextStore, contextSummary } from '$lib/stores/conversationContextStore';
   import { sendContextualMessage } from '$lib/clients/contextService';
   import { getConversationContext } from '$lib/clients/contextService';

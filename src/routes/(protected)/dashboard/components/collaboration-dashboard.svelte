@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { scale, fade } from 'svelte/transition';
 	import { profileStore } from '$lib/stores/profileStore';
 	import { getSpace } from '$lib/stores/collaborationStore.svelte';
@@ -43,8 +42,11 @@
 		}
 	];
 
-	onMount(() => {
-		// Simulate loading for smooth animation
+	let _collabDashInit = false;
+	$effect(() => {
+		if (_collabDashInit) return;
+		_collabDashInit = true;
+		console.log('[COLLAB DASHBOARD] $effect FIRED — loading collaboration details');
 		setTimeout(() => {
 			isLoaded = true;
 			loadCollaborationDetails();

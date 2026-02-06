@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { getCurrentClient } from '$lib/clients/clientService';
   import { proposalStore, loadProposal } from '$lib/stores/proposalStore';
   import { proposalSessionStore } from '$lib/stores/proposalSessionStore';
@@ -18,39 +17,43 @@
     proposal = state.proposal;
   });
 
-  onMount(async () => {
-    try {
-      const client = await getCurrentClient();
-      if (!client) {
-        error = 'User not authenticated';
-        isLoading = false;
-        return;
-      }
-      userId = client.id.toString();
-      
-      // 1. Load basic proposal data (metadata)
-      await loadProposal(proposalId);
-      
-      if (!proposal) {
-        error = 'Proposal not found';
-        isLoading = false;
-        return;
-      }
+  let _proposalEditInit = false;
+  $effect(() => {
+    if (_proposalEditInit) return;
+    _proposalEditInit = true;
+    console.log('[PROPOSAL EDIT] $effect FIRED — loading proposal', proposalId);
+    (async () => {
+      try {
+        const client = await getCurrentClient();
+        if (!client) {
+          error = 'User not authenticated';
+          isLoading = false;
+          return;
+        }
+        userId = client.id.toString();
+        
+        await loadProposal(proposalId);
+        
+        if (!proposal) {
+          error = 'Proposal not found';
+          isLoading = false;
+          return;
+        }
 
-      // 2. Initialize the AI Session
-      await proposalSessionStore.initSession(
-        proposalId, 
-        proposal.call_id, 
-        proposal.proposal_title, 
-        userId
-      );
-      
-      isLoading = false;
-    } catch (err: any) {
-      console.error('Error loading:', err);
-      error = err.message || 'Failed to load proposal';
-      isLoading = false;
-    }
+        await proposalSessionStore.initSession(
+          proposalId, 
+          proposal.call_id, 
+          proposal.proposal_title, 
+          userId
+        );
+        
+        isLoading = false;
+      } catch (err: any) {
+        console.error('Error loading:', err);
+        error = err.message || 'Failed to load proposal';
+        isLoading = false;
+      }
+    })();
   });
 </script>
 

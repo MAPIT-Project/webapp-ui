@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { profileStore } from '$lib/stores/profileStore';
 	import { conversationStore } from '$lib/stores/conversationStore';
@@ -99,9 +98,13 @@
 		}
 	}
 
-	onMount(async () => {
+	let _dashboardInitialized = false;
+	$effect(() => {
+		if (_dashboardInitialized) return;
+		_dashboardInitialized = true;
+		console.log('[PERSONAL DASHBOARD] $effect FIRED — loading dashboard data');
 		greeting = getGreeting();
-		await loadDashboardData();
+		loadDashboardData();
 	});
 
 	// Derived User Name
