@@ -4,7 +4,6 @@
 
 	import { user } from '$lib/stores/sessionStore';
 	import { ensureClientExists } from '$lib/clients/clientService';
-	import { onMount } from 'svelte';
 	import { scale, fade } from 'svelte/transition';
 	import AIProviderSelector from '../../components/ai-provider-selector.svelte';
 	import { fetchAvailableProviders } from '$lib/stores/aiProviderStore';
@@ -13,24 +12,30 @@
 	let clientLoading: boolean = $state(true);
 	let clientError: string | null = $state(null);
 	let showCapabilities = $state(false);
+	let initialized = $state(false);
 
 	// Create client record if one doesn't exist
-	onMount(async () => {
-		if ($user) {
-			try {
-				const client = await ensureClientExists($user.email?.split('@')[0]);
-				if (!client) {
-					console.error('Failed to create or find client record');
-					clientError = 'Failed to initialize user data';
+	// Using $effect instead of onMount so it reacts when $user becomes available
+	$effect(() => {
+		const currentUser = $user;
+		if (currentUser && !initialized) {
+			initialized = true;
+			(async () => {
+				try {
+					const client = await ensureClientExists(currentUser.email?.split('@')[0]);
+					if (!client) {
+						console.error('Failed to create or find client record');
+						clientError = 'Failed to initialize user data';
+					}
+					// Fetch available AI providers
+					await fetchAvailableProviders();
+				} catch (err) {
+					console.error('Error during client initialization:', err);
+					clientError = 'Error setting up user account';
+				} finally {
+					clientLoading = false;
 				}
-				// Fetch available AI providers
-				await fetchAvailableProviders();
-			} catch (err) {
-				console.error('Error during client initialization:', err);
-				clientError = 'Error setting up user account';
-			} finally {
-				clientLoading = false;
-			}
+			})();
 		}
 	});
 </script>
