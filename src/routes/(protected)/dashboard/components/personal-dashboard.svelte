@@ -283,20 +283,22 @@
 					</div>
 
 					<!-- AI Assistant Widget -->
-					<div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#2563EB] p-6 text-white shadow-lg shadow-blue-900/20">
-						<div class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white opacity-10 blur-2xl"></div>
+					<div class="relative overflow-hidden rounded-2xl border border-[#404040]/40 bg-[#1E1E1E]/80 backdrop-blur-md p-6">
+						<div class="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-[#3B82F6] opacity-[0.06] blur-2xl"></div>
 						
 						<div class="relative z-10">
-							<div class="flex items-center gap-2 mb-3">
-								<Icon name="auto_awesome" className="w-5 h-5" iconSize="xl" />
-								<h3 class="font-bold text-lg">AI Assistant</h3>
+							<div class="flex items-center gap-2.5 mb-3">
+								<div class="p-2 rounded-lg bg-blue-500/10 text-[#3B82F6]">
+									<Icon name="auto_awesome" className="w-5 h-5" iconSize="xl" />
+								</div>
+								<h3 class="font-semibold text-white">AI Assistant</h3>
 							</div>
-							<p class="text-blue-100 text-sm mb-4 leading-relaxed">
+							<p class="text-[#B0B0B0] text-sm mb-5 leading-relaxed">
 								Need help analyzing a call document or drafting a section? I'm here to assist.
 							</p>
 							<button 
 								onclick={() => nav('/dashboard/conversations')}
-								class="w-full py-2.5 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors shadow-sm"
+								class="w-full py-2.5 bg-[#3B82F6]/10 text-[#93C5FD] border border-[#3B82F6]/30 rounded-xl text-sm font-medium hover:bg-[#3B82F6]/20 hover:border-[#3B82F6]/50 transition-all"
 							>
 								Ask Mapit AI
 							</button>
