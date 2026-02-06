@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
+import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ params, request, fetch, cookies }) => {
   const conversationId = params.conversation_id;
@@ -17,7 +18,7 @@ export const POST: RequestHandler = async ({ params, request, fetch, cookies }) 
     }
     
     // Forward the request to your FastAPI backend
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversationId}/message/stream`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversationId}/message/stream`;
     
     const body = JSON.stringify(requestBody);
     

@@ -1,12 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ params, request }) => {
   const { conversation_id } = params;
   
   try {
-    // Forward the request to the backend API on localhost:8000
-    const backendUrl = `http://localhost:8000/api/conversation/${conversation_id}/follow-ups`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/conversation/${conversation_id}/follow-ups`;
     
     // Get the request body
     const body = await request.json();
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
     
     // Add content-type for POST requests
     headers.set('Content-Type', 'application/json');
-    headers.set('Access-Control-Allow-Origin', 'http://localhost:5173');
+    headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Credentials', 'true');
     
     const response = await fetch(backendUrl, {

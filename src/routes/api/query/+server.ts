@@ -1,8 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { aiQueryRateLimit, extractClientIP } from '$lib/server/rateLimit';
+import { env } from '$env/dynamic/private';
 
-const CORDIS_API_BASE_URL = 'http://localhost:8000';
+const CORDIS_API_BASE_URL = env.BACKEND_URL || 'http://localhost:8000';
 
 interface QueryRequest {
 	question: string;
@@ -204,7 +205,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 			return json(
 				{
 					error: 'Unable to connect to CORDIS API',
-					details: 'Make sure the CORDIS API server is running on localhost:8000'
+					details: `Make sure the CORDIS API server is running at ${CORDIS_API_BASE_URL}`
 				},
 				{ status: 503 }
 			);

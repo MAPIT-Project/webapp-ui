@@ -1,6 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
-const CORDIS_API_BASE_URL = 'http://localhost:8000';
+const CORDIS_API_BASE_URL = env.BACKEND_URL || 'http://localhost:8000';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {

@@ -1,10 +1,13 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
+
+const BACKEND_URL = env.BACKEND_URL || 'http://localhost:8000';
 
 export const GET: RequestHandler = async ({ fetch }) => {
 	try {
 		// Fetch data from the actual AI service endpoint
-		const response = await fetch('http://localhost:8000/api/providers');
+		const response = await fetch(`${BACKEND_URL}/api/providers`);
 
 		if (!response.ok) {
 			// If the AI service returns an error, relay it

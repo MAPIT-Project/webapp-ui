@@ -1,12 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ params, request }) => {
   const { conversation_id } = params;
   
   try {
-    // Forward the request to the backend API on localhost:8000
-    const backendUrl = `http://localhost:8000/api/conversation/${conversation_id}/reset-context`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/conversation/${conversation_id}/reset-context`;
     
     // Forward headers (excluding host and connection headers)
     const headers = new Headers();
@@ -17,7 +17,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
     }
     
     // Add CORS headers if needed
-    headers.set('Access-Control-Allow-Origin', 'http://localhost:5173');
+    headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Credentials', 'true');
     
     const response = await fetch(backendUrl, {
