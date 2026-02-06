@@ -1,42 +1,46 @@
 <script lang="ts">
 	import { searchStore } from '$lib/stores/searchStore';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
-	// Local copy of store values
-	let searchQuery = '';
-	let searchResults: any[] = [];
-	let isSearching = false;
-	let totalResultsCount = 0;
-	let searchInput: HTMLInputElement;
+	// Reactive state derived from store
+	let searchQuery = $state('');
+	let searchResults = $state<any[]>([]);
+	let isSearching = $state(false);
+	let totalResultsCount = $state(0);
+	let searchInput: HTMLInputElement | undefined = $state();
 
-	// Set up subscription to the search store
-	const unsubscribe = searchStore.subscribe((state) => {
-		searchQuery = state.query;
-		searchResults = state.results;
-		isSearching = state.isSearching;
-		totalResultsCount = state.totalCount || searchResults.length;
+	// Subscribe to store reactively
+	$effect(() => {
+		const unsub = searchStore.subscribe((state) => {
+			searchQuery = state.query;
+			searchResults = state.results;
+			isSearching = state.isSearching;
+			totalResultsCount = state.totalCount || searchResults.length;
+		});
+		return unsub;
 	});
 
-	// Export callbacks as props
-	export let onSearch: () => Promise<void>;
-	export let onClear: () => void;
+	// Props
+	interface Props {
+		onSearch: () => Promise<void>;
+		onClear: () => void;
+	}
+
+	const { onSearch, onClear }: Props = $props();
 
 	// Handle search submission
 	async function handleSearch(event?: Event) {
 		if (event) event.preventDefault();
 
 		if (!searchQuery.trim()) {
-			// Clear the search store
-			searchStore.set({ query: '', isSearching: false, results: [] });
+			searchStore.set({ query: '', isSearching: false, results: [], totalCount: 0 });
 			onClear();
 			return;
 		}
 
-		// Update store with the search query
 		searchStore.update((state) => ({ ...state, query: searchQuery, isSearching: true }));
 
-		// Call parent component's search handler
 		try {
 			await onSearch();
 		} catch (error) {
@@ -48,7 +52,7 @@
 
 	// Clear search and reset view
 	function clearSearch() {
-		searchStore.set({ query: '', isSearching: false, results: [] });
+		searchStore.set({ query: '', isSearching: false, results: [], totalCount: 0 });
 		onClear();
 	}
 
@@ -69,19 +73,14 @@
 
 	onMount(() => {
 		if (browser) {
-			// Listen for the focus-search event from keyboard shortcuts
-			document.addEventListener('focus-search', () => {
+			const listener = () => {
 				console.log('Focus search event received');
 				focusSearch();
-			});
-		}
-	});
-
-	// Cleanup on component unmount
-	onDestroy(() => {
-		unsubscribe();
-		if (browser) {
-			document.removeEventListener('focus-search', focusSearch);
+			};
+			document.addEventListener('focus-search', listener);
+			return () => {
+				document.removeEventListener('focus-search', listener);
+			};
 		}
 	});
 </script>
@@ -89,11 +88,12 @@
 <div
 	class="absolute left-1/2 top-10 z-[500] flex w-4/5 max-w-[500px] -translate-x-1/2 transform flex-col gap-2.5 text-black"
 >
-	<form class="flex overflow-hidden rounded bg-white shadow-md" on:submit={handleSearch}>
+	<form class="flex overflow-hidden rounded bg-white shadow-md" onsubmit={handleSearch}>
 		<input
 			bind:this={searchInput}
 			type="text"
-			bind:value={searchQuery}
+			value={searchQuery}
+			oninput={(e) => searchStore.update((s) => ({ ...s, query: e.currentTarget.value }))}
 			placeholder="Search for projects by title or objective..."
 			class="flex-grow border-none p-[10px_12px] font-sans text-sm focus:outline-none"
 			aria-label="Search query"
@@ -113,8 +113,8 @@
 			<button
 				type="button"
 				class="ml-2 cursor-pointer font-bold text-[#4285F4] underline"
-				on:click={clearSearch}
-				on:keydown={handleClearKeyDown}
+				onclick={clearSearch}
+				onkeydown={handleClearKeyDown}
 				aria-label="Clear search results"
 			>
 				Clear
