@@ -58,40 +58,35 @@
 	<div class="relative flex flex-1 flex-col overflow-hidden">
 		<!-- Header Bar -->
 		<div
-			class="absolute left-0 right-0 top-0 z-40 h-14 border-b border-[#333] bg-[#1C1C1C]/90 backdrop-blur-md"
+			class="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-[#333] bg-[#1C1C1C]/90 px-4 backdrop-blur-md"
 		>
-			<div class="flex h-full items-center justify-between max-w-7xl px-4">
-				<div class="flex items-center gap-3">
-					<div class="relative rounded-lg border border-white/10 bg-[#252525] p-1">
-						<img
-							src="/images/mapit_logo_no_bg.png"
-							class="size-5 object-contain"
-							alt="MAPIT Logo"
-						/>
-					</div>
-					<div class="flex flex-col">
-						<span class="text-sm font-bold text-[#E0E0E0] leading-none tracking-wide">MAPIT</span>
-						<span class="text-[10px] font-medium text-gray-500 leading-none mt-1">AI DOMAIN EXPORT TOOL</span>
-					</div>
-                    <!-- <div class="ml-3 h-4 w-[1px] bg-[#333]"></div> -->
-                    <!-- <span class="text-[10px] font-mono text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full border border-emerald-500/20">BETA v3.0</span> -->
+			<div class="flex items-center gap-3">
+				<div class="relative rounded-lg border border-white/10 bg-[#252525] p-1">
+					<img
+						src="/images/mapit_logo_no_bg.png"
+						class="size-5 object-contain"
+						alt="MAPIT Logo"
+					/>
 				</div>
-				<div class="flex items-center gap-4">
-					<!-- Capabilities Info Button -->
-					<button
-						class="group rounded-lg p-2 text-gray-400 transition-all duration-200 hover:bg-white/10 hover:text-white"
-						title="AI Capabilities"
-						onclick={() => (showCapabilities = true)}
-					>
-						<Icon name="info" iconClass="w-5 h-5 group-hover:text-blue-400 transition-colors" />
-					</button>
-					<!-- <AIProviderSelector /> -->
+				<div class="flex flex-col">
+					<span class="text-sm font-bold text-[#E0E0E0] leading-none tracking-wide">MAPIT</span>
+					<span class="text-[10px] font-medium text-gray-500 leading-none mt-1">AI DOMAIN EXPERT TOOL</span>
 				</div>
+			</div>
+			<div class="flex items-center gap-4">
+				<!-- Capabilities Info Button -->
+				<button
+					class="group rounded-lg p-2 text-gray-400 transition-all duration-200 hover:bg-white/10 hover:text-white"
+					title="AI Capabilities"
+					onclick={() => (showCapabilities = true)}
+				>
+					<Icon name="info" iconClass="w-5 h-5 group-hover:text-blue-400 transition-colors" />
+				</button>
 			</div>
 		</div>
 
 		<!-- Main Content Area -->
-		<div class="relative flex flex-1 items-center justify-center p-6 pt-20">
+		<div class="relative flex flex-1 items-center justify-center p-6">
 			{#if clientLoading}
 				<div class="flex flex-col items-center gap-8" in:fade={{ duration: 300 }}>
                     <div class="relative">

@@ -136,53 +136,7 @@
 			</button>
 		</div>
 
-		<!-- Enhanced Loading Status -->
-		{#if isProcessing}
-			<div
-				class="mt-4 rounded-xl border border-gray-700/50 bg-gradient-to-r from-gray-800/70 to-gray-900/70 p-6 backdrop-blur-sm"
-				in:scale={{ duration: 300, start: 0.95 }}
-			>
-				<div class="flex flex-col items-center gap-4">
-					<!-- Animated dots -->
-					<div class="flex items-center gap-3 text-sm text-gray-400">
-						<div class="flex space-x-1">
-							<div class="h-2 w-2 animate-bounce rounded-full bg-blue-500"></div>
-							<div
-								class="h-2 w-2 animate-bounce rounded-full bg-purple-500"
-								style="animation-delay: 0.1s"
-							></div>
-							<div
-								class="h-2 w-2 animate-bounce rounded-full bg-emerald-500"
-								style="animation-delay: 0.2s"
-							></div>
-						</div>
-						<span class="font-medium">Creating conversation and generating response...</span>
-					</div>
-
-					<!-- Progress indicator -->
-					<div class="h-1 w-full overflow-hidden rounded-full bg-gray-700/50">
-						<div
-							class="h-full animate-pulse bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"
-						></div>
-					</div>
-
-					<!-- Timing information -->
-					<div
-						class="rounded-lg border border-gray-600/30 bg-gray-800/50 px-4 py-3 text-center text-xs text-gray-400"
-					>
-						<div class="mb-1 flex items-center justify-center gap-2">
-							<Icon name="info" iconClass="w-4 h-4 text-blue-400" />
-							<span>Please wait</span>
-						</div>
-						<div class="text-gray-500">
-							Response generation typically takes <span class="font-medium text-blue-300"
-								>30-60 seconds</span
-							>
-						</div>
-					</div>
-				</div>
-			</div>
-		{/if}
+		
 	</form>
 
 	<!-- Enhanced Error Display -->
