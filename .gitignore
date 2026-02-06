@@ -30,4 +30,5 @@ csv_data_extractor/venv/**/*
 *.csv#
 
 # Crush agent directory
-.crush
+.crushsupabase_full_dump.backup
+*.backup

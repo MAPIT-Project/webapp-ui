@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // For production
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.PRIVATE_DATABASE_URL;
 
 // For local development with Docker
 const localConnectionConfig = {

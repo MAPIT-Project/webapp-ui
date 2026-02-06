@@ -4,8 +4,8 @@ import { env } from '$env/dynamic/private';
 import { client } from '$lib/server/db/schema';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
-if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
-const sql = postgres(env.DATABASE_URL, {
+if (!env.PRIVATE_DATABASE_URL) throw new Error('PRIVATE_DATABASE_URL is not set');
+const sql = postgres(env.PRIVATE_DATABASE_URL, {
 	ssl: false
 });
 
