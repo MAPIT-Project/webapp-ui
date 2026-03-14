@@ -11,7 +11,7 @@ export const POST: RequestHandler = async ({ params, request, fetch }) => {
     // Forward the request to the FastAPI backend (which handles message persistence)
     const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversationId}/message/stream`;
     
-    const response = await fetch(backendUrl, {
+    const response = await globalThis.fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
