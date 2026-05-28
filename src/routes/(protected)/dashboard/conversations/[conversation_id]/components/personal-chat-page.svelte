@@ -39,6 +39,8 @@
 
 	let { conversationId }: Props = $props();
 
+	console.log('🚀 [ConversationPage] Component initialized with conversationId:', conversationId);
+
 	// State using runes
 	let userInput = $state('');
 	let messages = $state<MessageWithSuggestions[]>([]);
@@ -350,16 +352,16 @@ if (
 
 	// Load conversation details using API endpoint
 	async function loadConversationDetails(id: number) {
-		console.log('🏠 loadConversationDetails called with ID:', id);
+		console.log('🏠 [ConversationPage] loadConversationDetails called with ID:', id);
 		try {
-			console.log('📡 Fetching conversation details for ID:', id);
+			console.log('📡 [ConversationPage] Fetching conversation details for ID:', id);
 			const response = await fetch(`/api/conversations/${id}`, {
 				method: 'GET'
 			});
 
-			console.log('📊 Conversation details response status:', response.status);
+			console.log('📊 [ConversationPage] Conversation details response status:', response.status);
 			const result = await response.json();
-			console.log('📋 Conversation details response:', result);
+			console.log('📋 [ConversationPage] Conversation details response:', result);
 
 			if (!response.ok) {
 				console.error('❌ Error loading conversation details:', result.error);
@@ -385,9 +387,9 @@ if (
 	}
 
 	async function loadMessages(id: number) {
-		console.log('🔍 loadMessages called with ID:', id);
+		console.log('🔍 [ConversationPage] loadMessages called with ID:', id);
 		if (isNaN(id)) {
-			console.error('❌ Invalid conversation ID:', id);
+			console.error('❌ [ConversationPage] Invalid conversation ID:', id);
 			error = 'Invalid conversation ID';
 			isLoading = false;
 			isLoadingMessages = false;
@@ -396,17 +398,17 @@ if (
 
 		// Prevent duplicate loading if already loading same conversation
 		if (isLoadingMessages || (lastLoadedChatId === id && messages.length > 0)) {
-			console.log('⏭️ Skipping duplicate message load for conversation:', id);
+			console.log('⏭️ [ConversationPage] Skipping duplicate message load for conversation:', id);
 			return;
 		}
 
-		console.log('🚀 Starting to load messages for conversation:', id);
+		console.log('🚀 [ConversationPage] Starting to load messages for conversation:', id);
 		isLoading = true;
 		isLoadingMessages = true;
 		error = null;
 
 		try {
-			console.log('📞 Calling getConversationMessages for conversation:', id);
+			console.log('📞 [ConversationPage] Calling getConversationMessages for conversation:', id);
 			const loadedMessages = await getConversationMessages(id);
 
 			// Check if we got an error response (empty array might indicate auth issues)
@@ -471,7 +473,11 @@ if (
 				console.log('Loaded', messages.length, 'messages for conversation:', id);
 			}
 		} catch (err) {
-			console.error('Error loading messages:', err);
+			console.error('❌ [ConversationPage] Error loading messages:', err);
+			console.error('❌ [ConversationPage] Error details:', {
+				message: err instanceof Error ? err.message : String(err),
+				stack: err instanceof Error ? err.stack : undefined
+			});
 			// Only set error if it's not an authentication issue (let conversation details handle that)
 			if (err instanceof Error && err.message.includes('Unauthorized')) {
 				error = 'Please log in to access conversations';
@@ -481,6 +487,7 @@ if (
 				isLoading = false; // Ensure loading state is reset on error
 			}
 		} finally {
+			console.log('🏁 [ConversationPage] Message loading complete');
 			isLoading = false;
 			isLoadingMessages = false;
 		}
@@ -664,7 +671,11 @@ if (
 
 	
 	async function handleSubmit() {
-		if (!userInput.trim() || $streamingConversationStore.isProcessing || isSending) return;
+		console.log('📝 [ConversationPage] handleSubmit called');
+		if (!userInput.trim() || $streamingConversationStore.isProcessing || isSending) {
+			console.log('⚠️ [ConversationPage] Submit blocked - input empty or already processing');
+			return;
+		}
 
 		isSending = true;
 		error = null;

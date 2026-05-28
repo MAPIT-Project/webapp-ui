@@ -2,11 +2,16 @@ import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 
 export const GET: RequestHandler = async ({ fetch }) => {
+	console.log('🔍 [BackendStatusAPI] Starting backend status check...');
 	const startTime = Date.now();
 	const backendUrl = env.BACKEND_URL || 'http://localhost:8000';
 	const healthUrl = `${backendUrl}/api/health`;
 
+	console.log('📡 [BackendStatusAPI] Backend URL:', backendUrl);
+	console.log('🌐 [BackendStatusAPI] Health check URL:', healthUrl);
+
 	try {
+		console.log('🔄 [BackendStatusAPI] Fetching backend health status...');
 		const response = await fetch(healthUrl, {
 			method: 'GET',
 			headers: {
@@ -15,7 +20,11 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		});
 
 		const responseTime = Date.now() - startTime;
+		console.log('⏱️ [BackendStatusAPI] Response time:', responseTime, 'ms');
+		console.log('📊 [BackendStatusAPI] HTTP status:', response.status);
+
 		const data = await response.json().catch(() => null);
+		console.log('📋 [BackendStatusAPI] Response data:', data);
 
 		return new Response(JSON.stringify({
 			status: 'connected',
@@ -32,6 +41,11 @@ export const GET: RequestHandler = async ({ fetch }) => {
 
 	} catch (error) {
 		const responseTime = Date.now() - startTime;
+		console.error('❌ [BackendStatusAPI] Backend check failed:', error);
+		console.error('❌ [BackendStatusAPI] Error details:', {
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined
+		});
 
 		return new Response(JSON.stringify({
 			status: 'disconnected',
