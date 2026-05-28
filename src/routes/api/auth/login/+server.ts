@@ -79,18 +79,14 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		// Add rate limit headers to successful response
 		const rateLimitInfo = authRateLimit.info(ip);
 
-		// Return success response with user data
-		return json(
+		// Create response with user data
+		const response = json(
 			{
 				success: true,
 				user: {
 					id: data.user.id,
 					email: data.user.email,
 					created_at: data.user.created_at
-				},
-				session: {
-					access_token: data.session.access_token,
-					expires_at: data.session.expires_at as number
 				}
 			},
 			{
@@ -101,6 +97,39 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 				}
 			}
 		);
+
+		// IMPORTANT: Manually set Supabase cookies since we're using custom login
+		if (data.session) {
+			// Set access token cookie (2 hours)
+			response.headers.set(
+				'sb-access-token',
+				data.session.access_token,
+				{
+					path: '/',
+					httpOnly: false,
+					secure: true,
+					sameSite: 'lax',
+					maxAge: 7200 // 2 hours
+				}
+			);
+
+			// Set refresh token cookie (30 days)
+			if (data.session.refresh_token) {
+				response.headers.set(
+					'sb-refresh-token',
+					data.session.refresh_token,
+					{
+						path: '/',
+						httpOnly: true,
+						secure: true,
+						sameSite: 'lax',
+						maxAge: 2592000 // 30 days
+					}
+				);
+			}
+		}
+
+		return response;
 	} catch (error) {
 		console.error('Server error during login:', error);
 		return json(
