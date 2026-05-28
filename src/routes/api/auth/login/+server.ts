@@ -48,7 +48,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 							...options,
 							path: '/',
 							httpOnly: false, // Allow client access
-							secure: false, // For localhost development
+							secure: true, // Required for HTTPS
 							sameSite: 'lax' // Allow cross-site requests
 						});
 					});
