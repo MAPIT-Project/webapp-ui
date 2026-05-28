@@ -2,6 +2,12 @@
 
 A web application empowering domain experts with advanced AI-driven insights—bridging cutting-edge technology with deep subject expertise.
 
+> [!WARNING]
+> **Project Disclaimer & Review Notice:**
+> - **Horizon Europe Focus**: The backend and frontend are primarily designed and optimized for **Horizon Europe**. Support for other programmes (Erasmus+, Creative Europe, EU4Health, Digital Europe, and LIFE) is integrated but not as thoroughly tested or mature.
+> - **AI-Assisted Single-Dev Build**: This system was built by a **single developer** leveraging AI extensively to execute the work of a full engineering team.
+> - **Manual Review Required**: Due to the speed and scale of development, the code contains unreviewed blocks, potentially redundant code, or security gaps. **Please ensure a thorough code review and security audit is completed before making this project public or deploying to production.**
+
 ## Features
 
 - Interactive mapping visualization using Deck.gl and Mapbox
@@ -56,3 +62,9 @@ You can preview the production build with `npm run preview`.
 - Supabase
 - Deck.gl & Mapbox
 - Drizzle ORM
+
+---
+
+## ❤️ Credits & Support
+Developed and maintained by **Anmar Ram** ([anmar.noah@gmail.com](mailto:anmar.noah@gmail.com)) for the MAP-IT platform.
+
