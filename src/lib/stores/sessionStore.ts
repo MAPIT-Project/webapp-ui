@@ -29,37 +29,39 @@ export async function initializeSession(serverUser?: User | null) {
 	}
 
 	// Attempt a client-side auth refresh in the background.
+	// DISABLED: Prevents conflicts with server-side authentication
 	// This may fail if the browser can't reach Supabase directly (e.g. self-hosted
 	// Supabase behind a firewall, CORS issues, etc.), but the app still works
 	// because API routes use server-side Supabase with cookies.
-	try {
-		console.log('[SESSION STORE] Attempting client-side supabase.auth.getUser() with 5s timeout...');
-		const { data: { user: currentUser }, error } = await withTimeout(
-			supabase.auth.getUser(),
-			5000 // 5 second timeout to prevent infinite hanging
-		);
+	// try {
+	// 	console.log('[SESSION STORE] Attempting client-side supabase.auth.getUser() with 5s timeout...');
+	// 	const { data: { user: currentUser }, error } = await withTimeout(
+	// 		supabase.auth.getUser(),
+	// 		5000 // 5 second timeout to prevent infinite hanging
+	// 	);
 
-		if (!error && currentUser) {
-			console.log('[SESSION STORE] Client-side auth returned user:', currentUser.email);
-			user.set(currentUser);
-		} else if (error) {
-			console.warn('[SESSION STORE] Client-side auth check returned error:', error.message);
-			// Don't clear the user if we already have a server-validated user
-		}
-	} catch (err) {
-		console.warn('[SESSION STORE] Client-side auth check failed (this is OK if using server session):', err);
-		// Don't clear the user — we trust the server-validated session
-	}
+	// 	if (!error && currentUser) {
+	// 		console.log('[SESSION STORE] Client-side auth returned user:', currentUser.email);
+	// 		user.set(currentUser);
+	// 	} else if (error) {
+	// 		console.warn('[SESSION STORE] Client-side auth check returned error:', error.message);
+	// 		// Don't clear the user if we already have a server-validated user
+	// 	}
+	// } catch (err) {
+	// 	console.warn('[SESSION STORE] Client-side auth check failed (this is OK if using server session):', err);
+	// 	// Don't clear the user — we trust the server-validated session
+	// }
 
 	console.log('[SESSION STORE] initializeSession finished. Setting up onAuthStateChange listener.');
 
 	// Subscribe to auth state changes
-	supabase.auth.onAuthStateChange((event, session) => {
-		console.log('[SESSION STORE] onAuthStateChange event:', event, 'user:', session?.user?.email ?? 'NULL');
-		if (event === 'SIGNED_IN' && session?.user) {
-			user.set(session.user);
-		} else if (event === 'SIGNED_OUT') {
-			user.set(null);
-		}
-	});
+	// DISABLED: Prevents conflicts with server-side authentication
+	// supabase.auth.onAuthStateChange((event, session) => {
+	// 	console.log('[SESSION STORE] onAuthStateChange event:', event, 'user:', session?.user?.email ?? 'NULL');
+	// 	if (event === 'SIGNED_IN' && session?.user) {
+	// 		user.set(session.user);
+	// 	} else if (event === 'SIGNED_OUT') {
+	// 		user.set(null);
+	// 	}
+	// });
 }
