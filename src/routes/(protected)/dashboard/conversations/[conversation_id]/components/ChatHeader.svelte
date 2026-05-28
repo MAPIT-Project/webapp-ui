@@ -3,6 +3,7 @@
 	import ApiModeToggle from '../../../components/api-mode-toggle.svelte';
 	import AIProviderSelector from '../../../components/ai-provider-selector.svelte';
 	import ContextHeaderIndicator from '$lib/components/generic/context-header-indicator.svelte';
+	import BackendStatusIndicator from '$lib/components/generic/backend-status-indicator.svelte';
 	import { contextSummary } from '$lib/stores/conversationContextStore';
 	import { conversationContextStore } from '$lib/stores/conversationContextStore';
 	import Modal from '$lib/components/generic/modal.svelte';
@@ -18,7 +19,7 @@
 	<div
 		class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] opacity-[0.02]"
 	></div>
-	
+
 	<div class="relative flex h-full items-center justify-between px-4">
 		<!-- Left side - Logo and branding -->
 		<div class="flex items-center gap-3">
@@ -37,6 +38,9 @@
 
 		<!-- Right side - Controls and context indicator -->
 		<div class="flex items-center gap-3">
+			<!-- Backend Status Indicator -->
+			<BackendStatusIndicator />
+
 			<!-- Capabilities Info Button -->
 			<button
 				class="group rounded-lg p-2 text-gray-400 transition-all duration-200 hover:bg-white/10 hover:text-white"
@@ -54,13 +58,13 @@
 				topics={$contextSummary.topics}
 				onToggle={() => conversationContextStore.toggleContext()}
 			/> -->
-			
+
 			<!-- Vertical divider -->
 			<!-- <div class="h-6 w-px bg-[#4F4F4F]"></div> -->
-			
+
 			<!-- AI provider selector -->
 			<!-- <AIProviderSelector /> -->
-			
+
 			<!-- Optional: API mode toggle (commented out) -->
 			<!-- <div class="h-6 w-px bg-[#4F4F4F]"></div> -->
 			<!-- <ApiModeToggle /> -->
@@ -100,7 +104,7 @@
 		<!-- What Can I Ask? -->
 		<section>
 			<h3 class="text-xl font-semibold text-blue-400 mb-4">What Can I Ask?</h3>
-			
+
 			<div class="space-y-6">
 				<!-- Eligibility & Rules -->
 				<div>
@@ -153,7 +157,7 @@
 						</div>
 					</div>
 				</div>
-				
+
 				<!-- Comparisons -->
 				<div>
 					<h4 class="text-md font-medium text-white mb-2">Comparisons</h4>
@@ -185,7 +189,7 @@
 						</div>
 					</div>
 				</div>
-				
+
 				<!-- Funding Trends & Analysis -->
 				<div>
 					<h4 class="text-md font-medium text-white mb-2">Funding Trends & Analysis</h4>
@@ -236,7 +240,7 @@
 				<li>• Pre-computed statistics from the Horizon Europe database</li>
 			</ul>
 		</section>
-		
+
 		<div class="text-center text-xs text-gray-600 italic mt-2">
 			Powered by MAP-IT - Your Horizon Europe Research Assistant
 		</div>
