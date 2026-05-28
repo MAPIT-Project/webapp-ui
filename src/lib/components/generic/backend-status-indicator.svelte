@@ -5,16 +5,24 @@
 	let backendStatus = $state<'loading' | 'connected' | 'disconnected'>('loading');
 	let responseTime = $state<number | null>(null);
 	let showTooltip = $state(false);
-	let checkInterval: NodeJS.Timeout | null = null;
+	let isClient = $state(false);
+	let checkInterval: ReturnType<typeof setInterval> | null = null;
+	let hasErrored = $state(false);
 
 	async function checkBackendStatus() {
+		if (!isClient) return; // Only run on client side
+
 		try {
 			const response = await fetch('/api/backend-status');
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}`);
+			}
 			const data = await response.json();
 
 			if (data.status === 'connected') {
 				backendStatus = 'connected';
 				responseTime = data.response_time_ms;
+				hasErrored = false;
 			} else {
 				backendStatus = 'disconnected';
 				responseTime = null;
@@ -22,11 +30,19 @@
 		} catch (error) {
 			backendStatus = 'disconnected';
 			responseTime = null;
+			hasErrored = true;
+			console.error('Backend status check failed:', error);
 		}
 	}
 
 	onMount(() => {
-		checkBackendStatus();
+		isClient = true;
+
+		// Small delay to avoid issues during page load
+		setTimeout(() => {
+			checkBackendStatus();
+		}, 1000);
+
 		// Check status every 30 seconds
 		checkInterval = setInterval(checkBackendStatus, 30000);
 	});
@@ -60,6 +76,7 @@
 	}
 </script>
 
+{#if isClient}
 <div class="relative" onmouseenter={() => (showTooltip = true)} onmouseleave={() => (showTooltip = false)}>
 	<button
 		class="group rounded-lg p-2 text-gray-400 transition-all duration-200 hover:bg-white/10 hover:text-white"
@@ -69,7 +86,7 @@
 			<div class="relative">
 				<Icon name="cloud" iconClass="w-4 h-4" />
 				<div
-					class="absolute -right-1 -top-1 size-2.5 rounded-full {getStatusColor()} animate-pulse"
+					class="absolute -right-1 -top-1 size-2.5 rounded-full {getStatusColor()} class:animate-pulse={backendStatus !== 'disconnected'}"
 				></div>
 			</div>
 		</div>
@@ -80,7 +97,7 @@
 			class="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-[#3A3A3A] bg-[#1E1E1E] p-3 shadow-lg"
 		>
 			<div class="flex items-center gap-2">
-				<div class="size-2.5 rounded-full {getStatusColor()}" class:animate-pulse={backendStatus !== 'disconnected'}></div>
+				<div class="size-2.5 rounded-full {getStatusColor()}"></div>
 				<span class="text-sm font-medium text-white">{getStatusText()}</span>
 			</div>
 			{#if backendStatus === 'connected' && responseTime}
@@ -91,3 +108,4 @@
 		</div>
 	{/if}
 </div>
+{/if}
