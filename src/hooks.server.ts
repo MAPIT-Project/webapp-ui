@@ -68,6 +68,10 @@ const supabaseHandle: Handle = async ({ event, resolve }) => {
 			error: userError
 		} = await supabase.auth.getUser();
 
+		console.log('[HOOKS] getUser result - user:', user ? `${user.email}` : 'NULL', 'error:', userError?.message || 'NULL');
+
+		console.log('[HOOKS] getUser result - user:', user ? `${user.email}` : 'NULL', 'error:', userError?.message || 'NULL');
+
 		event.locals.supabase = supabase;
 		// Create a minimal session object with the authenticated user
 		// The user from getUser() is verified against the Supabase Auth server

@@ -106,6 +106,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 				data.session.access_token,
 				{
 					path: '/',
+					domain: '.mapit.work', // Allow all subdomains
 					httpOnly: false,
 					secure: true,
 					sameSite: 'lax',
@@ -120,6 +121,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 					data.session.refresh_token,
 					{
 						path: '/',
+						domain: '.mapit.work', // Allow all subdomains
 						httpOnly: true,
 						secure: true,
 						sameSite: 'lax',
