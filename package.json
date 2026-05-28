@@ -6,6 +6,7 @@
 		"dev": "vite dev",
 		"build": "dotenv -e .env -- vite build",
 		"start": "dotenv -e .env -- node build/index.js",
+		"host": "npm run build && pm2 delete mapit-ui 2>/dev/null; pm2 start npm --name mapit-ui -- start",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -14,7 +15,11 @@
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+		"pm2:logs": "pm2 logs mapit-ui",
+		"pm2:stop": "pm2 stop mapit-ui",
+		"pm2:restart": "pm2 restart mapit-ui",
+		"pm2:delete": "pm2 delete mapit-ui"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
