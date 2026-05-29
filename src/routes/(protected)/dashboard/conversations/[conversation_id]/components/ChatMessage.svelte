@@ -242,7 +242,7 @@
 						});
 					}
 					// Tool Call (Action)
-					if (step.action === 'call_tools' && step.tools_called) {
+					if ((step.action === 'call_tools' || (step.action && step.action.startsWith('call_tools'))) && step.tools_called) {
 						step.tools_called.forEach((tool: string) => {
 							events.push({
 								type: 'tool_call',
