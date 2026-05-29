@@ -25,17 +25,15 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
     // Generate a JWT token for backend authentication
     const backendToken = await createProxyToken();
 
-    // Transform request body to match backend ChatMessage schema
+    // Transform request body to match backend V3 MessageRequest schema
     // Frontend sends: { message, include_context }
-    // Backend expects: { message, session_id, model }
     const backendBody = {
       message: requestBody.message,
-      session_id: conversationId,
-      model: requestBody.model || 'openai-gpt4o',
+      include_context: requestBody.include_context !== false,
     };
 
     // Forward to the correct backend endpoint with JWT auth
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/chat/stream`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversationId}/message/stream`;
 
     const response = await globalThis.fetch(backendUrl, {
       method: 'POST',
@@ -64,6 +62,9 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
     });
 
   } catch (err) {
+    if (err && typeof err === 'object' && 'status' in err) {
+      throw err;
+    }
     console.error('Proxy error:', err);
     throw error(500, `Failed to proxy streaming request: ${err instanceof Error ? err.message : String(err)}`);
   }

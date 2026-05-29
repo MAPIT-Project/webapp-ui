@@ -84,131 +84,144 @@ export class StreamingConversationClient {
 
       let accumulatedContent = '';
       let accumulatedCitations: Citation[] = [];
+      let buffer = '';
+
+      const processLine = (line: string) => {
+        if (!line.startsWith('data: ')) return false;
+        try {
+          const data: StreamingEventData = JSON.parse(line.slice(6));
+
+          switch (data.type) {
+            case 'progress':
+              // Handle progress messages with step information
+              if (data.step !== undefined && data.total_steps) {
+                // This is an export progress message
+                onProgress?.(
+                  data.stage || 'exporting',
+                  data.message || '',
+                  {
+                    step: data.step,
+                    totalSteps: data.total_steps,
+                    type: 'export'
+                  }
+                );
+              } else {
+                // Regular progress message
+                onProgress?.(
+                  data.stage || 'processing',
+                  data.message || '',
+                  {
+                    routingDecision: (data as any).routing_decision,
+                    intentConfidence: (data as any).intent_confidence
+                  }
+                );
+              }
+              break;
+
+            case 'status':
+              onProgress?.(
+                data.stage || 'processing',
+                data.message || '',
+                {
+                  routingDecision: (data as any).routing_decision,
+                  intentConfidence: (data as any).intent_confidence
+                }
+              );
+              break;
+            
+            case 'conversation_name':
+              if (data.name && data.conversation_id) {
+                onConversationName?.(data.name, data.conversation_id);
+              }
+              break;
+
+            case 'agent_thinking':
+            case 'tool_call':
+            case 'tool_result':
+            case 'agent_iteration':
+              onAgentEvent?.(data);
+              break;
+
+            case 'response':
+              // Handle export response with download info
+              onProgress?.(
+                'export_complete',
+                'Export ready for download',
+                {
+                  downloadUrl: data.download_url,
+                  fileType: data.file_type,
+                  fileName: data.file_name,
+                  packageContents: data.package_contents,
+                  type: 'export_response'
+                }
+              );
+              break;
+
+            case 'token':
+            case 'chunk':
+              accumulatedContent += data.content || '';
+              onToken?.(data.content || '');
+              // Don't update database incrementally - too many requests cause issues
+              // We'll update only at the end
+              break;
+
+            case 'complete':
+              // Accumulate citations if provided
+              if (data.citations) {
+                accumulatedCitations = data.citations;
+              }
+              
+              // Final update with complete metadata - map to AIResponseData format
+              const aiResponseData = {
+                ai_provider: data.ai_provider,
+                ai_version: data.ai_version,
+                model_used: data.model_used,
+                data_source: data.data_source,
+                processing_time: data.processing_time,
+                projects_found: data.projects_found,
+                logs: data.logs,
+                context_used: data.context_used,
+                resolved_question: data.resolved_question,
+                follow_up_suggestions: data.follow_up_suggestions,
+                projects_discussed: data.projects_discussed,
+                citations: accumulatedCitations
+              };
+              console.log('Passing complete metadata to parent component');
+              onComplete?.(data);
+              return true; // End the stream
+
+            case 'error':
+              // Handle error - pass error to parent component
+              const errorMessage = data.details || data.error || 'An error occurred while processing your request';
+              console.log('Streaming error received:', data.error, 'Details:', data.details);
+              console.log('Passing error to parent component');
+              onError?.(errorMessage);
+              return true; // End the stream
+          }
+        } catch (e) {
+          console.warn('Failed to parse SSE data:', line);
+        }
+        return false;
+      };
 
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data: StreamingEventData = JSON.parse(line.slice(6));
-
-              switch (data.type) {
-                case 'progress':
-                  // Handle progress messages with step information
-                  if (data.step !== undefined && data.total_steps) {
-                    // This is an export progress message
-                    onProgress?.(
-                      data.stage || 'exporting',
-                      data.message || '',
-                      {
-                        step: data.step,
-                        totalSteps: data.total_steps,
-                        type: 'export'
-                      }
-                    );
-                  } else {
-                    // Regular progress message
-                    onProgress?.(
-                      data.stage || 'processing',
-                      data.message || '',
-                      {
-                        routingDecision: (data as any).routing_decision,
-                        intentConfidence: (data as any).intent_confidence
-                      }
-                    );
-                  }
-                  break;
-
-                case 'status':
-                  onProgress?.(
-                    data.stage || 'processing',
-                    data.message || '',
-                    {
-                      routingDecision: (data as any).routing_decision,
-                      intentConfidence: (data as any).intent_confidence
-                    }
-                  );
-                  break;
-                
-                case 'conversation_name':
-                  if (data.name && data.conversation_id) {
-                    onConversationName?.(data.name, data.conversation_id);
-                  }
-                  break;
-
-                case 'agent_thinking':
-                case 'tool_call':
-                case 'tool_result':
-                case 'agent_iteration':
-                  onAgentEvent?.(data);
-                  break;
-
-                case 'response':
-                  // Handle export response with download info
-                  onProgress?.(
-                    'export_complete',
-                    'Export ready for download',
-                    {
-                      downloadUrl: data.download_url,
-                      fileType: data.file_type,
-                      fileName: data.file_name,
-                      packageContents: data.package_contents,
-                      type: 'export_response'
-                    }
-                  );
-                  break;
-
-                case 'token':
-                  accumulatedContent += data.content || '';
-                  onToken?.(data.content || '');
-                  // Don't update database incrementally - too many requests cause issues
-                  // We'll update only at the end
-                  break;
-
-                case 'complete':
-                  // Accumulate citations if provided
-                  if (data.citations) {
-                    accumulatedCitations = data.citations;
-                  }
-                  
-                  // Final update with complete metadata - map to AIResponseData format
-                  const aiResponseData = {
-                    ai_provider: data.ai_provider,
-                    ai_version: data.ai_version,
-                    model_used: data.model_used,
-                    data_source: data.data_source,
-                    processing_time: data.processing_time,
-                    projects_found: data.projects_found,
-                    logs: data.logs,
-                    context_used: data.context_used,
-                    resolved_question: data.resolved_question,
-                    follow_up_suggestions: data.follow_up_suggestions,
-                    projects_discussed: data.projects_discussed,
-                    citations: accumulatedCitations
-                  };
-                  console.log('Passing complete metadata to parent component');
-                  onComplete?.(data);
-                  return; // End the stream
-
-                case 'error':
-                  // Handle error - pass error to parent component
-                  const errorMessage = data.details || data.error || 'An error occurred while processing your request';
-                  console.log('Streaming error received:', data.error, 'Details:', data.details);
-                  console.log('Passing error to parent component');
-                  onError?.(errorMessage);
-                  return; // End the stream
-              }
-            } catch (e) {
-              console.warn('Failed to parse SSE data:', line);
-            }
-          }
+          const finished = processLine(line);
+          if (finished) return;
         }
+      }
+
+      // Process any trailing bytes remaining in the buffer
+      if (buffer.length > 0) {
+        processLine(buffer);
       }
 
     } catch (error) {

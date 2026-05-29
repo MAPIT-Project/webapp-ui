@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
   const { conversation_id } = params;
   
   try {
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/conversation/${conversation_id}/reset-context`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversation_id}/context`;
     
     // Forward headers (excluding host and connection headers)
     const headers = new Headers();
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
     headers.set('Access-Control-Allow-Credentials', 'true');
     
     const response = await fetch(backendUrl, {
-      method: 'POST',
+      method: 'DELETE',
       headers: headers,
       credentials: 'include'
     });

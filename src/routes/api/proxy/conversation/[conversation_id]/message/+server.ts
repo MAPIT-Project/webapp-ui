@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
   const { conversation_id } = params;
   
   try {
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v2/conversation/${conversation_id}/message`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversation_id}/message`;
     
     // Get the request body
     const body = await request.json();

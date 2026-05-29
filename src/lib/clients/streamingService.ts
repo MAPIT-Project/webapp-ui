@@ -149,6 +149,7 @@ export class StreamingQueryService {
 							break;
 
 						case 'token':
+						case 'chunk':
 							result.tokens.push(data.content);
 							result.fullAnswer += data.content;
 							options.onToken?.(data.content, result.fullAnswer);

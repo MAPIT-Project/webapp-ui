@@ -34,6 +34,7 @@ export type SSEEventType =
   | 'tool_result'
   | 'section_update'
   | 'token'
+  | 'chunk'
   | 'agent_complete'
   | 'session_state'
   | 'error';
@@ -83,6 +84,11 @@ export interface TokenEvent extends BaseSSEEvent {
   content: string;
 }
 
+export interface ChunkEvent extends BaseSSEEvent {
+  type: 'chunk';
+  content: string;
+}
+
 export interface AgentCompleteEvent extends BaseSSEEvent {
   type: 'agent_complete';
   result: {
@@ -115,6 +121,7 @@ export type SSEEvent =
   | ToolResultEvent
   | SectionUpdateEvent
   | TokenEvent
+  | ChunkEvent
   | AgentCompleteEvent
   | SessionStateEvent
   | ErrorEvent;

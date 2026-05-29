@@ -229,6 +229,7 @@ function createProposalSessionStore() {
                   return { ...store, sections: updatedSections };
 
                 case 'token':
+                case 'chunk':
                   currentResponseText += event.content;
                   msg.content = currentResponseText;
                   return { 
