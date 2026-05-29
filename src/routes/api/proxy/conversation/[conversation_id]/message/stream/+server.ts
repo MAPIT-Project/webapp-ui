@@ -1,31 +1,58 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
+import { createProxyToken } from '$lib/server/jwt';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 
-export const POST: RequestHandler = async ({ params, request, fetch }) => {
+export const POST: RequestHandler = async ({ params, request, cookies }) => {
   const conversationId = params.conversation_id;
-  
+
   try {
     const requestBody = JSON.parse(await request.text());
-    
-    // Forward the request to the FastAPI backend (which handles message persistence)
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversationId}/message/stream`;
-    
+
+    // Verify user is authenticated with Supabase (for session validation)
+    const supabase = createSupabaseServerClient(cookies);
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      console.error('Auth error:', sessionError);
+      throw error(401, 'Unauthorized: No valid session');
+    }
+
+    // Get the actual user ID from Supabase session
+    const userId = session.user.id;
+
+    // Generate a JWT token for backend authentication
+    const backendToken = await createProxyToken();
+
+    // Transform request body to match backend ChatMessage schema
+    // Frontend sends: { message, include_context }
+    // Backend expects: { message, session_id, model }
+    const backendBody = {
+      message: requestBody.message,
+      session_id: conversationId,
+      model: requestBody.model || 'openai-gpt4o',
+    };
+
+    // Forward to the correct backend endpoint with JWT auth
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/chat/stream`;
+
     const response = await globalThis.fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
+        'Authorization': `Bearer ${backendToken}`,
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(backendBody)
     });
-    
+
     if (!response.ok) {
-      throw error(response.status, `Backend error: ${response.statusText}`);
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`Backend error ${response.status}: ${errorText}`);
+      throw error(response.status, `Backend error: ${response.statusText} - ${errorText}`);
     }
-    
-    // Stream the response directly to the client — no interception needed
-    // since the AI API handles saving messages
+
+    // Stream the response directly to the client
     return new Response(response.body, {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -35,9 +62,9 @@ export const POST: RequestHandler = async ({ params, request, fetch }) => {
         'Access-Control-Allow-Headers': '*',
       }
     });
-    
+
   } catch (err) {
     console.error('Proxy error:', err);
-    throw error(500, 'Failed to proxy streaming request');
+    throw error(500, `Failed to proxy streaming request: ${err instanceof Error ? err.message : String(err)}`);
   }
 };
