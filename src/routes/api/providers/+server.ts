@@ -2,7 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
-const BACKEND_URL = env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = env.BACKEND_URL || 'http://localhost:18000';
 
 export const GET: RequestHandler = async ({ fetch }) => {
 	try {

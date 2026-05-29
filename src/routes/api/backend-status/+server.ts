@@ -4,7 +4,7 @@ import { env } from '$env/dynamic/private';
 export const GET: RequestHandler = async ({ fetch }) => {
 	console.log('🔍 [BackendStatusAPI] Starting backend status check...');
 	const startTime = Date.now();
-	const backendUrl = env.BACKEND_URL || 'http://localhost:8000';
+	const backendUrl = env.BACKEND_URL || 'http://localhost:18000';
 	const healthUrl = `${backendUrl}/api/health`;
 
 	console.log('📡 [BackendStatusAPI] Backend URL:', backendUrl);

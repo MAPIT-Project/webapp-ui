@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
   const { conversation_id } = params;
   
   try {
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversation_id}/context`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:18000'}/api/v3/conversation/${conversation_id}/context`;
     
     // Forward headers (excluding host and connection headers)
     const headers = new Headers();

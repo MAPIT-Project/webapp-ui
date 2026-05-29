@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 
-const BACKEND_URL = env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = env.BACKEND_URL || 'http://localhost:18000';
 
 async function proxyRequest(event: any) {
   const { params, request, fetch } = event;

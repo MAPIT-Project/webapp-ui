@@ -6,7 +6,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
   const { conversation_id } = params;
   
   try {
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversation_id}/context`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:18000'}/api/v3/conversation/${conversation_id}/context`;
     
     const response = await fetch(backendUrl, {
       method: 'GET',
@@ -39,7 +39,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
   const { conversation_id } = params;
   
   try {
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversation_id}/context`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:18000'}/api/v3/conversation/${conversation_id}/context`;
     
     // Get the request body
     const body = await request.json();

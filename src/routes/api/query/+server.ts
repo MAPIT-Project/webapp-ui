@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { aiQueryRateLimit, extractClientIP } from '$lib/server/rateLimit';
 import { env } from '$env/dynamic/private';
 
-const CORDIS_API_BASE_URL = env.BACKEND_URL || 'http://localhost:8000';
+const CORDIS_API_BASE_URL = env.BACKEND_URL || 'http://localhost:18000';
 
 interface QueryRequest {
 	question: string;

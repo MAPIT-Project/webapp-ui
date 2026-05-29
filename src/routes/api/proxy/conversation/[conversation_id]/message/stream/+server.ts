@@ -33,7 +33,7 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
     };
 
     // Forward to the correct backend endpoint with JWT auth
-    const backendUrl = `${env.BACKEND_URL || 'http://localhost:8000'}/api/v3/conversation/${conversationId}/message/stream`;
+    const backendUrl = `${env.BACKEND_URL || 'http://localhost:18000'}/api/v3/conversation/${conversationId}/message/stream`;
 
     const response = await globalThis.fetch(backendUrl, {
       method: 'POST',
