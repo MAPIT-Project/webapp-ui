@@ -253,7 +253,20 @@
 						});
 					}
 					// Tool Result (Observation)
-					if (step.observation) {
+					if (step.tool_calls && Array.isArray(step.tool_calls) && step.tool_calls.length > 0) {
+						step.tool_calls.forEach((tc: any) => {
+							events.push({
+								type: 'tool_result',
+								stage: 'tool_complete',
+								tool_name: tc.tool_name,
+								result_summary: typeof tc.result_summary === 'string' && tc.result_summary.length > 100 
+									? tc.result_summary.substring(0, 100) + '...' 
+									: JSON.stringify(tc.result_summary || '').substring(0, 100) + '...',
+								success: tc.success !== undefined ? tc.success : true,
+								iteration: step.step
+							});
+						});
+					} else if (step.observation) {
 						events.push({
 							type: 'tool_result',
 							stage: 'tool_complete',
