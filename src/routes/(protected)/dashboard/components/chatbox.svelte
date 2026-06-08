@@ -122,9 +122,9 @@
 
 <div class="mx-auto w-full max-w-4xl" in:scale={{ duration: 300, start: 0.98 }}>
 	<!-- Enhanced Input Section -->
-	<form onsubmit={handleSubmit} class="relative mb-6" in:fade={{ duration: 200 }}>
+	<form onsubmit={handleSubmit} class="relative mb-8" in:fade={{ duration: 200 }}>
 		<div
-			class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800/50 to-gray-900/50 shadow-2xl backdrop-blur-sm"
+			class="relative overflow-hidden rounded-2xl bg-[#141414]/90 border border-[#2A2A2A] shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-md focus-within:border-[#A855F7]/50 focus-within:ring-1 focus-within:ring-[#A855F7]/50 transition-all duration-300"
 		>
 			<input
 				type="text"
@@ -132,27 +132,25 @@
 				placeholder={isProcessing
 					? 'Creating conversation...'
 					: 'What would you like to explore today?'}
-				class="w-full rounded-2xl border border-[#4A4A57]/30 bg-[#383842]/80 px-6 py-5 pr-16 text-lg text-white placeholder-gray-400 backdrop-blur-sm transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+				class="w-full bg-transparent px-6 py-5 pr-16 text-lg text-white placeholder-[#6B7280] focus:outline-none"
 				disabled={isProcessing}
 			/>
 			<button
 				type="submit"
-				class="group absolute right-4 top-1/2 -translate-y-1/2 transform rounded-xl p-3 text-gray-400 transition-all duration-200 hover:bg-white/10 hover:text-white disabled:opacity-50"
+				class="group absolute right-3 top-1/2 -translate-y-1/2 transform rounded-xl p-2.5 text-[#6B7280] transition-all duration-200 hover:bg-[#A855F7] hover:text-white disabled:opacity-50"
 				disabled={isProcessing || !userInput.trim()}
 			>
 				{#if isProcessing}
 					<div
-						class="h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"
+						class="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"
 					></div>
 				{:else}
 					<div class="transition-transform group-hover:scale-110">
-						<Icon name="send" iconClass="text-current w-5 h-5" />
+						<Icon name="send" className="text-current w-5 h-5" />
 					</div>
 				{/if}
 			</button>
 		</div>
-
-		
 	</form>
 
 	<!-- Enhanced Error Display -->
@@ -200,15 +198,15 @@
 					{#each examples as example, i}
 						<button
 							onclick={() => startWithExample(example.text)}
-							class="inline-flex items-center gap-2 rounded-3xl border border-[#2C2C2C] bg-[#1E1E1E] px-3 py-2 text-sm text-[#E0E0E0] transition-colors hover:border-[#4F4F4F] hover:bg-[#2C2C2C] disabled:opacity-60"
+							class="inline-flex items-center gap-2.5 rounded-2xl border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-2.5 text-sm text-[#9CA3AF] transition-all hover:border-[#A855F7]/40 hover:bg-[#1E1E1E]/80 hover:text-white disabled:opacity-60 shadow-lg shadow-black/20"
 							disabled={isProcessing}
 							in:scale={{ duration: 150, delay: i * 30, start: 0.98 }}
 						>
 							<span
-								class="inline-block size-2.5 rounded-full"
-								style="background-color: {example.color}"
+								class="inline-block size-2 rounded-full shadow-[0_0_8px_currentColor]"
+								style="color: {example.color}; background-color: currentColor;"
 							></span>
-							<span class="whitespace-nowrap opacity-80">{example.text}</span>
+							<span class="whitespace-nowrap font-medium tracking-wide">{example.text}</span>
 						</button>
 					{/each}
 				</div>

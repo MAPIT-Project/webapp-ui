@@ -217,11 +217,19 @@ function createProposalSessionStore() {
                 case 'section_update':
                   // Update the actual section data
                   const updatedSections = { ...store.sections };
-                  if (updatedSections[event.section_id]) {
-                    updatedSections[event.section_id] = {
-                      ...updatedSections[event.section_id],
+                  const targetId = event.section_id;
+                  
+                  let matchedKey = targetId;
+                  if (!updatedSections[targetId]) {
+                    // Try to find it by partial match if it was just 'objectives' instead of 'excellence.objectives'
+                    matchedKey = Object.keys(updatedSections).find(k => k.endsWith(`.${targetId}`)) || targetId;
+                  }
+
+                  if (updatedSections[matchedKey]) {
+                    updatedSections[matchedKey] = {
+                      ...updatedSections[matchedKey],
                       content: event.content,
-                      word_count: event.content.split(/\s+/).length, // Rough count
+                      word_count: event.content ? event.content.split(/\s+/).length : 0,
                       status: 'draft',
                       last_updated: new Date().toISOString()
                     };
@@ -243,6 +251,16 @@ function createProposalSessionStore() {
                   if (!msg.content && event.result.answer) {
                     msg.content = event.result.answer;
                   }
+                  
+                  // Trigger a background refresh of the session to ensure we have the absolute latest document state
+                  // (including quality scores, gaps, etc. which are not streamed incrementally)
+                  setTimeout(() => {
+                    const currentId = get(proposalSessionStore).sessionId;
+                    if (currentId) {
+                      proposalSessionStore.loadSession(currentId);
+                    }
+                  }, 1000);
+
                   return { 
                     ...store, 
                     currentThought: null,

@@ -138,7 +138,7 @@ export class ProposalService {
    */
   async createProposal(data: {
     call_id: string;
-    proposal_title: string;
+    proposal_title?: string;
     proposal_acronym?: string;
     proposal_type?: string;
   }): Promise<{ proposal: Proposal; success: boolean } | null> {
@@ -179,6 +179,27 @@ export class ProposalService {
     } catch (error) {
       console.error('Error fetching proposals:', error);
       return null;
+    }
+  }
+
+  /**
+   * Delete a proposal
+   */
+  async deleteProposal(proposalId: number): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/proposal-document/${proposalId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        console.error('Error deleting proposal:', response.status, response.statusText);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting proposal:', error);
+      return false;
     }
   }
 

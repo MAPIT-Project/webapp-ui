@@ -1,21 +1,19 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { fade, fly } from 'svelte/transition';
   import { getCurrentClient } from '$lib/clients/clientService';
   import { proposalService } from '$lib/clients/proposalService';
   import type { Proposal } from '$lib/types/proposal';
   import Icon from '$lib/components/generic/icon.svelte';
+  import Modal from '$lib/components/generic/modal.svelte';
 
   let proposals = $state<Proposal[]>([]);
   let isLoading = $state(true);
   let error = $state<string | null>(null);
   let userId = $state<string>('');
   let showNewProposalDialog = $state(false);
-  let newProposalTitle = $state('');
   let newProposalCallId = $state('');
-  let newProposalAcronym = $state('');
-  let newProposalType = $state('RIA');
   let isCreatingProposal = $state(false);
-  let isFetchingCall = $state(false);
 
   // Load proposals on init
   let _proposalsInit = false;
@@ -52,30 +50,9 @@
     showNewProposalDialog = true;
   }
 
-  async function handleFetchCall() {
-    if (!newProposalCallId.trim()) return;
-
-    isFetchingCall = true;
-    error = null;
-
-    try {
-      const callData = await proposalService.lookupCall(newProposalCallId);
-      if (callData) {
-        newProposalTitle = callData.title;
-        newProposalType = callData.type;
-      } else {
-        error = 'Call not found. Please enter details manually.';
-      }
-    } catch (err) {
-      console.error('Error fetching call:', err);
-    } finally {
-      isFetchingCall = false;
-    }
-  }
-
   async function handleCreateProposal() {
-    if (!newProposalTitle.trim() || !newProposalCallId.trim()) {
-      error = 'Please fill in all required fields';
+    if (!newProposalCallId.trim()) {
+      error = 'Please enter a Call ID';
       return;
     }
 
@@ -84,10 +61,7 @@
 
     try {
       const result = await proposalService.createProposal({
-        call_id: newProposalCallId,
-        proposal_title: newProposalTitle,
-        proposal_acronym: newProposalAcronym || '',
-        proposal_type: newProposalType
+        call_id: newProposalCallId
       });
 
       if (result?.success) {
@@ -96,10 +70,7 @@
         
         // Close dialog and reset form
         showNewProposalDialog = false;
-        newProposalTitle = '';
         newProposalCallId = '';
-        newProposalAcronym = '';
-        newProposalType = 'RIA';
         
         // Navigate to the new proposal editor
         goto(`/dashboard/proposals/${result.proposal.proposal_id}/edit`);
@@ -116,6 +87,24 @@
 
   function handleEditProposal(proposalId: number) {
     goto(`/dashboard/proposals/${proposalId}/edit`);
+  }
+
+  async function handleDeleteProposal(proposalId: number, title: string) {
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+      return;
+    }
+    
+    try {
+      const success = await proposalService.deleteProposal(proposalId);
+      if (success) {
+        proposals = proposals.filter(p => p.proposal_id !== proposalId);
+      } else {
+        alert('Failed to delete proposal');
+      }
+    } catch (err) {
+      console.error('Error deleting proposal:', err);
+      alert('Failed to delete proposal');
+    }
   }
 
   function getStatusColor(status: string): string {
@@ -135,60 +124,57 @@
 
   function closeNewProposalDialog() {
     showNewProposalDialog = false;
-    newProposalTitle = '';
     newProposalCallId = '';
-    newProposalAcronym = '';
-    newProposalType = 'RIA';
     error = null;
   }
 </script>
 
 <!-- Modern dark grey gradient background -->
-<div
-  class="relative flex h-screen w-full flex-col overflow-hidden bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414]"
->
+<div class="min-h-screen w-full bg-gradient-to-b from-[#1A1A1A] to-[#141414] text-[#F5F5F5] p-6 sm:p-8 lg:p-10 relative overflow-y-auto">
   <!-- Subtle pattern overlay for texture -->
   <div
     class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] opacity-[0.02]"
   ></div>
 
-  <!-- Top header with modern backdrop -->
-  <div class="relative z-30 border-b border-[#3A3A3A] bg-[#1E1E1E]/70 backdrop-blur-md px-6 py-4">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <Icon name="description" className="text-[#2196F3] text-xl" />
-        <h1 class="text-2xl font-bold text-[#E0E0E0]">Proposals</h1>
+  <div class="mx-auto max-w-5xl relative z-10" in:fade={{ duration: 300 }}>
+    <!-- Header -->
+    <header class="mb-10 flex items-center justify-between" in:fly={{ y: -10, duration: 300 }}>
+      <div>
+        <p class="text-indigo-400/80 font-medium text-sm mb-1 tracking-wider uppercase">Manage</p>
+        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-teal-400 bg-clip-text text-transparent flex items-center gap-3">
+          <Icon name="description" className="text-purple-400 text-3xl" />
+          Proposals
+        </h1>
       </div>
       
       <button
-        class="flex items-center gap-2 px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors"
+        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl transition-all duration-300 font-medium shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] hover:-translate-y-0.5"
         onclick={handleNewProposal}
       >
         <Icon name="add" />
         New Proposal
       </button>
-    </div>
-  </div>
+    </header>
 
-  <!-- Content -->
-  <main class="relative z-10 flex h-full w-full flex-1 flex-col overflow-hidden pt-8">
-    <div class="px-6 py-4">
+    <!-- Content -->
+    <main class="w-full flex-1 flex-col">
+      <div>
       {#if isLoading}
         <div class="flex items-center justify-center h-64">
           <div class="text-center space-y-4">
-            <div class="w-12 h-12 border-4 border-[#2196F3] border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p class="text-[#B0B0B0]">Loading proposals...</p>
+            <div class="w-12 h-12 border-4 border-[#A855F7] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="text-[#9CA3AF]">Loading proposals...</p>
           </div>
         </div>
       {:else if error}
         <div class="text-center py-12">
-          <div class="text-red-400 text-xl mb-4">
+          <div class="text-[#F44336] text-xl mb-4">
             <Icon name="error" className="w-16 h-16 mx-auto" />
           </div>
-          <h2 class="text-xl font-semibold text-[#E0E0E0] mb-2">Error</h2>
-          <p class="text-[#B0B0B0] mb-6">{error}</p>
+          <h2 class="text-xl font-semibold text-white mb-2">Error</h2>
+          <p class="text-[#9CA3AF] mb-6">{error}</p>
           <button
-            class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors"
+            class="px-4 py-2 bg-[#A855F7] text-white rounded-xl hover:bg-[#9333EA] transition-colors font-medium"
             onclick={() => window.location.reload()}
           >
             Try Again
@@ -196,13 +182,13 @@
         </div>
       {:else if proposals.length === 0}
         <div class="text-center py-12">
-          <div class="text-gray-400 text-xl mb-4">
+          <div class="text-[#6B7280] text-xl mb-4">
             <Icon name="description" className="w-16 h-16 mx-auto" />
           </div>
-          <h2 class="text-xl font-semibold text-[#E0E0E0] mb-2">No proposals yet</h2>
-          <p class="text-[#B0B0B0] mb-6">Create your first proposal to get started</p>
+          <h2 class="text-xl font-semibold text-white mb-2">No proposals yet</h2>
+          <p class="text-[#9CA3AF] mb-6">Create your first proposal to get started</p>
           <button
-            class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors"
+            class="px-4 py-2 bg-[#A855F7] text-white rounded-xl hover:bg-[#9333EA] transition-colors font-medium"
             onclick={handleNewProposal}
           >
             Create Proposal
@@ -211,11 +197,11 @@
       {:else}
         <div class="space-y-4">
           {#each proposals as proposal (JSON.stringify(proposal) + '-' + Math.random())}
-            <div class="bg-[#1E1E1E]/50 border border-[#3A3A3A] rounded-lg p-6 hover:bg-[#2C2C2C]/50 transition-colors">
+            <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-6 hover:bg-[#1E1E1E]/80 hover:border-[#A855F7]/40 transition-all">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
-                    <h3 class="text-lg font-semibold text-[#E0E0E0]">
+                    <h3 class="text-lg font-semibold text-white">
                       {proposal.proposal_title}
                     </h3>
                     <span class="px-2 py-1 rounded-full text-xs font-medium {getStatusColor(proposal.status)}">
@@ -223,7 +209,7 @@
                     </span>
                   </div>
                   
-                  <div class="flex items-center gap-4 text-sm text-[#B0B0B0] mb-4">
+                  <div class="flex items-center gap-4 text-sm text-[#9CA3AF] mb-4">
                     <span class="flex items-center gap-1">
                       <Icon name="tag" className="w-4 h-4" />
                       {proposal.call_id}
@@ -241,26 +227,33 @@
                   <!-- Progress bar -->
                   <div class="mb-4">
                     <div class="flex justify-between text-sm mb-1">
-                      <span class="text-[#B0B0B0]">Progress</span>
-                      <span class="text-[#E0E0E0]">{proposal.progress.completion_percentage}%</span>
+                      <span class="text-[#9CA3AF]">Progress</span>
+                      <span class="text-white font-medium">{proposal.progress.completion_percentage}%</span>
                     </div>
-                    <div class="w-full bg-[#2C2C2C] rounded-full h-2">
+                    <div class="w-full bg-[#141414] rounded-full h-2">
                       <div 
-                        class="bg-gradient-to-r from-[#2196F3] to-[#42A5F5] h-2 rounded-full transition-all duration-300"
+                        class="bg-gradient-to-r from-[#A855F7] to-[#D8B4FE] h-2 rounded-full transition-all duration-300"
                         style="width: {proposal.progress.completion_percentage}%"
                       ></div>
                     </div>
                   </div>
                   
-                  <div class="flex items-center gap-4 text-sm text-[#B0B0B0]">
+                  <div class="flex items-center gap-4 text-sm text-[#9CA3AF]">
                     <span>{proposal.progress.completed_sections} of {proposal.progress.total_sections} sections</span>
                     <span>~{proposal.progress.estimated_pages} pages</span>
                   </div>
                 </div>
                 
-                <div class="ml-6">
+                <div class="ml-6 flex items-center gap-2">
                   <button
-                    class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors flex items-center gap-2"
+                    class="p-2 bg-[#F44336]/10 text-[#F44336] rounded-xl hover:bg-[#F44336] hover:text-white transition-colors flex items-center justify-center"
+                    onclick={() => handleDeleteProposal(proposal.proposal_id, proposal.proposal_title)}
+                    title="Delete Proposal"
+                  >
+                    <Icon name="delete" />
+                  </button>
+                  <button
+                    class="px-4 py-2 bg-[#A855F7]/10 text-[#A855F7] rounded-xl hover:bg-[#A855F7] hover:text-white transition-colors flex items-center gap-2 font-medium"
                     onclick={() => handleEditProposal(proposal.proposal_id)}
                   >
                     <Icon name="edit" />
@@ -274,102 +267,71 @@
       {/if}
     </div>
   </main>
+  </div>
 
   <!-- New Proposal Dialog -->
-  {#if showNewProposalDialog}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div class="bg-[#1E1E1E] border border-[#3A3A3A] rounded-lg p-6 w-full max-w-md">
-        <h2 class="text-xl font-semibold text-[#E0E0E0] mb-4">Create New Proposal</h2>
+  <Modal
+    bind:isOpen={showNewProposalDialog}
+    title="Create New Proposal"
+    on:cancel={closeNewProposalDialog}
+    background="bg-[#121212]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl max-w-xl w-full"
+    fullWidth={true}
+  >
+    <div slot="content" class="w-full text-[#E0E0E0] p-6">
+        <div class="mb-6 flex justify-center">
+          <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/5 text-purple-400 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+            <Icon name="add_circle" iconSize="3xl" />
+          </div>
+        </div>
         
+        <p class="text-center text-[#B0B0B0] mb-8 max-w-md mx-auto">
+          Enter a Call ID and our autonomous agent will automatically fetch the grant guidelines, objectives, and parameters to set up your intelligent workspace.
+        </p>
+
         {#if error}
-          <div class="mb-4 p-3 bg-red-900/20 border border-red-800 rounded-lg text-red-400 text-sm">
+          <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-3">
+            <Icon name="error" />
             {error}
           </div>
         {/if}
         
-        <div class="space-y-4">
+        <div class="space-y-4 mb-8">
           <div>
-            <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Call ID *</label>
-            <div class="flex gap-2">
-              <input
-                type="text"
-                bind:value={newProposalCallId}
-                placeholder="Enter call ID (e.g., HORIZON-CL5-2025-D3-01)"
-                class="flex-1 px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
-              />
-              <button
-                class="px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#B0B0B0] hover:bg-[#3A3A3A] hover:text-[#E0E0E0] transition-colors flex items-center gap-2"
-                onclick={handleFetchCall}
-                disabled={isFetchingCall}
-                title="Fetch call details from EU Portal"
-              >
-                {#if isFetchingCall}
-                  <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                {:else}
-                  <Icon name="search" className="w-4 h-4" />
-                {/if}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Proposal Title *</label>
+            <label for="newProposalCallId" class="block text-sm font-medium text-gray-300 mb-2">Call Identifier *</label>
             <input
+              id="newProposalCallId"
               type="text"
-              bind:value={newProposalTitle}
-              placeholder="Enter proposal title"
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
+              bind:value={newProposalCallId}
+              placeholder="e.g., HORIZON-CL5-2024-D2-01"
+              class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all text-lg font-mono shadow-inner"
             />
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Acronym</label>
-            <input
-              type="text"
-              bind:value={newProposalAcronym}
-              placeholder="Enter acronym (optional)"
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] placeholder-[#B0B0B0] focus:outline-none focus:border-[#2196F3]"
-            />
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-[#E0E0E0] mb-1">Type</label>
-            <select
-              bind:value={newProposalType}
-              class="w-full px-3 py-2 bg-[#2C2C2C] border border-[#4F4F4F] rounded-lg text-[#E0E0E0] focus:outline-none focus:border-[#2196F3]"
-            >
-              <option value="RIA">RIA</option>
-              <option value="IA">IA</option>
-              <option value="CSA">CSA</option>
-              <option value="MSCA">MSCA</option>
-            </select>
           </div>
         </div>
         
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-4 mt-8 border-t border-white/10 pt-6">
           <button
-            class="px-4 py-2 bg-[#2C2C2C] text-[#E0E0E0] rounded-lg hover:bg-[#4F4F4F] transition-colors"
+            class="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl hover:bg-white/10 transition-colors font-medium"
             onclick={closeNewProposalDialog}
             disabled={isCreatingProposal}
           >
             Cancel
           </button>
           <button
-            class="px-4 py-2 bg-[#2196F3] text-white rounded-lg hover:bg-[#42A5F5] transition-colors flex items-center gap-2"
+            class="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl transition-all duration-300 flex items-center gap-2 font-medium shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)]"
             onclick={handleCreateProposal}
             disabled={isCreatingProposal}
           >
             {#if isCreatingProposal}
-              <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Creating...
+              <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Initializing Workspace...
             {:else}
-              Create
+              <Icon name="rocket_launch" />
+              Create Proposal
             {/if}
           </button>
         </div>
-      </div>
     </div>
-  {/if}
+  </Modal>
 
   <!-- Subtle bottom gradient overlay -->
   <div

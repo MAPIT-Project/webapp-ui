@@ -1,60 +1,49 @@
-import { json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { Proposal } from '$lib/types/proposal';
-import { mockProposals } from '$lib/server/mockData';
+import { env } from '$env/dynamic/private';
 
-// Generate a new proposal ID
-function generateNewProposalId(): number {
-  return Math.max(...mockProposals.map(p => p.proposal_id), 0) + 1;
+const BACKEND_URL = env.BACKEND_URL || 'http://localhost:18000';
+
+async function proxyRequest(event: any) {
+  const { request, fetch } = event;
+  
+  // Extract query params if any
+  const urlObj = new URL(request.url);
+  const searchParams = urlObj.search;
+  
+  const targetUrl = `${BACKEND_URL}/api/proposal-document${searchParams}`;
+
+  try {
+    const headers = new Headers(request.headers);
+    headers.delete('host');
+    headers.delete('connection');
+    headers.delete('content-length');
+
+    const options: RequestInit = {
+      method: request.method,
+      headers,
+      duplex: 'half' // Required for streaming bodies in some environments
+    } as any;
+
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      options.body = request.body;
+    }
+
+    const response = await fetch(targetUrl, options);
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    });
+  } catch (err) {
+    console.error(`Proxy error for /api/proposal-document:`, err);
+    throw error(502, 'Bad Gateway');
+  }
 }
 
-// GET /api/proposal-document - Get all proposals
-export const GET: RequestHandler = async () => {
-  return json(mockProposals);
-};
-
-// POST /api/proposal-document - Create a new proposal
-export const POST: RequestHandler = async ({ request }) => {
-  try {
-    const body = await request.json();
-    
-    // Validate required fields
-    if (!body.call_id || !body.proposal_title) {
-      return json({ error: 'Missing required fields: call_id, proposal_title' }, { status: 400 });
-    }
-    
-    // Create a new proposal
-    const newProposalId = generateNewProposalId();
-    const newProposal: Proposal = {
-      proposal_id: newProposalId,
-      call_id: body.call_id,
-      proposal_title: body.proposal_title,
-      proposal_acronym: body.proposal_acronym || '',
-      proposal_type: body.proposal_type || 'RIA',
-      status: 'draft',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      sections: [], // Initialize with empty sections or default template
-      progress: {
-        total_sections: 12,
-        completed_sections: 0,
-        completion_percentage: 0,
-        total_words: 0,
-        estimated_pages: 0,
-        average_quality: 0
-      }
-    };
-    
-    // Add to our shared mock data
-    mockProposals.push(newProposal);
-    
-    return json({
-      success: true,
-      proposal: newProposal,
-      message: 'Proposal created successfully'
-    });
-  } catch (error) {
-    console.error('Error creating proposal:', error);
-    return json({ error: 'Failed to create proposal' }, { status: 500 });
-  }
-};
+export const GET: RequestHandler = proxyRequest;
+export const POST: RequestHandler = proxyRequest;
+export const PUT: RequestHandler = proxyRequest;
+export const PATCH: RequestHandler = proxyRequest;
+export const DELETE: RequestHandler = proxyRequest;

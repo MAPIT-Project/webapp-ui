@@ -3,7 +3,6 @@
     proposalSessionStore, 
     activeSection 
   } from '$lib/stores/proposalSessionStore';
-  import { PROPOSAL_SECTIONS } from '$lib/types/proposal';
   import type { SessionSection } from '$lib/types/proposal-session';
   import SectionNavItem from './section-nav-item.svelte';
   import Icon from '$lib/components/generic/icon.svelte';
@@ -17,6 +16,7 @@
   let currentSectionData: SessionSection | null = null;
   let isEditing = false;
   let editContent = '';
+  let dynamicCategories: any[] = [];
 
   // Subscribe to the whole store to react to changes
   proposalSessionStore.subscribe(state => {
@@ -30,6 +30,27 @@
       estimated_pages: Math.ceil(state.totalWords / 500) // Rough estimate
     };
     loading = state.loading;
+
+    // Calculate dynamic categories from sections
+    const cats: Record<string, { name: string, key: string, sections: SessionSection[] }> = {};
+    for (const section of Object.values(sections)) {
+      const parts = section.section_id.split('.');
+      const categoryKey = parts[0] || 'other';
+      if (!cats[categoryKey]) {
+        const displayName = categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1);
+        cats[categoryKey] = { name: displayName, key: categoryKey, sections: [] };
+      }
+      cats[categoryKey].sections.push(section);
+    }
+    const order = ['excellence', 'impact', 'implementation', 'pi'];
+    dynamicCategories = Object.values(cats).sort((a, b) => {
+      const indexA = order.indexOf(a.key);
+      const indexB = order.indexOf(b.key);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
   });
 
   activeSection.subscribe(value => {
@@ -131,14 +152,13 @@
     <!-- Navigation Sidebar -->
     <div class="w-80 border-r border-[#40404033] bg-[#1A1A1A]/30 overflow-y-auto">
       <div class="p-4 space-y-6">
-        {#each Object.entries(PROPOSAL_SECTIONS) as [categoryKey, categoryData]}
-          {@const categorySections = Object.values(sections).filter(s => s.section_id.startsWith(`${categoryKey}.`))}
-          {@const categoryProgress = calculateCategoryProgress(categorySections)}
+        {#each dynamicCategories as category}
+          {@const categoryProgress = calculateCategoryProgress(category.sections)}
           
           <div class="space-y-3">
             <div class="flex items-center justify-between px-3">
               <h3 class="text-xs font-bold text-[#B0B0B0] uppercase tracking-wider">
-                {categoryData.name}
+                {category.name}
               </h3>
               <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-[#2A2A2A] text-[#B0B0B0]">
                 {categoryProgress}%
@@ -153,17 +173,13 @@
             </div>
             
             <div class="space-y-1">
-              {#each Object.entries(categoryData.subsections) as [subsectionKey, subsectionName]}
-                {@const sectionId = `${categoryKey}.${subsectionKey}`}
-                {@const section = sections[sectionId]}
-                {#if section}
-                  <SectionNavItem 
-                    {section}
-                    active={currentSectionData?.section_id === sectionId}
-                    level={2}
-                    on:click={handleSectionClick}
-                  />
-                {/if}
+              {#each category.sections as section}
+                <SectionNavItem 
+                  {section}
+                  active={currentSectionData?.section_id === section.section_id}
+                  level={2}
+                  on:click={handleSectionClick}
+                />
               {/each}
             </div>
           </div>
