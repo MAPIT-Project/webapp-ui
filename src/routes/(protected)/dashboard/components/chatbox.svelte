@@ -98,17 +98,27 @@
 	}
 
 	let _chatboxInit = false;
+	// Add event listener for capabilities modal questions
 	$effect(() => {
-		if (_chatboxInit) return;
-		_chatboxInit = true;
-		Promise.resolve().then(updateArrows);
+		if (!_chatboxInit) {
+			_chatboxInit = true;
+			Promise.resolve().then(updateArrows);
+		}
+		
+		const handleFillChatInput = (e: Event) => {
+			const customEvent = e as CustomEvent<string>;
+			if (customEvent.detail) {
+				userInput = customEvent.detail;
+				handleSubmit();
+			}
+		};
+		
+		window.addEventListener('mapit:fillChatInput', handleFillChatInput);
+		return () => {
+			window.removeEventListener('mapit:fillChatInput', handleFillChatInput);
+		};
 	});
 </script>
-
-<svelte:window on:mapit:fillChatInput={(e: any) => {
-	userInput = e.detail;
-	handleSubmit();
-}} />
 
 <div class="mx-auto w-full max-w-4xl" in:scale={{ duration: 300, start: 0.98 }}>
 	<!-- Enhanced Input Section -->

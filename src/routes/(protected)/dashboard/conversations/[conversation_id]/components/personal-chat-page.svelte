@@ -748,12 +748,22 @@ if (
 	function handleStopStreaming() {
 		stopStreaming();
 	}
-</script>
 
-<svelte:window on:mapit:fillChatInput={(e: any) => {
-	userInput = e.detail;
-	handleSubmit();
-}} />
+	$effect(() => {
+		const handleFillChatInput = (e: Event) => {
+			const customEvent = e as CustomEvent<string>;
+			if (customEvent.detail) {
+				userInput = customEvent.detail;
+				handleSubmit();
+			}
+		};
+		
+		window.addEventListener('mapit:fillChatInput', handleFillChatInput);
+		return () => {
+			window.removeEventListener('mapit:fillChatInput', handleFillChatInput);
+		};
+	});
+</script>
 
 <!-- Modern dark grey gradient background -->
 <div

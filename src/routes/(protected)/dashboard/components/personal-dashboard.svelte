@@ -89,6 +89,7 @@
 					</div>
 				</button>
 
+				<!-- HIDDEN FOR DEMO
 				<button
 					onclick={() => goto('/dashboard/proposals')}
 					class="group flex items-center gap-4 rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] p-4 text-left transition-all hover:border-[#A855F7]/40 hover:bg-[#1E1E1E]/80"
@@ -101,6 +102,7 @@
 						<span class="text-xs text-[#6B7280]">Draft a grant application</span>
 					</div>
 				</button>
+				-->
 
 				<button
 					onclick={() => goto('/dashboard/collaborations')}
@@ -162,59 +164,11 @@
 					{/if}
 				</section>
 
-				<!-- Recent Proposals -->
+				<!-- HIDDEN FOR DEMO: Recent Proposals 
 				<section in:fly={{ y: 15, delay: 150, duration: 300 }}>
-					<div class="flex items-center justify-between mb-4">
-						<h2 class="text-sm font-medium text-[#9CA3AF] uppercase tracking-wider">Proposals</h2>
-						<button onclick={() => goto('/dashboard/proposals')} class="text-xs text-[#6B7280] hover:text-[#A855F7] transition-colors">
-							View all
-						</button>
-					</div>
-
-					{#if proposals.length === 0}
-						<div class="rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] p-8 text-center">
-							<div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[#2A2A2A]">
-								<Icon name="description" iconSize="xl" />
-							</div>
-							<p class="text-sm text-[#6B7280] mb-3">No proposals yet</p>
-							<button
-								onclick={() => goto('/dashboard/proposals')}
-								class="text-xs font-medium text-[#A855F7] hover:text-[#D8B4FE] transition-colors"
-							>
-								Create your first proposal
-							</button>
-						</div>
-					{:else}
-						<div class="rounded-xl border border-[#2A2A2A] bg-[#1E1E1E] divide-y divide-[#2A2A2A]">
-							{#each proposals as proposal, i}
-								<a
-									href="/dashboard/proposals/{proposal.proposal_id}/edit"
-									class="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#252525] first:rounded-t-xl last:rounded-b-xl"
-									in:fly={{ y: 8, delay: 150 + i * 40, duration: 250 }}
-								>
-									<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#2A2A2A] text-[#6B7280] group-hover:text-[#A855F7] transition-colors">
-										<Icon name="description" iconSize="sm" />
-									</div>
-									<div class="flex-1 min-w-0">
-										<span class="block truncate text-sm text-[#B0B0B0] group-hover:text-white transition-colors">
-											{proposal.proposal_title || 'Untitled'}
-										</span>
-									</div>
-									{#if proposal.status}
-										<span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium
-											{proposal.status === 'draft' ? 'bg-[#2A2A2A] text-[#9CA3AF]' : 
-											 proposal.status === 'approved' ? 'bg-[#10B981]/10 text-[#10B981]' : 
-											 proposal.status === 'rejected' ? 'bg-[#F44336]/10 text-[#F44336]' :
-											 'bg-[#3B82F6]/10 text-[#93C5FD]'}">
-											{proposal.status}
-										</span>
-									{/if}
-									<Icon name="chevron_right" className="w-4 h-4 text-[#404040] group-hover:text-[#6B7280] transition-colors" iconSize="sm" />
-								</a>
-							{/each}
-						</div>
-					{/if}
+					...
 				</section>
+				-->
 			</div>
 
 		</div>

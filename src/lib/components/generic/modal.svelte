@@ -144,7 +144,7 @@
 		<div class="relative z-[100]" aria-labelledby={title} role="dialog" aria-modal="true">
 			<div
 				id="modal-backdrop"
-				class="fixed left-0 top-0 z-40 h-full w-full overflow-hidden bg-black/50"
+				class="fixed left-0 top-0 z-40 h-full w-full overflow-hidden bg-black/80"
 				transition:fade={{ duration: 300 }}
 			></div>
 
