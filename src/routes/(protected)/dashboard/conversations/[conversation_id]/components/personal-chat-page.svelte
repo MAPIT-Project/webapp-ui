@@ -750,6 +750,11 @@ if (
 	}
 </script>
 
+<svelte:window on:mapit:fillChatInput={(e: any) => {
+	userInput = e.detail;
+	handleSubmit();
+}} />
+
 <!-- Modern dark grey gradient background -->
 <div
 	class="relative flex h-screen w-full flex-col overflow-hidden bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414]"

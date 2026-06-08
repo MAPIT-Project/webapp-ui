@@ -105,6 +105,11 @@
 	});
 </script>
 
+<svelte:window on:mapit:fillChatInput={(e: any) => {
+	userInput = e.detail;
+	handleSubmit();
+}} />
+
 <div class="mx-auto w-full max-w-4xl" in:scale={{ duration: 300, start: 0.98 }}>
 	<!-- Enhanced Input Section -->
 	<form onsubmit={handleSubmit} class="relative mb-6" in:fade={{ duration: 200 }}>
