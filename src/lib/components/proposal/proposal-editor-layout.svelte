@@ -67,9 +67,9 @@
     : 'col-span-3');
 </script>
 
-<div class="proposal-editor-layout h-screen flex flex-col bg-gradient-to-b from-[#1A1A1A] to-[#161616]">
+<div class="proposal-editor-layout h-full flex flex-col bg-gradient-to-b from-[#1A1A1A] to-[#141414]">
   <!-- Header -->
-  <header class="border-b border-[#40404033] bg-[#1E1E1E]/70 backdrop-blur-md px-4 py-3 z-10">
+  <header class="border-b border-[#40404033] bg-[#1E1E1E]/90 backdrop-blur-md px-4 py-2 z-10 shadow-sm">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <Icon name="description" className="text-[#3B82F6] text-xl" />
@@ -120,7 +120,7 @@
   <!-- Main content area -->
   <main class="flex-1 overflow-hidden {layoutClass}">
     <!-- Chat Panel -->
-    <div class="{chatPanelClass} border-r border-[#40404033] bg-[#1A1A1A]/30 flex flex-col">
+    <div class="{chatPanelClass} border-r border-[#40404033] bg-[#1A1A1A]/30 flex flex-col min-h-0">
       <!-- Chat Interface -->
       <div class="flex-1 flex flex-col min-h-0">
         <ProposalChatInterface />
@@ -128,7 +128,7 @@
     </div>
 
     <!-- Document Panel -->
-    <div class="{documentPanelClass} bg-transparent flex flex-col">
+    <div class="{documentPanelClass} bg-transparent flex flex-col min-h-0">
       <ProposalDocumentViewer />
     </div>
   </main>

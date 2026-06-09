@@ -114,41 +114,39 @@
 
 <div class="proposal-viewer h-full flex flex-col bg-transparent text-[#F5F5F5]">
   <!-- Header with title and progress -->
-  <div class="border-b border-[#40404033] p-6 bg-[#1E1E1E]/50 backdrop-blur-sm">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-bold text-[#F5F5F5] tracking-tight">
+  <div class="border-b border-[#40404033] px-6 py-4 bg-[#1E1E1E]/30 backdrop-blur-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+    <div class="flex items-center gap-4 min-w-0">
+      <h2 class="text-lg md:text-xl font-semibold text-[#F5F5F5] tracking-tight truncate max-w-md xl:max-w-xl">
         {storeState?.title || 'Untitled Proposal'}
       </h2>
-      <div class="flex items-center gap-4 text-sm">
-        {#if loading}
-             <div class="flex items-center gap-2 text-[#FFC107]">
-                <div class="w-4 h-4 border-2 border-[#FFC107] border-t-transparent rounded-full animate-spin"></div>
-                <span>Syncing...</span>
-             </div>
-        {/if}
-      </div>
+      {#if loading}
+           <div class="flex items-center gap-2 text-[#FFC107] bg-[#FFC107]/10 px-2 py-1 rounded text-xs">
+              <div class="w-3 h-3 border-2 border-[#FFC107] border-t-transparent rounded-full animate-spin"></div>
+              <span>Syncing</span>
+           </div>
+      {/if}
     </div>
     
     <!-- Progress bar -->
-    <div class="space-y-2">
-    <div class="flex justify-between text-sm font-medium">
-        <span class="text-[#B0B0B0]">Overall Progress</span>
-        <span class="text-[#F5F5F5]">{progress.completion_percentage.toFixed(0)}%</span>
-    </div>
-    <div class="w-full bg-[#2A2A2A] rounded-full h-2 overflow-hidden shadow-inner">
-        <div 
-        class="bg-gradient-to-r from-[#3B82F6] to-[#2563EB] h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-        style="width: {progress.completion_percentage}%"
-        ></div>
-    </div>
-    <div class="flex justify-between text-xs text-[#6B7280]">
-        <span>{progress.completed_sections} of {progress.total_sections} sections</span>
-        <span>{progress.total_words} words (~{progress.estimated_pages} pages)</span>
-    </div>
+    <div class="w-full xl:w-72 space-y-1.5 shrink-0">
+      <div class="flex justify-between text-xs font-medium">
+          <span class="text-[#B0B0B0]">Progress</span>
+          <span class="text-[#F5F5F5]">{progress.completion_percentage.toFixed(0)}%</span>
+      </div>
+      <div class="w-full bg-[#2A2A2A] rounded-full h-1.5 overflow-hidden shadow-inner">
+          <div 
+          class="bg-gradient-to-r from-[#3B82F6] to-[#2563EB] h-1.5 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+          style="width: {progress.completion_percentage}%"
+          ></div>
+      </div>
+      <div class="flex justify-between text-[10px] text-[#6B7280]">
+          <span>{progress.completed_sections} / {progress.total_sections} sections</span>
+          <span>{progress.total_words} words</span>
+      </div>
     </div>
   </div>
 
-  <div class="flex flex-1 overflow-hidden">
+  <div class="flex flex-1 overflow-hidden min-h-0">
     <!-- Navigation Sidebar -->
     <div class="w-80 border-r border-[#40404033] bg-[#1A1A1A]/30 overflow-y-auto">
       <div class="p-4 space-y-6">
@@ -188,7 +186,7 @@
     </div>
 
     <!-- Section Content -->
-    <div class="flex-1 overflow-y-auto bg-transparent relative">
+    <div class="flex-1 overflow-y-auto bg-transparent relative min-h-0 min-w-0">
       {#if loading && !currentSectionData}
         <div class="flex items-center justify-center h-full">
           <div class="text-center space-y-4">

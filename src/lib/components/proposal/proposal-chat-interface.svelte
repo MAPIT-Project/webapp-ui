@@ -131,23 +131,23 @@
 
 </script>
 
-<div class="proposal-chat-interface h-full flex flex-col bg-gradient-to-br from-[#1C1C1C] via-[#181818] to-[#141414] relative overflow-hidden">
+<div class="proposal-chat-interface h-full flex flex-col bg-transparent relative overflow-hidden">
   <!-- Subtle pattern overlay -->
-  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:32px_32px] opacity-[0.02]"></div>
+  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%50%,_theme(colors.white)_1px,_transparent_1px)] bg-[length:24px_24px] opacity-[0.015]"></div>
 
   <div class="relative z-10 flex h-full w-full flex-1 flex-col overflow-hidden">
     <!-- Header with Quick Actions -->
-    <div class="border-b border-gray-800/50 p-4 bg-[#1E1E1E]/40 backdrop-blur-sm z-20">
-      <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Quick Actions</h3>
-      <div class="flex flex-wrap gap-2">
+    <div class="border-b border-gray-800/50 p-3 bg-[#1E1E1E]/20 backdrop-blur-sm z-20">
+      <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Quick Actions</h3>
+      <div class="flex flex-wrap gap-1.5">
         {#each PROPOSAL_QUICK_ACTIONS as action}
           <button
-            class="flex items-center gap-2 px-3 py-2 bg-[#2A2A2A]/50 hover:bg-[#333333] border border-gray-700/50 rounded-lg transition-all duration-200 text-left disabled:opacity-50 group shadow-sm hover:shadow-md"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#2A2A2A]/40 hover:bg-[#333333]/80 border border-[#404040]/50 rounded-lg transition-all duration-200 text-left disabled:opacity-50 group shadow-sm hover:shadow-md hover:border-gray-500/50"
             onclick={() => handleQuickAction(action)}
             disabled={$isProcessing}
           >
-            <span class="text-blue-400 group-hover:text-blue-300 transition-colors text-sm">{action.icon}</span>
-            <span class="text-xs font-medium text-gray-200">{action.label}</span>
+            <span class="text-blue-400/80 group-hover:text-blue-400 transition-colors text-xs">{action.icon}</span>
+            <span class="text-[11px] font-medium text-gray-300">{action.label}</span>
           </button>
         {/each}
       </div>
@@ -180,7 +180,7 @@
               </div>
 
               <!-- Message Bubble -->
-              <div class="max-w-[85ch] flex-1 {message.role === 'user' ? 'text-right' : 'text-left'}">
+              <div class="max-w-full flex-1 min-w-0 {message.role === 'user' ? 'text-right' : 'text-left'}">
                 <div class="inline-block align-top">
                   {#if message.role === 'user'}
                     <div class="relative rounded-lg px-3 py-2 text-white {isGrouped ? 'rounded-tr-lg' : 'rounded-tr-sm'} backdrop-blur-sm bg-[#1E1E1E]/50">
@@ -196,7 +196,7 @@
                       </div>
                     </div>
                   {:else}
-                    <div class="group/ai relative inline-block max-w-[85ch] align-top">
+                    <div class="group/ai relative inline-block max-w-full align-top min-w-0">
                       
                       <!-- Agent Reasoning -->
                       {#if agentEvents && agentEvents.length > 0}
@@ -209,7 +209,7 @@
                         </div>
                       {/if}
 
-                      <div class="rounded-lg border-0 px-2 text-gray-100 {isGrouped ? 'rounded-tl-lg' : 'rounded-tl-sm'} backdrop-blur-sm">
+                      <div class="rounded-lg border-0 px-2 text-gray-100 {isGrouped ? 'rounded-tl-lg' : 'rounded-tl-sm'} backdrop-blur-sm overflow-x-auto min-w-0">
                         {#if message.content}
                           <div class="[&>p:first-child]:!mt-0 prose prose-sm prose-invert max-w-full leading-relaxed break-words [&>*]:text-gray-100 [&_a:hover]:text-blue-300 [&_a]:text-blue-400 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:rounded [&_blockquote]:border-l-4 [&_blockquote]:border-blue-400 [&_blockquote]:bg-blue-400/5 [&_blockquote]:p-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-300 [&_hr]:block [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-slate-600/20 [&_code]:rounded [&_code]:border [&_code]:border-indigo-500/20 [&_code]:bg-indigo-500/15 [&_code]:px-2 [&_code]:py-1 [&_code]:text-sm [&_code]:font-medium [&_code]:text-indigo-200 [&_em]:text-blue-300 [&_h1]:!text-white [&_h1:first-child]:mt-0 [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-xl [&_h2]:!text-white [&_h2:first-child]:mt-0 [&_h2]:mb-2 [&_h2]:mt-3 [&_h2]:text-lg [&_h3]:!text-white [&_h3:first-child]:mt-0 [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-base [&_li]:my-1 [&_li]:text-gray-200 [&_ol]:my-3 [&_ol_li::marker]:text-gray-400 [&_p:last-child]:mb-0 [&_p]:mb-3 [&_p]:text-gray-100 [&_p]:leading-relaxed [&_p:not(:first-child)]:mt-2 [&_p:has(>strong:first-child)]:mt-6 [&_pre]:my-4 [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-indigo-500/20 [&_pre]:bg-slate-900/40 [&_pre]:p-4 [&_pre]:text-sm [&_pre]:overflow-x-auto [&_pre_code]:border-none [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-slate-200 [&_strong]:text-white [&_table]:my-4 [&_table]:w-full [&_table]:overflow-x-auto [&_table]:rounded [&_td]:border-b [&_td]:border-slate-600/20 [&_td]:p-3 [&_td]:text-gray-200 [&_th]:border-b-2 [&_th]:border-indigo-500/30 [&_th]:bg-slate-700/50 [&_th]:p-3 [&_th]:text-left [&_th]:font-bold [&_th]:text-white [&_tr:nth-child(even)]:bg-slate-700/20 [&_ul]:my-3 [&_ul_li::marker]:text-gray-400 [&_ul_ul]:mb-2 [&_ul_ul]:mt-2 [&_ul_ul]:rounded [&_ul_ul]:border [&_ul_ul]:border-slate-600/10 [&_ul_ul]:bg-slate-900/20 [&_ul_ul]:p-2 [&_ul_ul_li]:my-1 [&_ul_ul_li]:text-sm">
                             {@html renderMessageContent(message.content)}
