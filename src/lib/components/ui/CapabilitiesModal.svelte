@@ -395,6 +395,30 @@
 								</div>
 							</div>
 						</button>
+
+						<button type="button" onclick={() => handleQuestionClick("I am drafting a proposal for the latest 'Renewable Energy Valleys' RIA call. Generate a realistic 36-month project timeline and calculate an estimated budget benchmark for a consortium involving 5 partners across 3 EU countries.")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(20,184,166,0.1)] cursor-pointer">
+							<div class="flex gap-4">
+								<div class="mt-1 rounded-full bg-teal-500/20 p-2 text-teal-400 shrink-0 h-fit">
+									<Icon name="calendar_month" iconClass="w-5 h-5" />
+								</div>
+								<div>
+									<h4 class="text-md font-medium text-white mb-2 group-hover:text-teal-400 transition-colors">Timeline & Budget Benchmarking</h4>
+									<p class="text-sm text-[#D0D0D0] leading-relaxed">"I am drafting a proposal for the latest 'Renewable Energy Valleys' RIA call. Generate a realistic 36-month project timeline and calculate an estimated budget benchmark for a consortium involving 5 partners across 3 EU countries."</p>
+								</div>
+							</div>
+						</button>
+
+						<button type="button" onclick={() => handleQuestionClick("Analyze the geographic diversification patterns of successful Horizon Europe Cluster 4 consortiums. Based on historical data, which 'Widening' or underrepresented EU countries should we include in our consortium to optimize our evaluation score?")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)] cursor-pointer">
+							<div class="flex gap-4">
+								<div class="mt-1 rounded-full bg-amber-500/20 p-2 text-amber-400 shrink-0 h-fit">
+									<Icon name="public" iconClass="w-5 h-5" />
+								</div>
+								<div>
+									<h4 class="text-md font-medium text-white mb-2 group-hover:text-amber-400 transition-colors">Geographic Diversification & Strategy</h4>
+									<p class="text-sm text-[#D0D0D0] leading-relaxed">"Analyze the geographic diversification patterns of successful Horizon Europe Cluster 4 consortiums. Based on historical data, which 'Widening' or underrepresented EU countries should we include in our consortium to optimize our evaluation score?"</p>
+								</div>
+							</div>
+						</button>
 					</div>
 				</div>
 			{/if}
