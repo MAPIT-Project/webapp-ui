@@ -130,7 +130,7 @@
 			<div class="flex items-center gap-3">
 				<div class="flex items-center gap-2">
 					<div
-						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-purple-600"
+						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-[#3B82F6] to-[#2563EB]"
 					>
 						<Icon name="groups" iconClass="text-white text-sm" />
 					</div>
@@ -156,7 +156,7 @@
 			<!-- Background decoration -->
 			<div class="pointer-events-none absolute inset-0 overflow-hidden">
 				<div
-					class="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-purple-500/5 blur-3xl"
+					class="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-blue-500/5 blur-3xl"
 				></div>
 				<div
 					class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-500/5 blur-3xl"
@@ -170,7 +170,7 @@
 					<div class="mb-8 text-center" in:scale={{ duration: 400, delay: 200, start: 0.95 }}>
 						<div class="mb-4 inline-flex items-center gap-3">
 							<div
-								class="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg"
+								class="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#2563EB] shadow-lg"
 							>
 								<Icon name="add_comment" iconClass="text-white text-lg" />
 							</div>
@@ -192,7 +192,7 @@
 									for="chatTitle"
 									class="mb-3 block flex items-center gap-2 text-sm font-semibold text-[#E0E0E0]"
 								>
-									<Icon name="edit" iconClass="text-purple-400 w-4 h-4" />
+									<Icon name="edit" iconClass="text-blue-400 w-4 h-4" />
 									Chat Title
 								</label>
 								<input
@@ -202,7 +202,7 @@
 									onkeydown={handleKeyDown}
 									placeholder="Enter a descriptive chat title..."
 									maxlength="30"
-									class="w-full rounded-xl border border-[#4F4F4F] bg-[#2C2C2C] px-4 py-4 text-lg text-[#E0E0E0] placeholder-[#B0B0B0] transition-all focus:border-[#8A2BE2]/50 focus:outline-none focus:ring-2 focus:ring-[#8A2BE2]/50"
+									class="w-full rounded-xl border border-[#4F4F4F] bg-[#2C2C2C] px-4 py-4 text-lg text-[#E0E0E0] placeholder-[#B0B0B0] transition-all focus:border-[#3B82F6]/50 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50"
 									disabled={isCreatingChat}
 								/>
 								<div class="mt-3 flex items-center justify-between">
@@ -225,7 +225,7 @@
 							<button
 								onclick={() => handleCreateChat()}
 								disabled={isCreatingChat || !chatTitle.trim() || chatTitle.length > 30}
-								class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#8A2BE2] px-6 py-4 font-semibold text-[#FFFFFF] transition-all hover:bg-[#A052E8] disabled:cursor-not-allowed disabled:opacity-60"
+								class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3B82F6] px-6 py-4 font-semibold text-[#FFFFFF] transition-all hover:bg-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60"
 							>
 								{#if isCreatingChat}
 									<div
@@ -241,7 +241,7 @@
 					</div>
 
 					<!-- Quick Start Templates -->
-					<!-- <div class="w-full max-w-4xl" in:scale={{ duration: 400, delay: 400, start: 0.95 }}>
+					<div class="w-full max-w-4xl" in:scale={{ duration: 400, delay: 400, start: 0.95 }}>
                         <div class="text-center mb-8">
                             <h2 class="text-2xl font-semibold text-white mb-2">Quick Start Templates</h2>
                             <p class="text-[#B0B0B0]">Get started faster with pre-made chat templates</p>
@@ -272,7 +272,7 @@
                                             </div>
                                         </div>
                                         
-                                        <h3 class="text-white font-semibold mb-2 group-hover:text-purple-100 transition-colors">{template.title}</h3>
+                                        <h3 class="text-white font-semibold mb-2 group-hover:text-blue-100 transition-colors">{template.title}</h3>
                                         <p class="text-gray-400 text-sm leading-relaxed">{template.description}</p>
                                         
                                         <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-xl"
@@ -288,7 +288,7 @@
                                 <span>Templates help you get started quickly with common collaboration patterns</span>
                             </div>
                         </div>
-                    </div> -->
+                    </div>
 				</div>
 		</div>
 	</div>

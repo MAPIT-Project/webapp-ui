@@ -658,6 +658,19 @@
 	<div id="map" class="relative m-0 h-full w-full" bind:this={mapContainer}></div>
 
 	<MapSearch onSearch={performSearch} onClear={handleClearSearch} />
+
+	<!-- Disabled Overlay -->
+	<div class="absolute inset-0 z-[2000] flex flex-col items-center justify-center bg-[#121212]/80 backdrop-blur-sm">
+		<div class="rounded-2xl border border-[#333] bg-[#1E1E1E] p-8 text-center shadow-2xl max-w-md">
+			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#3B82F6]/20">
+				<svg class="w-8 h-8 text-[#3B82F6]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+				</svg>
+			</div>
+			<h2 class="mb-2 text-2xl font-bold text-white">Consortium Builder</h2>
+			<p class="text-[#B0B0B0]">This feature is currently in development and has been temporarily disabled.</p>
+		</div>
+	</div>
 </div>
 
 <style>

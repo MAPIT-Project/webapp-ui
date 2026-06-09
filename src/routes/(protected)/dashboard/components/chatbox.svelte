@@ -124,7 +124,7 @@
 	<!-- Enhanced Input Section -->
 	<form onsubmit={handleSubmit} class="relative mb-8" in:fade={{ duration: 200 }}>
 		<div
-			class="relative overflow-hidden rounded-2xl bg-[#141414]/90 border border-[#2A2A2A] shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-md focus-within:border-[#A855F7]/50 focus-within:ring-1 focus-within:ring-[#A855F7]/50 transition-all duration-300"
+			class="relative overflow-hidden rounded-2xl bg-[#141414]/90 border border-[#2A2A2A] shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-md focus-within:border-[#3B82F6]/50 focus-within:ring-1 focus-within:ring-[#3B82F6]/50 transition-all duration-300"
 		>
 			<input
 				type="text"
@@ -137,7 +137,7 @@
 			/>
 			<button
 				type="submit"
-				class="group absolute right-3 top-1/2 -translate-y-1/2 transform rounded-xl p-2.5 text-[#6B7280] transition-all duration-200 hover:bg-[#A855F7] hover:text-white disabled:opacity-50"
+				class="group absolute right-3 top-1/2 -translate-y-1/2 transform rounded-xl p-2.5 text-[#6B7280] transition-all duration-200 hover:bg-[#3B82F6] hover:text-white disabled:opacity-50"
 				disabled={isProcessing || !userInput.trim()}
 			>
 				{#if isProcessing}
@@ -198,7 +198,7 @@
 					{#each examples as example, i}
 						<button
 							onclick={() => startWithExample(example.text)}
-							class="inline-flex items-center gap-2.5 rounded-2xl border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-2.5 text-sm text-[#9CA3AF] transition-all hover:border-[#A855F7]/40 hover:bg-[#1E1E1E]/80 hover:text-white disabled:opacity-60 shadow-lg shadow-black/20"
+							class="inline-flex items-center gap-2.5 rounded-2xl border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-2.5 text-sm text-[#9CA3AF] transition-all hover:border-[#3B82F6]/40 hover:bg-[#1E1E1E]/80 hover:text-white disabled:opacity-60 shadow-lg shadow-black/20"
 							disabled={isProcessing}
 							in:scale={{ duration: 150, delay: i * 30, start: 0.98 }}
 						>

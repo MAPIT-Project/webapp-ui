@@ -26,7 +26,7 @@
 	title="MAP-IT AI Assistant Capabilities"
 	on:cancel={() => (isOpen = false)}
 	closeOnEscape={true}
-	background="bg-[#121212]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl max-w-4xl w-full min-w-[70%] max-h-[95vh]"
+	background="bg-[#121212]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl max-w-4xl w-full min-w-[80%] max-h-[90vh]"
 	fullWidth={true}
 >
 	<div slot="content" class="flex flex-col h-full text-[#E0E0E0] max-h-[80vh] overflow-hidden">
