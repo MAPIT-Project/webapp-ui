@@ -155,11 +155,11 @@
     
     <!-- Messages Container -->
     <div 
-      class="scrollbar-thin flex-1 overflow-y-auto px-6 py-6" 
+      class="scrollbar-thin flex-1 overflow-y-auto px-4 py-4" 
       bind:this={messagesContainer} 
       onscroll={updateScrollDownVisibility}
     >
-      <div class="mx-auto max-w-4xl space-y-8 pb-4">
+      <div class="mx-auto max-w-3xl space-y-6 pb-4">
         {#each $messages as message, idx}
           {@const isGrouped = idx > 0 && $messages[idx - 1].role === message.role}
           {@const agentEvents = getAgentEvents(message)}
@@ -169,12 +169,12 @@
               <!-- Avatar -->
               <div class="flex-shrink-0 {isGrouped ? 'invisible' : ''}">
                 {#if message.role === 'user'}
-                  <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-600 shadow-lg">
-                    <Icon name="person" className="text-white text-sm" />
+                  <div class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-600 shadow-lg">
+                    <Icon name="person" className="text-white text-[10px]" />
                   </div>
                 {:else}
-                  <div class="flex size-8 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-lg">
-                    <img src="/images/mapit_logo_no_bg.png" class="size-4 object-contain" alt="MAPIT Logo" />
+                  <div class="flex size-6 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-lg">
+                    <img src="/images/mapit_logo_no_bg.png" class="size-3 object-contain" alt="MAPIT Logo" />
                   </div>
                 {/if}
               </div>
@@ -183,7 +183,7 @@
               <div class="max-w-full flex-1 min-w-0 {message.role === 'user' ? 'text-right' : 'text-left'}">
                 <div class="inline-block align-top">
                   {#if message.role === 'user'}
-                    <div class="relative rounded-lg px-3 py-2 text-white {isGrouped ? 'rounded-tr-lg' : 'rounded-tr-sm'} backdrop-blur-sm bg-[#1E1E1E]/50">
+                    <div class="relative rounded-lg px-2.5 py-1.5 text-white {isGrouped ? 'rounded-tr-lg' : 'rounded-tr-sm'} backdrop-blur-sm bg-[#1E1E1E]/50">
                       <div class="prose prose-sm max-w-none">
                         <p class="m-0 whitespace-pre-wrap text-sm leading-relaxed">
                           {@html highlightMapitInMessage(message.content)}

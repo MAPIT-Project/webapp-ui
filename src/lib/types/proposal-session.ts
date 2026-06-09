@@ -3,6 +3,7 @@ export interface ProposalSession {
   proposal_id: number;
   call_id: string;
   title: string;
+  proposal_type: string;
   status: 'active' | 'paused' | 'completed' | 'expired';
   active_section_id: string | null;
   completion_percentage: number;

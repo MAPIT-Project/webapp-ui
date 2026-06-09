@@ -131,6 +131,26 @@ class ProposalSessionService {
   }
 
   /**
+   * Update section status manually
+   */
+  async updateSectionStatus(
+    sessionId: string, 
+    sectionId: string, 
+    status: string
+  ): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/${sessionId}/section/${sectionId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to update section status');
+    }
+  }
+
+  /**
    * Generate section content via AI (non-chat trigger)
    */
   async generateSection(

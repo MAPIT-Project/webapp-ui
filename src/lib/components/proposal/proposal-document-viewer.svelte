@@ -114,11 +114,32 @@
 
 <div class="proposal-viewer h-full flex flex-col bg-transparent text-[#F5F5F5]">
   <!-- Header with title and progress -->
-  <div class="border-b border-[#40404033] px-6 py-4 bg-[#1E1E1E]/30 backdrop-blur-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-    <div class="flex items-center gap-4 min-w-0">
-      <h2 class="text-lg md:text-xl font-semibold text-[#F5F5F5] tracking-tight truncate max-w-md xl:max-w-xl">
+  <div class="border-b border-[#40404033] px-5 py-3 bg-[#1E1E1E]/30 backdrop-blur-sm flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <h2 class="text-base md:text-lg font-semibold text-[#F5F5F5] tracking-tight truncate max-w-md xl:max-w-xl">
         {storeState?.title || 'Untitled Proposal'}
       </h2>
+      {#if storeState?.proposalType}
+      <a 
+          href="https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/how-to-participate/reference-documents" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="px-3 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border border-[#3B82F6]/50 text-[#3B82F6] bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 transition-colors shrink-0 flex items-center gap-1"
+          title="View official EU templates for {storeState.proposalType}"
+      >
+          <Icon name="article" className="w-2 -pt-2 pr-1" />
+          {storeState.proposalType}
+      </a>
+      {/if}
+      <button 
+          class="ml-2 px-3 py-1.5 bg-[#2A2A2A] hover:bg-[#333333] border border-[#40404033] rounded flex items-center gap-2 text-xs font-medium text-[#E5E7EB] transition-colors shadow-sm whitespace-nowrap shrink-0"
+          onclick={() => window.open(`http://localhost:8000/api/proposal/export/${storeState?.proposalId}/complete-package`, '_blank')}
+          title="Export as complete submission package (ZIP with Word and Excel)"
+          disabled={!storeState?.proposalId}
+      >
+          <Icon name="download" className="w-3.5 h-3.5" />
+          Export
+      </button>
       {#if loading}
            <div class="flex items-center gap-2 text-[#FFC107] bg-[#FFC107]/10 px-2 py-1 rounded text-xs">
               <div class="w-3 h-3 border-2 border-[#FFC107] border-t-transparent rounded-full animate-spin"></div>
@@ -148,8 +169,8 @@
 
   <div class="flex flex-1 overflow-hidden min-h-0">
     <!-- Navigation Sidebar -->
-    <div class="w-80 border-r border-[#40404033] bg-[#1A1A1A]/30 overflow-y-auto">
-      <div class="p-4 space-y-6">
+    <div class="w-64 border-r border-[#40404033] bg-[#1A1A1A]/30 overflow-y-auto">
+      <div class="p-3 space-y-4">
         {#each dynamicCategories as category}
           {@const categoryProgress = calculateCategoryProgress(category.sections)}
           
@@ -195,11 +216,11 @@
           </div>
         </div>
       {:else if currentSectionData}
-        <div id="section-{currentSectionData.section_id}" class="p-8 max-w-5xl mx-auto">
+        <div id="section-{currentSectionData.section_id}" class="p-6 max-w-4xl mx-auto">
           <!-- Section Header -->
-          <div class="mb-8 pb-6 border-b border-[#40404033]">
-            <div class="flex items-center justify-between mb-4">
-              <h1 class="text-3xl font-bold text-[#F5F5F5] tracking-tight">
+          <div class="mb-6 pb-4 border-b border-[#40404033]">
+            <div class="flex items-center justify-between mb-3">
+              <h1 class="text-2xl font-bold text-[#F5F5F5] tracking-tight">
                 {currentSectionData.section_name}
               </h1>
               
@@ -223,7 +244,7 @@
             </div>
 
             <!-- Metadata Bar -->
-            <div class="flex items-center justify-between text-sm bg-[#1E1E1E] p-4 rounded-xl border border-[#4F4F4F]">
+            <div class="flex items-center justify-between text-xs bg-[#1E1E1E] p-3 rounded-xl border border-[#4F4F4F]">
                 <!-- Quality Score -->
                 <div class="flex items-center gap-3">
                   <div class="flex flex-col">
@@ -256,6 +277,22 @@
                 <!-- Actions -->
                 <div class="flex items-center gap-2">
                     <button 
+                        class="px-3 py-2 {currentSectionData.status === 'complete' ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#4CAF50]/30 hover:bg-[#4CAF50]/20' : 'bg-[#2A2A2A] text-[#B0B0B0] border-[#4F4F4F] hover:bg-[#333333] hover:text-white'} rounded-lg text-xs transition-colors border"
+                        onclick={() => proposalSessionStore.updateSectionStatus(currentSectionData.section_id, currentSectionData.status === 'complete' ? 'draft' : 'complete')}
+                        disabled={currentSectionData.lock_status !== 'unlocked'}
+                        title={currentSectionData.status === 'complete' ? 'Mark as incomplete' : 'Mark as completed'}
+                    >
+                        <div class="flex items-center gap-1.5">
+                            {#if currentSectionData.status === 'complete'}
+                                <Icon name="check_circle" className="size-3 -mt-3" />
+                                <span>Done</span>
+                            {:else}
+                                <Icon name="radio_button_unchecked" className="size-3 -mt-3" />
+                                <span>Mark Done</span>
+                            {/if}
+                        </div>
+                    </button>
+                    <button 
                         class="px-3 py-2 bg-[#2A2A2A] hover:bg-[#333333] rounded-lg text-xs text-[#B0B0B0] hover:text-white transition-colors border border-[#4F4F4F]"
                         onclick={toggleEdit}
                         disabled={currentSectionData.lock_status !== 'unlocked'}
@@ -282,11 +319,11 @@
           </div>
 
           <!-- Section Content -->
-          <div class="prose prose-invert max-w-none">
+          <div class="prose prose-sm prose-invert max-w-none">
             {#if isEditing}
                 <textarea 
                     bind:value={editContent} 
-                    class="w-full h-[600px] bg-[#1A1A1A] text-[#E5E7EB] p-6 rounded-xl font-mono text-sm border border-[#4F4F4F] focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] leading-relaxed resize-none shadow-inner"
+                    class="w-full h-[500px] bg-[#1A1A1A] text-[#E5E7EB] p-5 rounded-xl font-mono text-xs border border-[#4F4F4F] focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] leading-relaxed resize-none shadow-inner"
                     placeholder="Start typing..."
                 ></textarea>
             {:else if currentSectionData.content}

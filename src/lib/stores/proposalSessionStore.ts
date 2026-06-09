@@ -27,6 +27,7 @@ interface ProposalSessionState {
   proposalId: number | null;
   callId: string | null;
   title: string | null;
+  proposalType: string | null;
   status: string | null;
 
   // Data
@@ -51,6 +52,7 @@ const initialState: ProposalSessionState = {
   proposalId: null,
   callId: null,
   title: null,
+  proposalType: null,
   status: null,
   sections: {},
   activeSectionId: null,
@@ -90,6 +92,7 @@ function createProposalSessionStore() {
           proposalId: session.proposal_id,
           callId: session.call_id,
           title: session.title,
+          proposalType: session.proposal_type,
           status: session.status,
           sections: session.sections,
           activeSectionId: session.active_section_id,
@@ -112,6 +115,7 @@ function createProposalSessionStore() {
           proposalId: session.proposal_id,
           callId: session.call_id,
           title: session.title,
+          proposalType: session.proposal_type,
           status: session.status,
           sections: session.sections,
           activeSectionId: session.active_section_id,
@@ -317,6 +321,36 @@ function createProposalSessionStore() {
         } catch (e) {
           console.error('Failed to sync section update', e);
           // Revert logic could go here
+        }
+      }
+    },
+
+    async updateSectionStatus(sectionId: string, status: string) {
+      let sessId: string | null = null;
+      update(s => {
+        sessId = s.sessionId;
+        // Optimistic update
+        const sections = { ...s.sections };
+        if (sections[sectionId]) {
+          sections[sectionId] = {
+            ...sections[sectionId],
+            status: status as any
+          };
+        }
+        
+        // Recalculate completion percentage
+        const completedSections = Object.values(sections).filter(sec => sec.status === 'complete').length;
+        const totalSections = Object.keys(sections).length;
+        const completionPercentage = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
+
+        return { ...s, sections, completionPercentage };
+      });
+
+      if (sessId) {
+        try {
+          await proposalSessionService.updateSectionStatus(sessId, sectionId, status);
+        } catch (e) {
+          console.error('Failed to sync section status update', e);
         }
       }
     },
