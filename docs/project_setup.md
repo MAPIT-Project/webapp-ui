@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVED — 20 juli 2026** — Dit document is historisch en niet meer actueel.
+> Zie [START_HERE.md](../../START_HERE.md) voor actuele documentatie.
+> Reden: dit document adviseert destructieve handmatige migratiestappen en een verouderd VPS-setup-pad.
+
 ## Project demo setup
 
 > The way this is done is not ideal and needs improvement.

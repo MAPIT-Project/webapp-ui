@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVED — 20 juli 2026** — Dit document is historisch en niet meer actueel.
+> Zie [START_HERE.md](../START_HERE.md) voor actuele documentatie.
+> Reden: dit is een tijdgebonden incident- en deploymentsessie, geen onderhouden setup- of operationsbron.
+
 # Session Summary: MAP-IT Backend Connectivity & Deployment Fix
 
 ## Date: 2026-05-28

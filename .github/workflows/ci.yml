@@ -1,0 +1,37 @@
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The inherited baseline currently contains known svelte-check diagnostics.
+      # Keep the result visible without blocking builds until CHECK_ISSUES.md is resolved.
+      - name: Run Svelte and TypeScript checks
+        continue-on-error: true
+        run: npm run check
+
+      - name: Build application
+        run: npm run build

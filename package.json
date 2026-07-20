@@ -10,6 +10,7 @@
 		"build:prod": "vite build",
 		"host": "npm run build && pm2 delete mapit-ui 2>/dev/null; pm2 start npm --name mapit-ui -- start",
 		"preview": "vite preview",
+		"test": "npm run check",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",

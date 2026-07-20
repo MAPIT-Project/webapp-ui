@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVED — 20 juli 2026** — Dit document is historisch en niet meer actueel.
+> Zie [START_HERE.md](../../START_HERE.md) voor actuele documentatie.
+> Reden: dit is een pre-V3-voorstel met services en routes die niet de huidige conversation-architectuur vormen.
+
 # Conversational AI Architecture for CORDIS System
 
 ## Executive Summary
