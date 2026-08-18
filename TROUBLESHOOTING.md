@@ -1,217 +1,64 @@
-# MAP-IT Troubleshooting Quick Reference
+> Documentation status: current | Owner: MAP-IT operations | Scope: local and production diagnostics | Last verified: 18-08-2026 against `bf0ea5f` + working tree remediation
 
-## 🚨 Critical Issues & Quick Fixes
+# MAP-IT troubleshooting
 
-### Login Works But No Redirect to Dashboard
-**Problem**: User can authenticate but doesn't get redirected to `/dashboard`
-**Quick Fix**: Check cookie security settings in `src/routes/api/auth/login/+server.ts`:
-```typescript
-// Line 51 - MUST be true for HTTPS
-secure: true, // NOT false!
-```
-
-### Mixed Content Errors
-**Problem**: Browser blocks requests from HTTPS to HTTP
-**Quick Fix**: Update environment variables to use HTTPS/reverse proxy:
-```bash
-# In .env.production
-PUBLIC_SUPABASE_URL="https://mapit.work/supabase"
-VITE_SUPABASE_URL="https://mapit.work/supabase"
-```
-
-### SSL Protocol Errors  
-**Problem**: `ERR_SSL_PROTOCOL_ERROR` when accessing Supabase
-**Quick Fix**: Don't use HTTPS with ports - set up NGINX reverse proxy instead
-
-### Backend Connection Refused
-**Problem**: `ECONNREFUSED` when trying to stream messages
-**Quick Fix**: Start backend service
-```bash
-cd ../MAP-IT_SA && make docker-up
-# Or: docker-compose up -d
-```
-
-### Conversation Pages Won't Load
-**Problem**: API succeeds but page crashes
-**Quick Fix**: Check browser console logs and backend connectivity
-```bash
-curl http://localhost:18000/api/health
-pm2 logs mapit-ui
-```
-
-## 🔍 Diagnostic Commands
-
-### 30-Second Health Check
-```bash
-# 1. Check all services status
-pm2 status && sudo systemctl status nginx | head -3
-
-# 2. Test backend connectivity  
-curl -s http://localhost:18000/api/health | head -5
-
-# 3. Test Supabase proxy
-curl -s https://mapit.work/supabase/rest/v1/ | head -3
-
-# 4. Check recent app logs
-pm2 logs mapit-ui --lines 10 --nostream
-```
-
-### Detailed Diagnostics
-```bash
-# Run full diagnostic script
-./debug-logs.sh
-
-# Check environment variables
-./check-env.sh
-```
-
-## 🛠️ Common Repair Procedures
-
-### Fix Authentication Issues
-```bash
-# 1. Update login endpoint cookie settings
-nano src/routes/api/auth/login/+server.ts
-# Change: secure: true (line 51)
-
-# 2. Rebuild and restart
-cd ~/webapp-ui
-pm2 stop mapit-ui
-npm run build:prod
-pm2 restart mapit-ui
-
-# 3. Test login flow
-# Go to https://new.mapit.work/login
-```
-
-### Fix Backend Connectivity
-```bash
-# 1. Check if backend is running
-curl http://localhost:18000/api/health
-
-# 2. If not running, start backend
-cd ../MAP-IT_SA
-make docker-up
-
-# 3. Verify backend
-curl http://localhost:18000/api/health
-```
-
-### Reset Everything
-```bash
-# 1. Stop all services
-pm2 stop mapit-ui
-cd ../MAP-IT_SA && docker-compose down
-
-# 2. Restart services
-cd ../MAP-IT_SA && make docker-up
-cd ~/webapp-ui && npm run build:prod && pm2 restart mapit-ui
-
-# 3. Verify
-pm2 status
-curl http://localhost:18000/api/health
-```
-
-## 📋 Environment Variable Checklist
-
-### Production Setup (.env.production)
-```bash
-# Database
-PRIVATE_DATABASE_URL="postgresql://user:pass@localhost:54322/db"
-
-# Backend
-BACKEND_URL="http://localhost:18000"  # Internal HTTP is fine
-
-# Supabase (HTTPS via reverse proxy)
-PUBLIC_SUPABASE_URL="https://mapit.work/supabase"  # MUST be HTTPS
-VITE_SUPABASE_URL="https://mapit.work/supabase"    # MUST be HTTPS
-PUBLIC_SUPABASE_ANON_KEY="your-key"
-```
-
-### Common Mistakes
-❌ `PUBLIC_SUPABASE_URL="http://localhost:54321"` (HTTP in production)
-❌ `PUBLIC_SUPABASE_URL="https://mapit.work:54321"` (HTTPS with port)
-❌ `secure: false` in login endpoint with HTTPS app
-
-✅ `PUBLIC_SUPABASE_URL="https://mapit.work/supabase"` (HTTPS reverse proxy)
-✅ `secure: true` in login endpoint with HTTPS app
-
-## 🔧 PM2 Quick Commands
+Start with secret-safe validation and health checks:
 
 ```bash
-npm run pm2:logs      # View logs
-npm run pm2:stop       # Stop app
-npm run pm2:restart   # Restart app
-npm run pm2:delete    # Remove from PM2
-npm run host           # Build + deploy
+npm run env:check -- dev        # local .env
+npm run env:check -- production # .env.production
+curl --fail http://127.0.0.1:54321/auth/v1/health
+curl --fail http://127.0.0.1:18000/api/health
+curl --fail http://localhost:5173/api/backend-status
 ```
 
-## 📊 What the Logs Mean
+## Local login does not persist
 
-### Browser Console Prefixes
-- `[BackendStatus]` - Backend connectivity checks (client-side)
-- `[BackendStatusAPI]` - Server-side backend API checks
-- `[ConversationPage]` - Page loading and message fetching
-- `[SUPABASE CLIENT]` - Supabase initialization
+- Use exactly `http://localhost:5173` or `http://127.0.0.1:5173`.
+- Confirm `supabase_cli/supabase/config.toml` still allows both redirects.
+- Leave `COOKIE_DOMAIN` unset locally. The login handler ignores it for localhost and sets `secure=false` on HTTP.
+- Clear old `.mapit.work`, `localhost`, and `127.0.0.1` cookies after switching environments.
+- Confirm `.env` uses the API on 54321, not Studio on 54323.
 
-### Server Logs
-- `🔍 [BackendStatusAPI]` - Starting backend status check
-- `📡 [BackendStatusAPI]` - Making request to backend
-- `✅ [BackendStatusAPI]` - Backend reachable
-- `❌ [BackendStatusAPI]` - Backend check failed
+## Production login does not persist
 
-## 🆘 Emergency Procedures
+- Confirm `ORIGIN=https://new.mapit.work` and nginx forwards `X-Forwarded-Proto $scheme`.
+- Inspect cookies: they must be `Secure`, `SameSite=Lax`, and host-only or scoped to `new.mapit.work`.
+- Validate `PUBLIC_SUPABASE_URL` and the anon key; do not print the key in logs.
+- Rebuild after changing `PUBLIC_*` variables because they are build-time public values.
 
-### App Completely Down
+## Backend or SSE is unavailable
+
 ```bash
-# 1. Check if processes are running
-pm2 status
-sudo systemctl status nginx
-
-# 2. Check recent logs
-pm2 logs mapit-ui --lines 50
-sudo tail -50 /var/log/nginx/error.log
-
-# 3. Restart everything
-sudo systemctl restart nginx
-pm2 restart mapit-ui
-
-# 4. If still failing, rebuild
-cd ~/webapp-ui
-pm2 stop mapit-ui
-npm run build:prod
-pm2 start npm --name mapit-ui -- start
+curl --fail http://127.0.0.1:18000/api/health
+curl --fail http://127.0.0.1:3000/api/backend-status # production app upstream
+pm2 logs mapit-ui --lines 50 --nostream
 ```
 
-### Authentication Completely Broken
+`BACKEND_URL` is server-only and may use loopback HTTP behind nginx. The V3 streaming route additionally needs the same `JWT_SECRET_KEY` as the backend. `/api/query/stream` and `/api/v4/*` stream SSE through SvelteKit.
+
+## Realtime is unavailable
+
 ```bash
-# 1. Check environment variables
-cat .env.production | grep SUPABASE
-
-# 2. Verify NGINX config includes Supabase proxy
-sudo nginx -t
-
-# 3. Check if Supabase is running
-curl https://mapit.work/supabase/rest/v1/
-
-# 4. Check cookie settings in code
-grep -r "secure.*false" src/routes/api/auth/
+psql "$DATABASE_URL" -c "select * from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'message';"
+psql "$DATABASE_URL" -f supabase_cli/enable_realtime.sql
 ```
 
-## 📞 Support & Escalation
+In production, verify nginx forwards both `Upgrade` and `Connection` and does not remove `Authorization`. Browser network tools should show a WebSocket under `/supabase/realtime/v1/websocket`. `/api/chat/websocket` itself is only an HTTP POST that inserts a message.
 
-### Before Asking for Help
-1. Run `./debug-logs.sh` and save output
-2. Check browser console for errors (F12)
-3. Get recent PM2 logs: `pm2 logs mapit-ui --lines 50`
-4. Check NGINX error logs: `sudo tail -50 /var/log/nginx/error.log`
+## Database commands fail immediately
 
-### Information to Provide
-- What you were trying to do
-- Exact error messages (browser console + terminal)
-- Output of diagnostic commands
-- Recent changes made to system
+- `DATABASE_URL` is required by `drizzle.config.ts` and every `npm run db:*` command.
+- `PRIVATE_DATABASE_URL` is separately required by application runtime.
+- Run `npm run env:check -- db` from the repository root.
+- Do not apply the legacy `supabase_cli/schema.sql` dump.
 
----
+## Production app listens on the wrong port
 
-**Quick Reference**: Keep this file handy for common issues!
-**Full Guide**: See `DEPLOYMENT_GUIDE.md` for complete setup instructions.
+Adapter-node defaults are not the runbook contract. Set `HOST=127.0.0.1`, `PORT=3000`, and `ORIGIN=https://new.mapit.work`; start with `npm run start:prod`. nginx must proxy `/` to `127.0.0.1:3000`, never 5173.
+
+## Check baseline
+
+The pre-remediation `npm run check` baseline was 64 errors and 76 warnings in 34 files. Compare against the final result in [REMEDIATION_LOG.md](REMEDIATION_LOG.md) rather than assuming every non-zero exit is newly introduced. There is no standalone unit-test runner.
+
+For complete deployment steps see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md); for local reset details see [supabase_cli/how_to_run.md](supabase_cli/how_to_run.md).

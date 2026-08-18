@@ -1,3 +1,5 @@
+> Documentation status: archived draft | Owner: MAP-IT frontend team | Scope: superseded architecture stub | Last verified: 18-08-2026 for archival classification
+
 Note:  
 _This document contains information about the full stack UI application for the MAPIT AI Domain Expert Tool. This is currently a work in progress, so the documentation here will be a bit messy to begin with and gradually turn into an important document._
 

@@ -1,4 +1,6 @@
-# CRUSH Agent Configuration
+> Documentation status: current | Owner: MAP-IT frontend team | Scope: AI-agent command reference, not human onboarding | Last verified: 18-08-2026 against `bf0ea5f` + working tree remediation
+
+# CRUSH agent configuration
 
 ## Build Commands
 
@@ -15,8 +17,8 @@
 
 ## Test Commands
 
-- Run tests: `npm run test` (check package.json for exact command)
-- Run single test file: `npm run test -- <file-pattern>`
+- Run the diagnostics alias: `npm test` (equivalent to `npm run check`)
+- No unit/E2E runner or single-test-file command is configured.
 
 ## Database Commands
 

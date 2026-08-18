@@ -3,8 +3,16 @@ import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 import { authRateLimit, extractClientIP } from '$lib/server/rateLimit';
+import { env } from '$env/dynamic/private';
 
-export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress, url }) => {
+	const secureCookie = url.protocol === 'https:';
+	const configuredDomain = env.COOKIE_DOMAIN?.trim();
+	const cookieDomain =
+		configuredDomain && !['localhost', '127.0.0.1', '::1'].includes(url.hostname)
+			? configuredDomain
+			: undefined;
+
 	// Apply rate limiting
 	const ip = extractClientIP(request, getClientAddress);
 
@@ -47,9 +55,9 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 						cookies.set(name, value, {
 							...options,
 							path: '/',
-							httpOnly: false, // Allow client access
-							secure: true, // Required for HTTPS
-							sameSite: 'lax' // Allow cross-site requests
+							secure: secureCookie,
+							sameSite: 'lax',
+							...(cookieDomain ? { domain: cookieDomain } : {})
 						});
 					});
 				}
@@ -79,8 +87,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		// Add rate limit headers to successful response
 		const rateLimitInfo = authRateLimit.info(ip);
 
-		// Create response with user data
-		const response = json(
+		return json(
 			{
 				success: true,
 				user: {
@@ -97,41 +104,6 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 				}
 			}
 		);
-
-		// IMPORTANT: Manually set Supabase cookies since we're using custom login
-		if (data.session) {
-			// Set access token cookie (2 hours)
-			response.headers.set(
-				'sb-access-token',
-				data.session.access_token,
-				{
-					path: '/',
-					domain: '.mapit.work', // Allow all subdomains
-					httpOnly: false,
-					secure: true,
-					sameSite: 'lax',
-					maxAge: 7200 // 2 hours
-				}
-			);
-
-			// Set refresh token cookie (30 days)
-			if (data.session.refresh_token) {
-				response.headers.set(
-					'sb-refresh-token',
-					data.session.refresh_token,
-					{
-						path: '/',
-						domain: '.mapit.work', // Allow all subdomains
-						httpOnly: true,
-						secure: true,
-						sameSite: 'lax',
-						maxAge: 2592000 // 30 days
-					}
-				);
-			}
-		}
-
-		return response;
 	} catch (error) {
 		console.error('Server error during login:', error);
 		return json(

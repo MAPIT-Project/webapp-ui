@@ -1,3 +1,5 @@
+> Documentation status: archived, unexecuted plan | Owner: MAP-IT frontend team | Scope: historical citation test proposal | Last verified: 18-08-2026 for archival classification
+
 # Citation Implementation Verification Plan
 
 This document outlines the verification plan for the structured citation integration in the personal chat experience.

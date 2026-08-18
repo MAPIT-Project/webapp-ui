@@ -1,5 +1,7 @@
+> Documentation status: archived | Owner: MAP-IT operations | Scope: superseded VPS/demo setup | Last verified: 18-08-2026 for archival classification
+>
 > ⚠️ **ARCHIVED — 20 juli 2026** — Dit document is historisch en niet meer actueel.
-> Zie [START_HERE.md](../../START_HERE.md) voor actuele documentatie.
+> Zie de [canonieke README](../../README.md) voor actuele documentatie.
 > Reden: dit document adviseert destructieve handmatige migratiestappen en een verouderd VPS-setup-pad.
 
 ## Project demo setup

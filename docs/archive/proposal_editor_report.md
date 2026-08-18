@@ -1,3 +1,5 @@
+> Documentation status: archived | Owner: MAP-IT frontend/backend teams | Scope: historical proposal editor handoff | Last verified: 18-08-2026 for archival classification
+
 # Proposal Editor UI/UX and Backend Integration Report
 
 This report details the current implementation of the `/proposals` section and the proposal editing functionality, designed to aid the backend team in developing a new solution for integrating enhanced proposal writing capabilities.

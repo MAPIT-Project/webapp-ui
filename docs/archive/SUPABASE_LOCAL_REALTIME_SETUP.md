@@ -1,3 +1,5 @@
+> Documentation status: archived | Owner: MAP-IT frontend team | Scope: superseded local Realtime instructions | Last verified: 18-08-2026 for archival classification
+
 # Local Supabase Realtime Setup
 
 ## Enable Realtime for Local Development

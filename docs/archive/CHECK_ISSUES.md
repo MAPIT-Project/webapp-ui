@@ -1,3 +1,5 @@
+> Documentation status: archived | Owner: MAP-IT frontend team | Scope: time-bound diagnostics baseline | Last verified: 18-08-2026 for archival classification
+
 # Frontend check baseline
 
 ## Scope and reproduction

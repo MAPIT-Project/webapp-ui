@@ -15406,4 +15406,8 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 --
 -- PostgreSQL database dump complete
 --
+-- LEGACY FULL-PLATFORM SNAPSHOT (archival/reference only).
+-- Do not apply this dump during frontend onboarding: it includes Supabase-internal
+-- and backend-owned objects. The frontend source of truth is
+-- src/lib/server/db/schema.ts; see supabase_cli/how_to_run.md.
 

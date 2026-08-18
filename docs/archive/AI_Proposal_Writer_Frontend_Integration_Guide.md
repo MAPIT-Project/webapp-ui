@@ -1,3 +1,5 @@
+> Documentation status: archived | Owner: MAP-IT backend/API team | Scope: original external React/Redux V4 handoff | Last verified: 18-08-2026 for archival classification
+
 # AI Proposal Writer - Frontend Integration Guide
 
 ## Overview

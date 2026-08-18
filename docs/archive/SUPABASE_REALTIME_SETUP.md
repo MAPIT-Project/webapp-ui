@@ -1,3 +1,5 @@
+> Documentation status: archived | Owner: MAP-IT frontend team | Scope: superseded hosted Realtime instructions | Last verified: 18-08-2026 for archival classification
+
 # Supabase Realtime Setup for Collaboration Chat
 
 ## Prerequisites
