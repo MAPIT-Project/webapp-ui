@@ -1,8 +1,8 @@
 > Documentation status: archived | Owner: MAP-IT operations | Scope: historical incident/deployment session | Last verified: 18-08-2026 for archival classification
 >
-> ⚠️ **ARCHIVED — 20 juli 2026** — Dit document is historisch en niet meer actueel.
-> Zie de [canonieke README](../../README.md) voor actuele documentatie.
-> Reden: dit is een tijdgebonden incident- en deploymentsessie, geen onderhouden setup- of operationsbron.
+> ⚠️ **ARCHIVED — 20 July 2026** — This document is historical and no longer current.
+> See the [canonical README](../../README.md) for current documentation.
+> Reason: this is a time-bound incident and deployment session, not a maintained setup or operations source.
 
 # Session Summary: MAP-IT Backend Connectivity & Deployment Fix
 

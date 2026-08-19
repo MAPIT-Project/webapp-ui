@@ -1,228 +1,228 @@
-> Status: geremedieerd op 18-08-2026 — zie REMEDIATION_LOG.md
+> Status: remediated at 18-08-2026 — see REMEDIATION_LOG.md
 >
 > Documentation status: remediated audit record | Owner: MAP-IT frontend team | Scope: documentation/code consistency audit | Last verified: 18-08-2026
 
-# Documentatie-audit — webapp-ui (NEWMAPIT)
+# Documentation audit — webapp ui (NEWMAPIT)
 
-**Auditdatum:** 18 augustus 2026
-**Scope:** alle getrackte Markdown-bestanden in deze repository, plus `package.json`, `package-lock.json`, `check-env.js`, `check-env.sh`, `drizzle.config.ts`, `.env.example`, `.env.production`, `svelte.config.js`, `vite.config.ts`, `nginx-supabase.conf`, de Supabase CLI-configuratie en relevante delen van `src/`. Geheime waarden uit de lokale `.env` zijn niet opgenomen; alleen de variabelenamen zijn vergeleken.
+**Audit date:** 18 August 2026
+**Scope:** all tracked Markdown files in this repository, plus `package.json`, `package-lock.json`, `check-env.js`, `check-env.sh`, `drizzle.config.ts`, `.env.example`, `.env.production`, `svelte.config.js`, `vite.config.ts`, `nginx-supabase.conf`, the Supabase CLI configuration and relevant parts of `src/`. Secret values ​​from local `.env` are not included; only the variable names were compared.
 
 ## TL;DR
 
-- **Nee: deze repo is nog niet zelfstandig klaar voor een nieuwe developer.**
-- De README geeft een globale introductie, maar geen reproduceerbare end-to-end quick start voor frontend, database, Supabase en MAP-IT-backend.
-- De env-, database- en poortdocumentatie spreekt de code op blokkerende punten tegen.
-- De relevante kennis is verspreid over 17 documenten, waaronder verouderde plannen, AI-/sessie-artefacten en kapotte verwijzingen.
-- Eerst is één canonieke onboardingroute nodig; daarna moeten deployment- en featuredocs aan de actuele code worden getoetst.
+- **No: this repo is not yet independently ready for a new developer.**
+- The README provides a global introduction, but not a reproducible end-to-end quick start for frontend, database, Supabase and MAP-IT backend.
+- The env, database and port documentation contradicts the code at blocking points.
+- The relevant knowledge is spread across 17 documents, including outdated plans, AI/session artifacts, and broken references.
+- EFirst, one canonical onboarding route is needed; then deployment and feature docs must be tested against the current code.
 
-## Score per criterium
+## Score per criterion
 
-| Criterium | Score | Beoordeling |
+| Criterion | Score | Rating |
 | --- | --- | --- |
-| README met projectdoel, tech stack en quick start | 🟡 | `README.md` beschrijft doel, features en stack en noemt `npm install`/`npm run dev`, maar mist prerequisites, env-configuratie, database/Supabase/backend-start, poort, verificatie en bekende beperkingen. |
-| Installatie & setup (Node, package manager, dependencies, env) | 🟡 | `DEPLOYMENT_GUIDE.md` noemt Node 18+, npm/yarn, clone, `npm install` en `cp .env.example .env`. Er is echter geen `.nvmrc`, `.node-version` of `engines`-veld; npm is door `package-lock.json` feitelijk de logische keuze, maar dat wordt niet als canoniek vastgelegd. De lokale full-stack setup staat verspreid over meerdere documenten. |
-| `.env.example` met alle benodigde variabelen | ❌ | Het bestand bestaat, maar mist `DATABASE_URL`, dat `drizzle.config.ts` voor alle `db:*`-scripts verplicht stelt. Het bevat tegelijk meerdere ongebruikte of dubbele variabelen en zet een service-role-placeholder ten onrechte onder een `PUBLIC_`-naam. De productie-template heeft een ander, eveneens onvolledig contract. |
-| Devserver starten + poort | 🟡 | `npm run dev` is correct en Vite gebruikt standaard 5173; die poort staat alleen expliciet in de deploymentguide. De Supabase-authconfig gebruikt juist poort 3000 en de huidige login-cookiecode is hard gekoppeld aan HTTPS/`.mapit.work`, waardoor een gedocumenteerde localhost-flow niet betrouwbaar is. |
-| Koppeling met MAP-IT-backend, URL's en streaming | 🟡 | `BACKEND_URL=http://localhost:18000` en de healthcheck zijn gedocumenteerd. Er ontbreekt één actueel overzicht van de same-origin frontendproxies, V3/V4-routes, JWT-secret en SSE-stromen. `/api/chat/websocket` is bovendien een HTTP POST; de echte WebSocketverbinding is Supabase Realtime. |
-| Supabase-setup actueel en consistent | 🟡 | Er zijn lokale en Realtime-gidsen en `supabase_cli/schema.sql` bevat de Realtime-publicatie. Ze bevatten echter verkeerde/verwarrende URLs, een niet-werkende Drizzle-stap, dubbele configlocaties, een auth-poortconflict en voorbeeld-RLS in plaats van een aantoonbaar actuele migratieprocedure. |
-| Build & deployment | 🟡 | Scripts en een uitgebreide guide bestaan, maar productiepoort, env-contract, domein, nginxconfig en cookiegedrag zijn niet onderling consistent. De guide kan daarom niet veilig als runbook worden gevolgd. |
-| Projectstructuur / architectuuroverzicht | ❌ | `docs/project_docs.md` is een WIP-stub van 25 regels. Er is geen actueel overzicht van routes, server/clientgrenzen, stores, database, Supabase Auth/Realtime, backendproxies en de twee proposalflows. De bestaande architectuurdocs zijn feature-specifiek of expliciet gearchiveerd. |
+| README with project goal, tech stack and quick start | 🟡 | `README.md` describes goal, features and stack and mentions `npm install`/`npm run dev`, but lacks prerequisites, env configuration, database/Supabase/backend-start, port, authentication, and known limitations. |
+| Installation & setup (Node, package manager, dependencies, etc.) | 🟡 | `DEPLOYMENT_GUIDE.md` names Node 18+, npm/yarn, clone, `npm install` and `cp .env.example .env`. However, there is no `.nvmrc`, `.node-version`, or `engines` field; `package-lock.json` actually makes npm the logical choice, but that is not recorded as canonical. The local full-stack setup is spread across multiple documents. |
+| `.env.example` with all necessary variables | ❌ | The file exists, but is missing `DATABASE_URL`, which makes `drizzle.config.ts` mandatory for all `db:*` scripts. It contains multiple unused or duplicate variables at the same time and incorrectly puts a service role placeholder under a `PUBLIC_` name. The production template has a different, also incomplete contract. |
+| Start Devserver + port | 🟡 | `npm run dev` is correct and Vite uses 5173 by default; that port is only explicitly mentioned in the deployment guide. The Supabase authconfig correctly uses port 3000 and the current login cookie code is hard linked to HTTPS/`.mapit.work`, making a documented localhost flow not reliable. |
+| Link with MAP-IT backend, URL's and streaming | 🟡 | `BACKEND_URL=http://localhost:18000` and the health check are documented. One current overview of the same-origin frontend proxies, V3/V4 routes, JWT-secret and SSE flows is missing. `/api/chat/websocket` is also a HTTP POST; the real WebSocket connection is Supabase Realtime. |
+| Supabase setup current and consistent | 🟡 | There are local and Realtime guides and `supabase_cli/schema.sql` contains the Realtime publication. However, they contain incorrect/confusing URLs, a broken Drizzle step, duplicate config locations, an auth port conflict, and sample RLS instead of a demonstrably up-to-date migration procedure. |
+| Build & deployment | 🟡 | Scripts and an extensive guide exist, but production port, env contract, domain, nginxconfig and cookie behavior are not mutually consistent. The guide cannot therefore be safely followed as a runbook. |
+| Project structure / architecture overview | ❌ | `docs/project_docs.md` is a WIP stub of 25 rules. There is no current overview of routes, server/client boundaries, stores, database, Supabase Auth/Realtime, backend proxies and the two proposal flows. The existing architecture docs are feature-specific or explicitly archived. |
 
-## Top 5 gaps die onboarding blokkeren
+## Top 5 gaps that block onboarding
 
-### 1. Er is geen correct en eenduidig env-contract
+### 1. There is no correct and unambiguous env contract
 
-Dit is de grootste directe blocker:
+This is the largest direct blocker:
 
-- De runtime-databaseclient vereist `PRIVATE_DATABASE_URL` (`src/lib/server/db/index.ts`), maar Drizzle CLI vereist `DATABASE_URL` (`drizzle.config.ts`).
-- `.env.example` bevat alleen `PRIVATE_DATABASE_URL`; daardoor zijn de gedocumenteerde `npm run db:push`, `db:generate`, `db:migrate` en `db:studio` niet reproduceerbaar vanuit het voorbeeldbestand.
-- `.env.production` bevat juist alleen `DATABASE_URL`, terwijl de app-runtime `PRIVATE_DATABASE_URL` vereist. Het bestand mist ook `BACKEND_URL`, `JWT_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY` en de Vite-testvariabelen.
-- `JWT_SECRET_KEY` heeft in de code een onveilige fallback (`fallback-secret-change-in-production`), terwijl de backend dezelfde secret moet gebruiken. De docs behandelen dit niet als harde productievoorwaarde.
-- `SUPABASE_SERVICE_ROLE_KEY` wordt voor invite/member-adminroutes gelezen. De fallback naar de anon key geeft niet dezelfde rechten en maakt de variabele operationeel noodzakelijk voor die functies.
-- `PUBLIC_SUPABASE_SERVICE_KEY` staat in `.env.example`, wordt nergens gelezen en suggereert ten onrechte dat een service-role key publiek mag zijn. Een echte service-role key mag nooit via een `PUBLIC_`-variabele aan clientcode worden blootgesteld.
+- The runtime database client requires `PRIVATE_DATABASE_URL` (`src/lib/server/db/index.ts`), but Drizzle CLI requires `DATABASE_URL` (`drizzle.config.ts`).
+- `.env.example` contains only `PRIVATE_DATABASE_URL`; therefore, the documented `npm run db:push`, `db:generate`, `db:migrate`, and `db:studio` are not reproducible from the sample file.
+In fact, - `.env.production` contains only `DATABASE_URL`, while the app runtime requires `PRIVATE_DATABASE_URL`. The file is also missing `BACKEND_URL`, `JWT_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and the Vite test variables.
+- `JWT_SECRET_KEY` has an unsafe fallback in the code (`fallback-secret-change-in-production`), while the backend must use the same secret. The docs do not treat this as a hard production condition.
+- `SUPABASE_SERVICE_ROLE_KEY` is read for invite/member-admin routes. The fallback to the anon key does not give the same rights and makes the variable operationally necessary for those functions.
+- `PUBLIC_SUPABASE_SERVICE_KEY` is in `.env.example`, is not read anywhere and incorrectly suggests that a service role key may be public. A real service role key should never be exposed to client code via a `PUBLIC_` variable.
 
-**Impact:** installatie lijkt voltooid, maar databasecommando's, runtime of adminfuncties kunnen vervolgens falen; daarnaast is de voorbeeldnaamgeving securitygevoelig.
+**Impact:** installation appears complete, but database commands, runtime, or admin functions may subsequently fail; In addition, the example naming is security-sensitive.
 
-### 2. Een end-to-end lokale quick start ontbreekt en localhost-auth botst met de code
+### 2. An end-to-end local quick start is missing and localhost-auth clashes with the code
 
-Een nieuwe developer krijgt geen enkele geverifieerde volgorde voor:
+A new developer will not receive any verified order for:
 
-1. juiste Node/npm-versie;
-2. `npm ci` of `npm install`;
-3. lokale Supabase/Docker starten;
-4. schema/migraties toepassen;
-5. anon- en service-role keys overnemen;
-6. MAP-IT FastAPI-backend op 18000 starten;
-7. gedeelde `JWT_SECRET_KEY` instellen;
-8. frontend op 5173 starten;
-9. health, login, query en streaming testen.
+1. correct Node/npm version;
+2. `npm ci` or `npm install`;
+3. Launch local Supabase/Docker;
+Apply 4. scheme/migrations;
+5. anon and service role keys taken over;
+6. MAP-IT Start FastAPI backend on 18000;
+7. set shared `JWT_SECRET_KEY`;
+Start 8. frontend on 5173;
+9. health, login, query and streaming testing.
 
-Daarbij zegt `DEPLOYMENT_GUIDE.md` dat cookies in development `secure: false` gebruiken, maar `src/routes/api/auth/login/+server.ts` zet `secure: true` onvoorwaardelijk en maakt handmatige cookies voor `.mapit.work`. `supabase_cli/supabase/config.toml` staat bovendien op `site_url=http://127.0.0.1:3000`, terwijl de Vite-devserver 5173 gebruikt.
+In addition, `DEPLOYMENT_GUIDE.md` says that cookies in development use `secure: false`, but `src/routes/api/auth/login/+server.ts` sets `secure: true` unconditionally and creates manual cookies for `.mapit.work`. Also, `supabase_cli/supabase/config.toml` is set to `site_url=http://127.0.0.1:3000`, while the Vite dev server uses 5173.
 
-**Impact:** de server kan wel starten, maar de gedocumenteerde lokale login/session-flow is niet betrouwbaar uitvoerbaar.
+**Impact:** the server can start, but the documented local login/session flow is not reliably executable.
 
-### 3. Database- en Supabase-initialisatie zijn niet reproduceerbaar beschreven
+### 3. Database and Supabase initialization are not described reproducibly
 
-- `supabase_cli/how_to_run.md` zegt vanuit `supabase_cli/` daarna `cd webapp-ui`; dat pad bestaat daar niet. Het bedoelde commando is waarschijnlijk `cd ..`.
-- Dezelfde gids laat `npm run db:push` uitvoeren met alleen `PRIVATE_DATABASE_URL`, terwijl `drizzle.config.ts` `DATABASE_URL` controleert.
-- De gids linkt naar een absolute lokale URI voor `schema.sql`; die link werkt niet op een andere machine.
-- `supabase_cli/schema.sql` is een grote database-dump inclusief Supabase-interne objecten, terwijl daarnaast Drizzle-migraties bestaan. Er staat niet welke bron leidend is, wanneer beide nodig zijn en hoe schema drift wordt voorkomen.
-- Er zijn twee Supabase-configs (`supabase_cli/config.toml` en `supabase_cli/supabase/config.toml`) met verschillende `project_id`-waarden. Bij `supabase start` vanuit `supabase_cli/` is de geneste config relevant, maar dat onderscheid is niet uitgelegd.
-- `docs/SUPABASE_LOCAL_REALTIME_SETUP.md` noemt `http://localhost:54323` “local Supabase”; dat is Studio. De API URL is 54321, zoals `supabase_cli/how_to_run.md` zelf correct meldt.
-- De Realtime-publicatie voor `public.message` staat al in `supabase_cli/schema.sql`, terwijl de Realtime-guide dezelfde handmatige SQL als noodzakelijke setup presenteert. Er ontbreekt een idempotente, canonieke migratiestap.
+- `supabase_cli/how_to_run.md` says from `supabase_cli/` then `cd webapp-ui`; that path does not exist there. The command in question is probably `cd ..`.
+- The same guide runs `npm run db:push` using only `PRIVATE_DATABASE_URL`, while `drizzle.config.ts` controls `DATABASE_URL`.
+- The guide links to an absolute local URI for `schema.sql`; that link doesn't work on any other machine.
+- `supabase_cli/schema.sql` is a large database dump including Supabase internal objects, while Drizzle migrations exist in addition. It does not say which source is leading, when both are needed and how schedule drift is prevented.
+- There are two Supabase configs (`supabase_cli/config.toml` and `supabase_cli/supabase/config.toml`) with different `project_id` values. With `supabase start` from `supabase_cli/` the nested config is relevant, but that distinction is not explained.
+- `docs/SUPABASE_LOCAL_REALTIME_SETUP.md` calls `http://localhost:54323` “local Supabase”; that's Studio. The API URL is 54321, as `supabase_cli/how_to_run.md` itself correctly reports.
+- The Realtime publication for `public.message` is already in `supabase_cli/schema.sql`, while the Realtime guide presents the same manual SQL as the necessary setup. An idempotent canonical migration step is missing.
 
-**Impact:** een nieuwe developer kan verschillende, deels conflicterende schema-routes volgen en eindigen met een afwijkende database.
+**Impact:** a new developer can follow different, partly conflicting schema routes and end up with a different database.
 
-### 4. Het production runbook gebruikt inconsistente poorten, domeinen en env-aannames
+### 4. The production runbook uses inconsistent ports, domains, and env assumptions
 
-- `npm start` draait de adapter-node build. Zonder `PORT` luistert die standaard op 3000; `nginx-supabase.conf` proxyt de app naar 5173 en `DEPLOYMENT_GUIDE.md` tekent de productieapp eveneens op 5173. `PORT`/`HOST`/`ORIGIN` staan nergens in de env-templates of runbook.
-- `nginx-supabase.conf` gebruikt `new.mapit.work`, terwijl meerdere guidevoorbeelden `mapit.work` gebruiken.
-- In de `/supabase/`-location zet nginx eerst `Connection 'upgrade'` en daarna `Connection ""`, en verbergt het de `Upgrade`-header. Dat is strijdig met de claim dat Supabase Realtime/WebSockets via deze proxy werken.
-- `build:prod` is exact `vite build`; het script maakt de productie-envkeuze niet explicieter dan `npm run build`. De guide beschrijft een sterkere scheiding dan de scripts garanderen.
-- Het `host`-script gebruikt `npm run build && pm2 delete ...; pm2 start ...`. Door de puntkomma wordt het startdeel ook na een mislukte build uitgevoerd.
-- De guide verwijst naar een volledige `/etc/nginx/sites-available/mapit.conf`, maar die staat niet in de repo; `nginx-supabase.conf` is een ander, gedeeltelijk voorbeeld.
+- `npm start` is running the adapter-node build. Without `PORT` it listens to 3000 by default; `nginx-supabase.conf` proxies the app to 5173 and `DEPLOYMENT_GUIDE.md` also signs the production app to 5173. `PORT`/`HOST`/`ORIGIN` are not listed anywhere in the env templates or runbook.
+- `nginx-supabase.conf` uses `new.mapit.work`, while several guide examples use `mapit.work`.
+- In the `/supabase/` location, nginx first sets `Connection 'upgrade'` and then `Connection ""`, and hides the `Upgrade` header. This conflicts with the claim that Supabase Realtime/WebSockets work via this proxy.
+- `build:prod` is exactly `vite build`; the script does not make the production env choice more explicit than `npm run build`. The guide describes a stronger separation than the scripts guarantee.
+- The `host` script uses `npm run build && pm2 delete ...; pm2 start ...`. The semicolon causes the start part to be executed even after a failed build.
+- The guide refers to a complete `/etc/nginx/sites-available/mapit.conf`, but it is not in the repo; `nginx-supabase.conf` is another partial example.
 
-**Impact:** letterlijk volgen van de deploymentguide kan een reverse proxy naar de verkeerde poort opleveren of een oude/mislukte build starten.
+**Impact:** Following the deployment guide to the letter may result in a reverse proxy to the wrong port or start an old/failed build.
 
-### 5. Er is geen canonieke documentatiestructuur; historische artefacten lijken gezaghebbend
+### 5. There is no canonical documentation structure; historical artifacts appear authoritative
 
-De root bevat naast de README meerdere concurrerende “guides”, rapporten en sessiesamenvattingen. Sommige historische bestanden zijn correct als `ARCHIVED` gemarkeerd, maar verwezen voor actuele informatie naar een startbestand buiten deze Git-repository. Na een zelfstandige clone was dat doel dus niet beschikbaar. Andere rapporten/plannen hebben geen statuslabel en ogen actueel terwijl routes, voorbeelden of claims niet meer kloppen.
+The root contains several competing guides, reports and session summaries in addition to the README. Some historical files are correctly marked `ARCHIVED`, but refer to a start file outside this Git repository for up-to-date information. After an independent clone, that target was not available. Other reports/plans have no status label and appear current, while routes, examples or claims are no longer correct.
 
-**Impact:** een nieuwe developer kan niet bepalen welke bron leidend is en volgt gemakkelijk een oud implementatievoorstel of incidentfix in plaats van de huidige architectuur.
+**Impact:** a new developer cannot determine which source is leading and easily follows an old implementation proposal or incident fix instead of the current architecture.
 
-## Documentinventaris en status
+## Document inventory and status
 
 ### Root
 
-| Bestand | Soort | Beoordeling | Aanbevolen status/actie |
+| File | Type | Assessment | Recommended status/action |
 | --- | --- | --- | --- |
-| `README.md` | Projectintroductie | Gedeeltelijk actueel, maar geen complete onboarding. | Uitbouwen tot de canonieke ingang met quick start en links naar verdiepende docs. |
-| `DEPLOYMENT_GUIDE.md` | Setup/deployment-runbook | Uitgebreid maar op cruciale punten verouderd of inconsistent met code/config. | Na correctie behouden als productie-runbook; lokale onboarding uit de README laten verwijzen naar een aparte setupguide. |
-| `TROUBLESHOOTING.md` | Operations quick reference | Deels bruikbaar, maar erft poort/env/cookie-aannames uit de deploymentguide. | Actualiseren na het vastleggen van de echte deploymentarchitectuur. |
-| `CRUSH.md` | AI-agentconfiguratie | Geen documentatie voor menselijke onboarding. De buildscripts kloppen grotendeels; de testsectie niet. | Buiten de menselijke docnavigatie houden. Corrigeer `npm run test -- <file>`: er is geen test runner en `test` is alleen een alias voor `check`. |
-| `AI_Proposal_Writer_Frontend_Integration_Guide.md` | Externe/V4 API-integratiespecificatie | V4-routes sluiten grotendeels aan op `proposalSessionService.ts` en `/api/v4/[...path]`, maar ruim 1.700 regels React/Redux-voorbeelden passen niet bij deze SvelteKit-repo. De genoemde backendmigratie `015_proposal_sessions.sql` staat niet hier. De V4 service/store bestaan, maar er is geen route/component die `proposalSessionStore` importeert; de zichtbare editor gebruikt nog `proposalStore`. | Label als backend API reference/handoff, vermeld eigenaar en versie, en beschrijf eerlijk of de V4 UI geïntegreerd, gedeeltelijk geïntegreerd of alleen voorbereid is. |
-| `CHECK_ISSUES.md` | Tijdgebonden kwaliteitsbaseline | Statusartefact, waarschijnlijk uit een audit-/AI-werksessie; geen onboarding. Op 18 augustus 2026 opnieuw geverifieerd: nog steeds **64 errors en 76 warnings in 34 bestanden**. | Verplaatsen naar `docs/status/` of issue tracker; datum en commit toevoegen. Niet als permanente architectuurdoc gebruiken. |
-| `SESSION_SUMMARY.md` | AI-/sessie- en incidentartefact | Expliciet gearchiveerd. Eindclaims “documentatie compleet” en “deployment ready” zijn strijdig met de huidige audit. Verwijst buiten de repo naar een ontbrekende startpagina. | Uit root verwijderen of naar `docs/archive/` verplaatsen; niet als bron voor onboarding gebruiken. |
-| `proposal_editor_report.md` | Handoff-/analyseartefact | Verouderd: noemt `.../proposals/[proposal_id]/+page.svelte`, terwijl de route nu `.../[proposal_id]/edit/+page.svelte` is. | Archiveren of actualiseren en duidelijk als historisch backend-handoffrapport labelen. |
+| `README.md` | Project introduction | Partially up to date, but not complete onboarding. | Expand to the canonical entry with quick start and links to in-depth docs. |
+| `DEPLOYMENT_GUIDE.md` | Setup/deployment runbook | Extensive but crucially outdated or inconsistent with code/config. | Retain as production runbook after correction; local onboarding from the README refer to a separate setup guide. |
+| `TROUBLESHOOTING.md` | Operations quick reference | Partly useful, but inherits port/env/cookie assumptions from the deployment guide. | Update after capturing the real deployment architecture. |
+| `CRUSH.md` | AI agent configuration | No documentation for human onboarding. The build scripts are largely correct; the test section does not. | Keep out of human doc navigation. Fix `npm run test -- <file>`: There is no test runner and `test` is just an alias for `check`. |
+ZZZPROTECTED0zzz SvelteKit repo. The mentioned backend migration `015_proposal_sessions.sql` is not listed here. The V4 service/store exists, but there is no route/component that imports `proposalSessionStore`; the visible editor still uses `proposalStore`. | Backend label API reference/handoff, mention owner and version, and honestly describe whether the V4 UI is integrated, partially integrated, or only prepared. |
+| `CHECK_ISSUES.md` | Time-bound quality baseline | Status artifact, probably from an audit/AI work session; no onboarding. On 18 August 2026 re-verified: still **64 errors and 76 warnings in 34 files**. | Move to `docs/status/` or issue tracker; add date and commit. Do not use as permanent architecture document. |
+| `SESSION_SUMMARY.md` | AI/session and incident artifact | Explicitly archived. Final claims “documentation complete” and “deployment ready” conflict with the current audit. Points outside the repo to a missing homepage. Remove | from root or move it to `docs/archive/`; do not use as a source for onboarding. |
+| `proposal_editor_report.md` | Handoff/analysis artifact | Deprecated: Calls `.../proposals/[proposal_id]/+page.svelte`, while the route is now `.../[proposal_id]/edit/+page.svelte`. | Archive or update and clearly label as a historical backend handoff report. |
 
 ### `docs/`
 
-| Bestand | Soort | Beoordeling | Aanbevolen status/actie |
+| File | Type | Assessment | Recommended status/action |
 | --- | --- | --- | --- |
-| `docs/project_docs.md` | Beoogd architectuuroverzicht | WIP-stub; noemt alleen stack en timestampconventie. | Vervangen door een echt architectuuroverzicht. |
-| `docs/project_setup.md` | Oude VPS/demo-setup | Expliciet gearchiveerd; bevat destructieve stappen, open firewalladvies en oude poorten. Linkt buiten de repo naar een ontbrekende startpagina. | Naar `docs/archive/` of verwijderen na veiligstellen van nuttige historie. |
-| `docs/SUPABASE_LOCAL_REALTIME_SETUP.md` | Lokale Realtime-setup | Deels bruikbaar, maar verwart Studio met API, dupliceert SQL uit `schema.sql` en legt de schema-eigenaar niet vast. | Samenvoegen met de lokale Supabase-guide. |
-| `docs/SUPABASE_REALTIME_SETUP.md` | Hosted/algemene Realtime-setup | Beschrijft de daadwerkelijke `postgres_changes`-flow op `public.message`, maar RLS is voorbeeldcode en niet aantoonbaar dezelfde policy als de huidige schema-initialisatie. | Actualiseren met de echte migratie/policies en onderscheid local/hosted. |
-| `docs/RATE_LIMITING.md` | Featuredocumentatie | De endpointlimieten kloppen, maar de claim “global protection op alle `/api/*`” is onjuist: die middleware is in `src/hooks.server.ts` uitgecommentarieerd. | Corrigeren en duidelijk “implemented” versus “disabled/planned” onderscheiden. |
-| `docs/PROPOSAL_EDITOR_IMPLEMENTATION.md` | Feature-/implementatieoverzicht | Gedeeltelijk bruikbaar, maar noemt mockgedrag als implementatie, bevat toekomstclaims en linkt naar ontbrekende `API_DOCUMENTATION.md` en `COMPONENT_LIBRARY.md`. | Tegen de huidige `/edit`-route en V4-sessionflow valideren; kapotte links herstellen. |
-| `docs/CITATION_IMPLEMENTATION_VERIFICATION.md` | Testplan/AI-implementatieartefact | Onuitgevoerd plan: alle checklistitems staan open en voorbeeldtests (`citationRenderer.test.ts`) bestaan niet. | Naar `docs/testing/` met status “plan, niet geïmplementeerd”, of omzetten naar echte tests/issues. |
-| `docs/CONVERSATIONAL_AI_ARCHITECTURE.md` | Historisch architectuurvoorstel | Expliciet gearchiveerd pre-V3-voorstel; verwijst buiten de repo naar een ontbrekende startpagina. | Naar `docs/archive/`. |
-| `docs/CONVERSATION_IMPLEMENTATION_GUIDE.md` | Historische implementatiehandleiding | Expliciet gearchiveerd; bevat vooral backend-Pythonbestanden die niet in deze repo bestaan. | Naar `docs/archive/`. |
+| `docs/project_docs.md` | Intended architectural overview | WIP-stub; only mentions stack and timestamp convention. | Replaced with a real architecture overview. |
+| `docs/project_setup.md` | Old VPS/demo setup | Explicitly archived; contains destructive steps, open firewall advice and old ports. Links outside the repo to a missing homepage. | To `docs/archive/` or delete after securing useful history. |
+| `docs/SUPABASE_LOCAL_REALTIME_SETUP.md` | Local Realtime Setup | Partly useful, but confuses Studio with API, duplicates SQL from `schema.sql`, and does not record the schema owner. | Merge with the local Supabase guide. |
+| `docs/SUPABASE_REALTIME_SETUP.md` | Hosted/generic Real-time setup | Describes the actual `postgres_changes` flow on `public.message`, but RLS is sample code and not demonstrably the same policy as the current schema initialization. | Update with the real migration/policies and distinguish local/hosted. |
+| `docs/RATE_LIMITING.md` | Feature documentation | The endpoint limits are correct, but the claim “global protection on all `/api/*`” is incorrect: that middleware is commented out in `src/hooks.server.ts`. | Correct and clearly distinguish “implemented” versus “disabled/planned”. |
+| `docs/PROPOSAL_EDITOR_IMPLEMENTATION.md` | Feature/Implementation Overview | Partially useful, but calls mock behavior as implementation, contains future claims, and links to missing `API_DOCUMENTATION.md` and `COMPONENT_LIBRARY.md`. | Validate against the current `/edit` route and V4 session flow; fix broken links. |
+| `docs/CITATION_IMPLEMENTATION_VERIFICATION.md` | Test plan/AI implementation artifact | Unexecuted plan: All checklist items are open and sample tests (`citationRenderer.test.ts`) do not exist. | To `docs/testing/` with status “plan, not implemented”, or convert to real tests/issues. |
+| `docs/CONVERSATIONAL_AI_ARCHITECTURE.md` | Historical architecture proposal | Explicitly archived pre-V3 proposal; points outside the repo to a missing homepage. | To `docs/archive/`. |
+| `docs/CONVERSATION_IMPLEMENTATION_GUIDE.md` | Historical Implementation Guide | Explicitly archived; mainly contains backend Python files that do not exist in this repo. | To `docs/archive/`. |
 
-### Andere locatie
+### Other location
 
-| Bestand | Soort | Beoordeling | Aanbevolen status/actie |
+| File | Type | Assessment | Recommended status/action |
 | --- | --- | --- | --- |
-| `supabase_cli/how_to_run.md` | Lokale database/Supabase-setup | Waardevolle basis, maar de `cd`-stap, absolute link en `DATABASE_URL`/`PRIVATE_DATABASE_URL`-instructie zijn onjuist. | Corrigeren en vanuit de README als enige lokale Supabase-bron linken. |
+| `supabase_cli/how_to_run.md` | Local database/Supabase setup | Valuable base, but the `cd` step, absolute link and `DATABASE_URL`/`PRIVATE_DATABASE_URL` statement are incorrect. | Correct and link from README as the only local Supabase source. |
 
 ## Env-var cross-check
 
-### Door de huidige code gelezen of operationeel vereist
+### By current code read or operationally required
 
-| Variabele | Lezer / functie | Status in `.env.example` | Audit |
+| Variable | Reader / function | Status in `.env.example` | Audit |
 | --- | --- | --- | --- |
-| `PUBLIC_SUPABASE_URL` | Browserclient, hooks en veel serverroutes | Aanwezig | Nodig. Voor local hoort dit normaal naar API-poort 54321 te wijzen. |
-| `PUBLIC_SUPABASE_ANON_KEY` | Browserclient, hooks en serverroutes | Aanwezig | Nodig. |
-| `PRIVATE_DATABASE_URL` | Runtime Drizzle-client en test/migratiecode | Aanwezig | Nodig voor app-runtime. |
-| `DATABASE_URL` | `drizzle.config.ts` en dus `db:*`-scripts | **Ontbreekt** | Blokkerende fout in het voorbeeldcontract. Documenteer beide namen of uniformeer de code. |
-| `BACKEND_URL` | Health, query, proposal, V3- en V4-proxies | Aanwezig | Heeft fallback `http://localhost:18000`, maar moet expliciet per omgeving worden vastgelegd. |
-| `JWT_SECRET_KEY` | JWT voor de beveiligde backend V3-streamingproxy | Aanwezig | Operationeel vereist; fallback is niet veilig en de “moet backend matchen”-stap ontbreekt in onboarding/deployment. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Collaboration invite/member-adminroutes | Aanwezig | Server-only houden; functioneel nodig voor adminoperaties. |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Alleen `/api/test_rls` | Aanwezig | Legacy/testalias, niet de hoofd-Supabaseconfig. Dit onderscheid ontbreekt. |
-| `PUBLIC_APP_NAME`, `PUBLIC_APP_URL`, `PUBLIC_APP_ENV` | Config/SEO/defaults | Aanwezig | Optioneel door defaults, maar `PUBLIC_APP_ENV` bestuurt niet SvelteKit's echte buildmode. |
-| `PUBLIC_ENABLE_DEBUG_TOOLS`, `PUBLIC_ENABLE_ANALYTICS`, `PUBLIC_API_TIMEOUT_MS`, `PUBLIC_MAX_UPLOAD_SIZE_MB` | Alleen configobject/defaults | Aanwezig | Geen aangetoonde consumers buiten config; documenteer als optioneel of verwijder dode configuratie. |
+| `PUBLIC_SUPABASE_URL` | Browser client, hooks and many server routes | Present | Needed. For local this should normally point to API port 54321. |
+| `PUBLIC_SUPABASE_ANON_KEY` | Browser client, hooks, and server routes | Present | Needed. |
+| `PRIVATE_DATABASE_URL` | Runtime Drizzle client and test/migration code | Present | Needed for app runtime. |
+| `DATABASE_URL` | `drizzle.config.ts` and thus `db:*` scripts | **Missing** | Blocking error in the sample contract. Document both names or standardize the code. |
+| `BACKEND_URL` | Health, query, proposal, V3 and V4 proxies | Present | Has fallback `http://localhost:18000`, but must be explicitly recorded per environment. |
+| `JWT_SECRET_KEY` | JWT for the secure backend V3 streaming proxy | Present | Operationally required; fallback is not secure and the “must match backend” step is missing in onboarding/deployment. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Collaboration invite/member-admin routes | Present | Keep server-only; functionally necessary for admin operations. |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Only `/api/test_rls` | Present | Legacy/test alias, not the main Supabaseconfig. This distinction is missing. |
+| `PUBLIC_APP_NAME`, `PUBLIC_APP_URL`, `PUBLIC_APP_ENV` | Config/SEO/defaults | Present | Optional by defaults, but `PUBLIC_APP_ENV` does not control SvelteKit's real build mode. |
+| `PUBLIC_ENABLE_DEBUG_TOOLS`, `PUBLIC_ENABLE_ANALYTICS`, `PUBLIC_API_TIMEOUT_MS`, `PUBLIC_MAX_UPLOAD_SIZE_MB` | Only config object/defaults | Present | No detected consumers outside config; document as optional or remove dead configuration. |
 
-### In `.env.example`, maar niet door de huidige frontendcode gebruikt
+### In `.env.example`, but not used by the current frontend code
 
-- `PUBLIC_SUPABASE_SERVICE_KEY` — verwijderen; de naam is securitygevaarlijk.
-- `SUPABASE_URL` — niet gebruikt naast `PUBLIC_SUPABASE_URL`.
-- `GOOGLE_API_KEY` — niet gelezen in deze frontend.
-- `MAPBOX_API_KEY` — niet gelezen in deze frontend; er is ook geen gedocumenteerde alternatieve tokenvariabele.
-- `DEBUG` — niet gelezen door de app.
+- `PUBLIC_SUPABASE_SERVICE_KEY` — delete; the name is security dangerous.
+- `SUPABASE_URL` — not used in addition to `PUBLIC_SUPABASE_URL`.
+- `GOOGLE_API_KEY` — not read in this frontend.
+- `MAPBOX_API_KEY` — not read in this frontend; there is also no documented alternate token variable.
+- `DEBUG` — not read by the app.
 
-`check-env.js` controleert slechts vier namen, laadt zelf geen `.env` en staat niet in `package.json`. `check-env.sh` bekijkt alleen PM2 en Supabase-URLregels. Geen van beide valideert het werkelijke, hierboven beschreven contract. Maak één fail-fast validator en koppel die aan een npm-script, bijvoorbeeld `npm run env:check`.
+`check-env.js` checks only four names, does not load `.env` itself and is not in `package.json`. `check-env.sh` only views PM2 and Supabase URL rules. Neither validates the actual contract described above. Create one fail-fast validator and link it to an npm script, for example `npm run env:check`.
 
-## Huidige backend/API-architectuur zoals uit de code afgeleid
+## Current backend/API architecture as inferred from the code
 
-De browser benadert overwegend relatieve, same-origin SvelteKit-routes. SvelteKit praat server-side met `BACKEND_URL` (standaard `http://localhost:18000`). Dat belangrijke grensvlak staat nergens compact beschreven.
+The browser predominantly accesses relative, same-origin SvelteKit routes. SvelteKit talks server-side with `BACKEND_URL` (default `http://localhost:18000`). This important interface is nowhere compactly described.
 
-| Frontendroute | Backenddoel | Transport / doel |
+| Frontend route | Backend target | Transport / target |
 | --- | --- | --- |
-| `/api/backend-status` | `${BACKEND_URL}/api/health` | JSON healthcheck |
-| `/api/query` | `${BACKEND_URL}/api/query` | Niet-streamende AI-query |
-| `/api/query/stream` | `${BACKEND_URL}/api/query/stream` | SSE-stream |
-| `/api/proxy/conversation/:id/message` | `${BACKEND_URL}/api/v3/conversation/:id/message` | V3 JSON-proxy; voegt zelf geen backend-JWT toe |
-| `/api/proxy/conversation/:id/message/stream` | `${BACKEND_URL}/api/v3/conversation/:id/message/stream` | V3 SSE met backend-JWT |
-| `/api/proxy/conversation/:id/context`, `reset-context` | V3 conversationroutes | Contextbeheer |
-| `/api/proxy/conversation/:id/follow-ups` | Geen backenddoel; lokale stub | Retourneert momenteel altijd een lege lijst |
-| `/api/v4/*` | `${BACKEND_URL}/api/v4/*` | Transparante V4-proxy, gebruikt door proposal sessions en SSE |
+| `/api/backend-status` | `${BACKEND_URL}/api/health` | JSON health check |
+| `/api/query` | `${BACKEND_URL}/api/query` | Non-streaming AI query |
+| `/api/query/stream` | `${BACKEND_URL}/api/query/stream` | SSE stream |
+| `/api/proxy/conversation/:id/message` | `${BACKEND_URL}/api/v3/conversation/:id/message` | V3 JSON proxy; does not add backend JWT itself |
+| `/api/proxy/conversation/:id/message/stream` | `${BACKEND_URL}/api/v3/conversation/:id/message/stream` | V3 SSE with backend JWT |
+| `/api/proxy/conversation/:id/context`, `reset-context` | V3 conversation routes | Context management |
+| `/api/proxy/conversation/:id/follow-ups` | No backend target; local stub | Currently always returns an empty list |
+| `/api/v4/*` | `${BACKEND_URL}/api/v4/*` | Transparent V4 proxy, used by proposal sessions and SSE |
 | `/api/proposal-document/*` | `${BACKEND_URL}/api/proposal-document/*` | Proposal document REST/proxy |
-| `/api/providers` | `${BACKEND_URL}/api/providers` | Providerlijst |
-| `/api/chat/websocket` | Geen backend-WebSocket; schrijft via SvelteKit/Supabase | HTTP POST, ondanks de routenaam |
-| Supabase browserclient | `PUBLIC_SUPABASE_URL` | Auth, REST en echte Realtime WebSocket (`postgres_changes` op `public.message`) |
+| `/api/providers` | `${BACKEND_URL}/api/providers` | Provider list |
+| `/api/chat/websocket` | No backend WebSocket; writes via SvelteKit/Supabase | HTTP POST, despite the route name |
+| Supabase browser client | `PUBLIC_SUPABASE_URL` | Auth, REST and real Realtime WebSocket (`postgres_changes` on `public.message`) |
 
-De V3 streamingproxy maakt een HS256 JWT met `JWT_SECRET_KEY`; de niet-streamende V3-messageproxy en de V4 catch-all-proxy doen dit momenteel niet. Dit verschil en de vereiste backendconfiguratie horen in het architectuuroverzicht.
+The V3 streaming proxy creates a HS256 JWT with `JWT_SECRET_KEY`; the non-streaming V3 messaging proxy and the V4 catch-all proxy currently do not do this. This difference and the required backend configuration belong in the architecture overview.
 
-## Concrete docs-vs-code-tegenstrijdigheden
+## Concrete docs-vs-code contradictions
 
-1. **Databasevariabele:** README/deployment/Supabase-gids sturen op `PRIVATE_DATABASE_URL`; `drizzle.config.ts` weigert te starten zonder `DATABASE_URL`.
-2. **Productietemplate:** `.env.production` heeft `DATABASE_URL`, maar `src/lib/server/db/index.ts` stopt zonder `PRIVATE_DATABASE_URL`; de template is dus niet zelfstandig bruikbaar voor runtime.
-3. **Productiepoort:** nginx en het deploymentdiagram gebruiken 5173; `npm start` met adapter-node gebruikt zonder `PORT` standaard 3000.
-4. **Dev-authpoort:** README/Vite gebruiken 5173; `supabase_cli/supabase/config.toml` gebruikt 3000 voor `site_url` en redirects.
-5. **Cookiegedrag:** deploymentguide zegt development `secure: false`; logincode gebruikt altijd `secure: true` en `.mapit.work`.
-6. **Global rate limiting:** `docs/RATE_LIMITING.md` zegt actief voor alle `/api/*`; `src/hooks.server.ts` markeert dit expliciet als `DISABLED`.
-7. **Tests:** `CRUSH.md` suggereert één testbestand via `npm run test -- <file>`; `package.json` laat `test` alleen `npm run check` uitvoeren en bevat geen Vitest/Jest/Playwright-runner.
-8. **Proposalroute:** `proposal_editor_report.md` wijst naar `[proposal_id]/+page.svelte`; de echte route is `[proposal_id]/edit/+page.svelte`.
-9. **Proposalstack:** de V4 integration guide geeft uitgebreide React/Redux-implementaties; de repo gebruikt Svelte stores en heeft `proposalSessionService.ts`/`proposalSessionStore.ts`, maar de actieve editorroute importeert de oudere `proposalStore` en geen UI importeert de V4 sessionstore.
-10. **Realtime URL:** de lokale Realtime-guide noemt poort 54323 als Supabase URL; dat is Studio, terwijl de API op 54321 staat.
-11. **Realtime setup:** docs vragen handmatig `ALTER PUBLICATION`; `supabase_cli/schema.sql` bevat die publicatie al. De canonieke/idempotente route ontbreekt.
-12. **Nginx Realtime:** docs claimen WebSocketondersteuning via `/supabase/`, maar de meegeleverde location wist de `Connection`-header en verbergt `Upgrade` na die eerst te hebben gezet.
-13. **Production env:** de deploymentguide toont `PRIVATE_DATABASE_URL`, `BACKEND_URL`, Vite-vars en service key; het getrackte `.env.production` bevat deze niet.
-14. **Buildmodes:** de guide zegt dat standaard `npm run build` `.env` gebruikt en `build:prod` specifiek `.env.production`; beide productiebuilds draaien feitelijk `vite build`, waarbij Vite's mode/env-laadregels gelden. `build:dev` injecteert `.env`, maar voert nog steeds een productiebuild uit.
-15. **Kapotte docslinks:** `docs/PROPOSAL_EDITOR_IMPLEMENTATION.md` linkt naar niet-bestaande `API_DOCUMENTATION.md` en `COMPONENT_LIBRARY.md`. Gearchiveerde docs verwijzen naar een startpagina buiten de repository.
-16. **Kwaliteitsclaim:** `SESSION_SUMMARY.md` eindigt met “documentation complete” en “deployment ready”; `npm run check` faalt nog met 64 errors/76 warnings en dit rapport vindt meerdere onboardingblockers.
+1. **Database variable:** README/deployment/Send Supabase guide on `PRIVATE_DATABASE_URL`; `drizzle.config.ts` refuses to start without `DATABASE_URL`.
+2. **Production template:** `.env.production` has `DATABASE_URL`, but `src/lib/server/db/index.ts` stops without `PRIVATE_DATABASE_URL`; the template is therefore not independently usable for runtime.
+3. **Production port:** nginx and the deployment diagram use 5173; `npm start` with adapter node used without `PORT` standard 3000.
+4. **Dev auth port:** README/Vite use 5173; `supabase_cli/supabase/config.toml` uses 3000 for `site_url` and redirects.
+5. **Cookie behavior:** deployment guide says development `secure: false`; login code always uses `secure: true` and `.mapit.work`.
+6. **Global rate limiting:** `docs/RATE_LIMITING.md` says active for all `/api/*`; `src/hooks.server.ts` explicitly marks this as `DISABLED`.
+7. **Tests:** `CRUSH.md` suggests one test file via `npm run test -- <file>`; `package.json` makes `test` run only `npm run check` and does not include a Vitest/Jest/Playwright runner.
+8. **Proposal route:** `proposal_editor_report.md` points to `[proposal_id]/+page.svelte`; the real route is `[proposal_id]/edit/+page.svelte`.
+9. **Proposalstack:** the V4 integration guide provides extensive React/Redux implementations; the repo uses Svelte stores and has `proposalSessionService.ts`/`proposalSessionStore.ts`, but the active editor route imports the older `proposalStore` and no UI imports the V4 session store.
+10. **Realtime URL:** the local Realtime guide calls port 54323 as Supabase URL; that is Studio, while the API is 54321.
+11. **Realtime setup:** docs ask manually `ALTER PUBLICATION`; `supabase_cli/schema.sql` already contains that publication. The canonical/idempotent route is missing.
+12. **Nginx Realtime:** docs claim WebSocket support via `/supabase/`, but the included location clears the `Connection` header and hides `Upgrade` after setting it first.
+13. **Production env:** the deployment guide shows `PRIVATE_DATABASE_URL`, `BACKEND_URL`, Vite-vars and service key; the tracked `.env.production` does not contain this.
+14. **Buildmodes:** the guide says that by default `npm run build` uses `.env` and `build:prod` specifically uses `.env.production`; both production builds actually run `vite build`, with Vite's mode/env loading rules in effect. `build:dev` injects `.env`, but still runs a production build.
+15. **Broken docs links:** `docs/PROPOSAL_EDITOR_IMPLEMENTATION.md` links to non-existent `API_DOCUMENTATION.md` and `COMPONENT_LIBRARY.md`. Archived docs point to a homepage outside the repository.
+16. **Quality claim:** `SESSION_SUMMARY.md` ends with “documentation complete” and “deployment ready”; `npm run check` still fails with 64 errors/76 warnings and this report finds multiple onboarding blockers.
 
-## Aanbevolen acties
+## Arecommended actions
 
-### P0 — vóór overdracht aan een nieuwe developer
+### P0 — before transfer to a new developer
 
-1. **Maak de README de canonieke startpagina.** Voeg een daadwerkelijk geteste quick start toe met exacte Node/npm-versie, `npm ci`, env-copy, Supabase-start, schema-init, backend-start, frontend-start, URLs en healthchecks.
-2. **Definieer één env-contract.** Beslis over `DATABASE_URL` versus `PRIVATE_DATABASE_URL`; documenteer required/optional, scope (public/server/build/runtime), voorbeeldwaarde en eigenaar. Verwijder `PUBLIC_SUPABASE_SERVICE_KEY` en ongebruikte aliases.
-3. **Maak localhost-auth expliciet werkend en documenteer het resultaat.** Breng Vite 5173, Supabase redirect URLs en cookie `secure`/`domain`-gedrag op één lijn. Dit vereist later een codewijziging; deze audit heeft die bewust niet uitgevoerd.
-4. **Maak één reproduceerbare databaseprocedure.** Kies een leidende migratiebron (Supabase migrations, Drizzle migrations of een duidelijk geversioneerde bootstrap), corrigeer de `cd`- en env-stappen en test vanaf een schone clone/database.
-5. **Herstel het production runbook.** Leg `PORT`, `HOST` en `ORIGIN` vast, maak nginx consistent met die poort en één domein, en valideer Supabase Realtime/WebSocketproxying.
+1. **Make the README the canonical homepage.** Add an actual tested quick start with exact Node/npm version, `npm ci`, env-copy, Supabase-start, schema-init, backend-start, frontend-start, URLs and health checks.
+2. **Define one env contract.** Decide on `DATABASE_URL` vs. `PRIVATE_DATABASE_URL`; document required/optional, scope (public/server/build/runtime), example value and owner. Remove `PUBLIC_SUPABASE_SERVICE_KEY` and unused aliases.
+3. **Make localhost-auth explicitly working and document the result.** Align Vite 5173, Supabase redirect URLs, and cookie `secure`/`domain` behavior. This will require a code change later; this audit deliberately did not carry out this.
+4. **Create one reproducible database procedure.** Choose a lead migration source (Supabase migrations, Drizzle migrations or a clearly versioned bootstrap), correct the `cd` and env steps and test from a clean clone/database.
+5. **Restore the production runbook.** Capture `PORT`, `HOST`, and `ORIGIN`, make nginx consistent with that port and one domain, and validate Supabase Realtime/WebSocket proxying.
 
-### P1 — begrip en onderhoudbaarheid
+### P1 — understanding and maintainability
 
-6. **Voeg `docs/ARCHITECTURE.md` toe** met:
-   - SvelteKit routegroepen en server/clientgrens;
-   - `src/lib/clients`, `stores`, `components`, `server/db` en `routes/api`;
-   - Supabase Auth, Postgres/Drizzle en Realtime;
-   - same-origin API-proxies naar backend V3/V4;
-   - SSE-eventflow en JWT-koppeling;
-   - proposal document versus proposal session flow.
-7. **Voeg een compacte API/backend-matrix toe** zoals hierboven, inclusief welke service elk endpoint gebruikt en welke env-var/auth nodig is.
-8. **Maak `npm run env:check`** dat zonder secrets te printen alle verplichte variabelen valideert voor `dev`, `db` en `production`. Vervang of documenteer de beperkingen van de twee huidige check-env-scripts.
-9. **Leg de verwachte kwaliteitsstatus vast.** `npm run check` faalt momenteel. Zet dit prominent onder “Known issues” of herstel de fouten voordat “ready” wordt geclaimd. Voeg echte testcommando's pas toe als een test runner bestaat.
+6. **Add `docs/ARCHITECTURE.md`** with:
+- SvelteKit route groups and server/client boundary;
+- `src/lib/clients`, `stores`, `components`, `server/db` and `routes/api`;
+- Supabase Auth, Postgres/Drizzle and Realtime;
+- same-origin API proxies to backend V3/V4;
+- SSE event flow and JWT link;
+- proposal document versus proposal session flow.
+7. **Add a compact API/backend matrix** as above, including which service each endpoint uses and which env-var/auth is needed.
+8. **Make `npm run env:check`** that validates all mandatory variables for `dev`, `db` and `production` without printing secrets. Replace or document the limitations of the two current check-env scripts.
+9. **Record the expected quality status.** `npm run check` is currently failing. Place this prominently under “Known issues” or correct the errors before claiming “ready”. Do not add real test commands until a test runner exists.
 
-### P2 — documentatie opschonen
+### P2 — clean up documentation
 
-10. **Verplaats sessie-/AI-artefacten naar `docs/archive/` of de issue tracker:** `SESSION_SUMMARY.md`, `CHECK_ISSUES.md`, `proposal_editor_report.md`, de twee gearchiveerde conversationdocs en eventueel het citation-verificatieplan.
-11. **Label elk blijvend document** met status (`current`, `draft`, `archived`), eigenaar, toepassingsgebied en “last verified against commit/date”.
-12. **Splits API-specificaties van repo-onboarding.** Behoud de V4 proposalguide als versiegebonden backendcontract, maar laat hem niet concurreren met SvelteKit-implementatiedocs en verwijder/verplaats de Reactvoorbeelden.
-13. **Herstel alle lokale links** en zorg dat geen actuele instructie afhankelijk is van een bestand buiten deze Git-repository of een absolute lokale bestands-URI.
-14. **Combineer de Supabase-docs** tot één local setup plus één hosted/production hoofdstuk; beschrijf expliciet API (54321), DB (54322), Studio (54323), Inbucket (54324), RLS en Realtime-publicatie.
+10. **Move session/AI artifacts to `docs/archive/` or the issue tracker:** `SESSION_SUMMARY.md`, `CHECK_ISSUES.md`, `proposal_editor_report.md`, the two archived conversation docs, and possibly the citation verification plan.
+11. **Label each persistent document** with status (`current`, `draft`, `archived`), owner, scope and “last verified against commit/date”.
+12. **Splits API repo onboarding specs.** Keep the V4 proposal guide as a versioned backend contract, but don't let it compete with SvelteKit deployment docs and delete/move the React examples.
+13. **Restore all local links** and ensure that no current statement depends on a file outside this Git repository or an absolute local file URI.
+14. **Combine the Supabase docs** into one local setup plus one hosted/production chapter; explicitly describe API (54321), DB (54322), Studio (54323), Inbucket (54324), RLS, and Real-Time Publishing.
 
-## Eindoordeel
+## End verdict
 
-De repo heeft opvallend veel documentatie, maar volume is hier geen vervanging voor een betrouwbare onboardingroute. De actuele README is te dun, terwijl de gedetailleerde informatie verspreid en soms tegenstrijdig is. Een ervaren maintainer kan de bedoelde architectuur uit de code reconstrueren; een nieuwe developer kan op basis van de huidige docs niet met voldoende zekerheid een schone clone configureren, lokaal inloggen, database en backend koppelen en dezelfde build deployen. De aanbevolen P0-acties zijn daarom voorwaarden voor een zelfstandige overdracht.
+The repo has a remarkable amount of documentation, but volume is no substitute for a reliable onboarding route. The current README is too thin, while the detailed information is scattered and sometimes contradictory. An experienced maintainer can reconstruct the intended architecture from the code; Based on the current docs, a new developer cannot configure a clean clone, log in locally, connect database and backend and deploy the same build with sufficient certainty. The recommended P0 actions are therefore prerequisites for an independent transfer.

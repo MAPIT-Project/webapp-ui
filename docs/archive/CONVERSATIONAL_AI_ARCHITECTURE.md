@@ -1,8 +1,8 @@
 > Documentation status: archived | Owner: MAP-IT architecture team | Scope: historical pre-V3 proposal | Last verified: 18-08-2026 for archival classification
 >
-> ⚠️ **ARCHIVED — 20 juli 2026** — Dit document is historisch en niet meer actueel.
-> Zie de [canonieke README](../../README.md) voor actuele documentatie.
-> Reden: dit is een pre-V3-voorstel met services en routes die niet de huidige conversation-architectuur vormen.
+> ⚠️ **ARCHIVED — 20 July 2026** — This document is historical and no longer current.
+> See the [canonical README](../../README.md) for current documentation.
+> Reason: this is a pre-V3 proposal with services and routes that do not constitute the current conversation architecture.
 
 # Conversational AI Architecture for CORDIS System
 

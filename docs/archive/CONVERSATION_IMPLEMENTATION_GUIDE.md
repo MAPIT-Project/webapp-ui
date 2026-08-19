@@ -1,8 +1,8 @@
 > Documentation status: archived | Owner: MAP-IT architecture team | Scope: historical backend-oriented implementation proposal | Last verified: 18-08-2026 for archival classification
 >
-> ⚠️ **ARCHIVED — 20 juli 2026** — Dit document is historisch en niet meer actueel.
-> Zie de [canonieke README](../../README.md) voor actuele documentatie.
-> Reden: de guide verwijst naar backendbestanden, services en routes die niet bestaan in de huidige codebase.
+> ⚠️ **ARCHIVED — 20 July 2026** — This document is historical and no longer current.
+> See the [canonical README](../../README.md) for current documentation.
+> Reason: the guide refers to backend files, services, and routes that do not exist in the current codebase.
 
 # Conversation Context Implementation Guide
 
