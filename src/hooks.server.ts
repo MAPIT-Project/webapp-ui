@@ -1,9 +1,11 @@
 import { sequence } from '@sveltejs/kit/hooks';
+import { env } from '$env/dynamic/private';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import type { Handle } from '@sveltejs/kit';
 import { apiRateLimit, getClientIP } from '$lib/server/rateLimit';
 import { json } from '@sveltejs/kit';
+const SERVER_SUPABASE_URL = env.PRIVATE_SUPABASE_URL || 'http://localhost:54321';
 
 // Global rate limiting middleware
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
@@ -48,7 +50,7 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
 // Supabase authentication middleware
 const supabaseHandle: Handle = async ({ event, resolve }) => {
 	try {
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		const supabase = createServerClient(SERVER_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 			cookies: {
 				getAll() {
 					return event.cookies.getAll();

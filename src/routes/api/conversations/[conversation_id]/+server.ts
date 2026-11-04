@@ -1,7 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
 
 export const GET: RequestHandler = async ({ params, cookies }) => {
 	try {
@@ -11,17 +10,7 @@ export const GET: RequestHandler = async ({ params, cookies }) => {
 			return json({ error: 'Invalid conversation ID' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		const {
 			data: { user },
@@ -111,17 +100,7 @@ export const PUT: RequestHandler = async ({ params, request, cookies }) => {
 			return json({ error: 'Invalid conversation ID' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		const {
 			data: { user },
@@ -224,17 +203,7 @@ export const DELETE: RequestHandler = async ({ params, cookies }) => {
 			return json({ error: 'Invalid conversation ID' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		const {
 			data: { user },

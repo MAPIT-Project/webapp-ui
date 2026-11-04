@@ -1,9 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
-import { env } from '$env/dynamic/private';
-import postgres from 'postgres';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	try {
@@ -14,17 +11,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		// Use getUser() for secure server-side authentication
 		const { data: { user }, error: userError } = await supabase.auth.getUser();

@@ -1,7 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
 
 // This endpoint handles adding collaboration messages
 // Real-time updates are handled by Supabase Realtime subscriptions on the client
@@ -13,17 +12,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			return json({ error: 'conversationId and text are required' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		const {
 			data: { user },

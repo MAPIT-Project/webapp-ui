@@ -1,7 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
 
 export const POST: RequestHandler = async ({ params, request, cookies }) => {
 	try {
@@ -23,17 +22,7 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 			return json({ error: 'Message ID and text are required' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		// Use getUser() for secure server-side authentication
 		const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -67,7 +56,7 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 		if (dataSource) updateData.data_source = dataSource;
 		if (processingTime !== undefined) updateData.processing_time = processingTime;
 		if (projectsFound !== undefined) updateData.projects_found = projectsFound;
-		
+
 		// Handle citations - preserve existing ones if no new citations are provided
 		if (citations) {
 			// New citations provided, use them

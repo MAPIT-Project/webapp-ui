@@ -1,9 +1,12 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 import { createServerClient } from '@supabase/ssr';
 import { authRateLimit, extractClientIP } from '$lib/server/rateLimit';
-import { env } from '$env/dynamic/private';
+
+// Use localhost for server-side requests to avoid proxy issues
+const SERVER_SUPABASE_URL = env.PRIVATE_SUPABASE_URL || 'http://localhost:54321';
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress, url }) => {
 	const secureCookie = url.protocol === 'https:';
@@ -45,7 +48,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		}
 
 		// Create server-side Supabase client with proper cookie handling
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		const supabase = createServerClient(SERVER_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 			cookies: {
 				getAll() {
 					return cookies.getAll();
@@ -105,6 +108,8 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		// Add rate limit headers to successful response
 		const rateLimitInfo = authRateLimit.info(ip);
 
+		// The Supabase SSR library automatically sets cookies via the setAll callback
+		// Cookies are already set above in the createServerClient configuration
 		return json(
 			{
 				success: true,
@@ -125,10 +130,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	} catch (error) {
 		console.error('Server error during login:', error);
 		return json(
-			{
-				error: 'Internal server error',
-				details: error instanceof Error ? error.message : String(error)
-			},
+			{ error: 'An unexpected error occurred during login' },
 			{ status: 500 }
 		);
 	}

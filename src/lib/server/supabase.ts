@@ -1,6 +1,10 @@
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 import { createServerClient } from '@supabase/ssr';
 import type { Cookies } from '@sveltejs/kit';
+
+// Use localhost for server-side requests to avoid proxy issues
+const SERVER_SUPABASE_URL = env.PRIVATE_SUPABASE_URL || 'http://localhost:54321';
 
 /**
  * Create a Supabase server client with the correct cookie handling pattern.
@@ -13,7 +17,7 @@ import type { Cookies } from '@sveltejs/kit';
  * client (e.g. in auth endpoints that set custom cookie options).
  */
 export function createSupabaseServerClient(cookies: Cookies) {
-	return createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+	return createServerClient(SERVER_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			getAll() {
 				return cookies.getAll();

@@ -1,7 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
 import { aiQueryRateLimit, extractClientIP } from '$lib/server/rateLimit';
 
 // This endpoint handles adding AI messages to collaboration chats
@@ -43,17 +42,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 			return json({ error: 'conversationId and text are required' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		const {
 			data: { user },

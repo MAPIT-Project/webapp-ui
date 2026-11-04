@@ -1,7 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
 import { authRateLimit, extractClientIP } from '$lib/server/rateLimit';
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
@@ -47,17 +46,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		}
 
 		// Create server-side Supabase client
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		// Perform registration on server side
 		const { data, error } = await supabase.auth.signUp({

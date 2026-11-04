@@ -1,8 +1,11 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { createServerClient } from '@supabase/ssr';
+
+const SERVER_SUPABASE_URL = env.PRIVATE_SUPABASE_URL || 'http://localhost:54321';
 
 export const GET: RequestHandler = async ({ params, cookies }) => {
 	try {
@@ -12,25 +15,17 @@ export const GET: RequestHandler = async ({ params, cookies }) => {
 			return json({ error: 'Invalid collaboration ID' }, { status: 400 });
 		}
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			cookies: {
-				get: (key: string) => cookies.get(key),
-				set: (key: string, value: string, options: any) => {
-					cookies.set(key, value, { ...options, path: '/' });
-				},
-				remove: (key: string, options: any) => {
-					cookies.delete(key, { ...options, path: '/' });
-				}
-			}
-		});
+		const supabase = createSupabaseServerClient(cookies);
 
 		// Create admin client for database queries
-		const serviceRoleKey = SUPABASE_SERVICE_ROLE_KEY || PUBLIC_SUPABASE_ANON_KEY;
-		const adminSupabase = createServerClient(PUBLIC_SUPABASE_URL, serviceRoleKey, {
+		const adminSupabase = createServerClient(SERVER_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 			cookies: {
-				get: () => null,
-				set: () => {},
-				remove: () => {}
+				getAll() {
+					return [];
+				},
+				setAll() {
+					// Admin client doesn't need to set cookies
+				}
 			}
 		});
 
