@@ -71,8 +71,26 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		});
 
 		if (error) {
-			console.error('Login error:', error.message);
-			return json({ error: error.message }, { status: 401 });
+			console.error('Login error:', {
+				name: error.name,
+				status: error.status,
+				code: error.code,
+				message: error.message
+			});
+			if (!error.status || error.status >= 500 || error.name === 'AuthRetryableFetchError') {
+				return json(
+					{ error: 'Authentication service is temporarily unavailable. Please try again later.' },
+					{ status: 503 }
+				);
+			}
+			if (error.status === 429) {
+				return json({ error: 'Too many login attempts. Please try again later.' }, { status: 429 });
+			}
+			const message = error.message?.trim();
+			return json(
+				{ error: message && message !== '{}' ? message : 'Authentication failed' },
+				{ status: 401 }
+			);
 		}
 
 		if (!data.user || !data.session) {
