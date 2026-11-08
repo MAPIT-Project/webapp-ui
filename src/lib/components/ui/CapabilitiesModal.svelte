@@ -239,7 +239,7 @@
 					<section class="mt-4 flex items-center justify-between border-t border-white/10 pt-6">
 						<div class="flex items-center gap-4 text-xs text-gray-500">
 							<div class="flex items-center gap-1">
-								<Icon name="database" iconClass="w-3 h-3" />
+								<Icon name="storage" iconClass="w-3 h-3" />
 								<span>13,800+ Projects</span>
 							</div>
 							<div class="flex items-center gap-1">
@@ -356,14 +356,14 @@
 							Advanced Demo Questions
 						</h3>
 						<p class="text-[15px] leading-relaxed text-[#B0B0B0] mb-6">
-							Click any of the complex questions below to instantly launch a live demonstration of the ReAct agent's capabilities.
+							Choose a question to explore funding, projects, partners, research networks or proposal planning.
 						</p>
 					</div>
 
 					<section aria-labelledby="evaluation-demo-title" class="rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-500/[0.07] via-transparent to-teal-500/[0.05] p-5">
 						<div class="mb-4 flex flex-wrap items-start justify-between gap-4">
-							<div><span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-300">Evaluation walkthrough</span><h4 id="evaluation-demo-title" class="mt-1 text-lg font-semibold text-white">From a research question to evidence</h4><p class="mt-2 max-w-xl text-xs leading-5 text-slate-400">Start with opportunities and partners. Add a source check or drafting example if time allows. Each question runs against the current data.</p></div>
-							<a href="/dashboard/data" onclick={() => isOpen = false} class="inline-flex items-center gap-2 rounded-xl border border-blue-400/20 bg-blue-400/10 px-3 py-2 text-xs font-medium text-blue-200 transition hover:bg-blue-400/20"><Icon name="database" iconClass="h-4 w-4" /> Explore data & sources <Icon name="arrow_forward" iconClass="h-3 w-3" /></a>
+							<div><span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-300">Evaluation walkthrough</span><h4 id="evaluation-demo-title" class="mt-1 text-lg font-semibold text-white">From a research question to evidence</h4><p class="mt-2 max-w-xl text-xs leading-5 text-slate-400">For a short walkthrough, start with the first three questions. Explore the other options to show different capabilities. Each question runs against the current data.</p></div>
+							<a href="/dashboard/data" onclick={() => isOpen = false} class="inline-flex items-center gap-2 rounded-xl border border-blue-400/20 bg-blue-400/10 px-3 py-2 text-xs font-medium text-blue-200 transition hover:bg-blue-400/20"><Icon name="storage" iconClass="h-4 w-4" /> Explore data & sources <Icon name="arrow_forward" iconClass="h-3 w-3" /></a>
 						</div>
 						<div class="grid gap-3 md:grid-cols-2">
 							{#each evaluationDemoQuestions as demo, i}
@@ -375,68 +375,6 @@
 							{/each}
 						</div>
 					</section>
-					<h4 class="mt-2 text-sm font-medium text-slate-400">More advanced scenarios</h4>
-					<div class="space-y-4">
-						<button type="button" onclick={() => handleQuestionClick("Compare the EIC Accelerator and ERC Advanced Grant regarding success rates and average funding amounts over the last 3 years. Based on this data, which one is more suitable for a high-risk deep-tech startup looking to scale?")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] cursor-pointer">
-							<div class="flex gap-4">
-								<div class="mt-1 rounded-full bg-blue-500/20 p-2 text-blue-400 shrink-0 h-fit">
-									<Icon name="compare_arrows" iconClass="w-5 h-5" />
-								</div>
-								<div>
-									<h4 class="text-md font-medium text-white mb-2 group-hover:text-blue-400 transition-colors">Programme Comparison & Strategic Advice</h4>
-									<p class="text-sm text-[#D0D0D0] leading-relaxed">"Compare the EIC Accelerator and ERC Advanced Grant regarding success rates and average funding amounts over the last 3 years. Based on this data, which one is more suitable for a high-risk deep-tech startup looking to scale?"</p>
-								</div>
-							</div>
-						</button>
-
-						<button type="button" onclick={() => handleQuestionClick("Find me experienced partners for a hydrogen energy project and tell me what makes them successful")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(236,72,153,0.1)] cursor-pointer">
-							<div class="flex gap-4">
-								<div class="mt-1 rounded-full bg-pink-500/20 p-2 text-pink-400 shrink-0 h-fit">
-									<Icon name="group" iconClass="w-5 h-5" />
-								</div>
-								<div>
-									<h4 class="text-md font-medium text-white mb-2 group-hover:text-pink-400 transition-colors">Advanced Partner Discovery</h4>
-									<p class="text-sm text-[#D0D0D0] leading-relaxed">"Find me experienced partners for a hydrogen energy project and tell me what makes them successful"</p>
-								</div>
-							</div>
-						</button>
-
-						<button type="button" onclick={() => handleQuestionClick("Show me consortium patterns for successful digital health projects")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(56,189,248,0.1)] cursor-pointer">
-							<div class="flex gap-4">
-								<div class="mt-1 rounded-full bg-sky-500/20 p-2 text-sky-400 shrink-0 h-fit">
-									<Icon name="hub" iconClass="w-5 h-5" />
-								</div>
-								<div>
-									<h4 class="text-md font-medium text-white mb-2 group-hover:text-sky-400 transition-colors">Consortium Network Analysis</h4>
-									<p class="text-sm text-[#D0D0D0] leading-relaxed">"Show me consortium patterns for successful digital health projects"</p>
-								</div>
-							</div>
-						</button>
-
-						<button type="button" onclick={() => handleQuestionClick("I am drafting a proposal for the latest 'Renewable Energy Valleys' RIA call. Generate a realistic 36-month project timeline and calculate an estimated budget benchmark for a consortium involving 5 partners across 3 EU countries.")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(20,184,166,0.1)] cursor-pointer">
-							<div class="flex gap-4">
-								<div class="mt-1 rounded-full bg-teal-500/20 p-2 text-teal-400 shrink-0 h-fit">
-									<Icon name="calendar_month" iconClass="w-5 h-5" />
-								</div>
-								<div>
-									<h4 class="text-md font-medium text-white mb-2 group-hover:text-teal-400 transition-colors">Timeline & Budget Benchmarking</h4>
-									<p class="text-sm text-[#D0D0D0] leading-relaxed">"I am drafting a proposal for the latest 'Renewable Energy Valleys' RIA call. Generate a realistic 36-month project timeline and calculate an estimated budget benchmark for a consortium involving 5 partners across 3 EU countries."</p>
-								</div>
-							</div>
-						</button>
-
-						<button type="button" onclick={() => handleQuestionClick("Analyze the geographic diversification patterns of successful Horizon Europe Cluster 4 consortiums. Based on historical data, which 'Widening' or underrepresented EU countries should we include in our consortium to optimize our evaluation score?")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)] cursor-pointer">
-							<div class="flex gap-4">
-								<div class="mt-1 rounded-full bg-amber-500/20 p-2 text-amber-400 shrink-0 h-fit">
-									<Icon name="public" iconClass="w-5 h-5" />
-								</div>
-								<div>
-									<h4 class="text-md font-medium text-white mb-2 group-hover:text-amber-400 transition-colors">Geographic Diversification & Strategy</h4>
-									<p class="text-sm text-[#D0D0D0] leading-relaxed">"Analyze the geographic diversification patterns of successful Horizon Europe Cluster 4 consortiums. Based on historical data, which 'Widening' or underrepresented EU countries should we include in our consortium to optimize our evaluation score?"</p>
-								</div>
-							</div>
-						</button>
-					</div>
 				</div>
 			{/if}
 		</div>

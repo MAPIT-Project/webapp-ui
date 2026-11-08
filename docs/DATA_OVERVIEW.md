@@ -46,7 +46,13 @@ are distinguished from import dates. Refreshing the page measures the local inde
 it does not ingest new CORDIS, call or document data.
 
 For source refresh procedures see the backend's `docs/data-refresh.md`.
-For the tested question set see `src/lib/data/evaluationDemoQuestions.ts`.
+For the current 18-question demo bank see `src/lib/data/evaluationDemoQuestions.ts`.
+The first three form a short walkthrough; the remaining options cover project
+search, semantic discovery, organisations, networks, consortium patterns, country
+statistics, budget benchmarks, programme comparison, eligibility, documents,
+drafting, timelines and feedback. Labels describe capabilities outside the prompt.
+The revised questions are not an end-to-end rehearsal of all 18 agent answers;
+the earlier recorded checks remain documented separately.
 
 ## Preview builds
 
