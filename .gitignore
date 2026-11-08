@@ -33,3 +33,6 @@ csv_data_extractor/venv/**/*
 # Crush agent directory
 .crushsupabase_full_dump.backup
 *.backup
+
+# Local preview releases and recoverable deployment backups
+/.releases/

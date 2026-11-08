@@ -155,3 +155,10 @@ Historical plans, AI-session output, superseded setup guides, and the original R
 ## Stack
 
 SvelteKit 2, Svelte 5, TypeScript, adapter-node, Tailwind/DaisyUI, Supabase Auth/Postgres/Realtime, Drizzle ORM, and a FastAPI backend reached through server-side proxies.
+
+## Data overview and evaluation demos
+
+The authenticated **Data & sources** page (`/dashboard/data`) shows live local
+project/graph totals and a programme-filtered document inventory. The capabilities
+popup now includes an **Evaluation walkthrough** question section. See
+[the dashboard guide](docs/DATA_OVERVIEW.md) for counts, source status and configuration.

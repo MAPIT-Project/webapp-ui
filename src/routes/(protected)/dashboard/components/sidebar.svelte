@@ -158,6 +158,11 @@
 			url: '/consortium'
 		},
 		{
+			name: 'Data & sources',
+			icon: 'storage',
+			url: '/data'
+		},
+		{
 			name: 'Collaborations',
 			icon: 'groups',
 			url: '/collaborations'

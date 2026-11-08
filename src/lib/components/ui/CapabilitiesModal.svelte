@@ -2,6 +2,7 @@
 	import Icon from '$lib/components/generic/icon.svelte';
 	import Modal from '$lib/components/generic/modal.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { evaluationDemoQuestions } from '$lib/data/evaluationDemoQuestions';
 
 	export let isOpen: boolean;
 
@@ -359,6 +360,22 @@
 						</p>
 					</div>
 
+					<section aria-labelledby="evaluation-demo-title" class="rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-500/[0.07] via-transparent to-teal-500/[0.05] p-5">
+						<div class="mb-4 flex flex-wrap items-start justify-between gap-4">
+							<div><span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-300">Evaluation walkthrough</span><h4 id="evaluation-demo-title" class="mt-1 text-lg font-semibold text-white">From a research question to evidence</h4><p class="mt-2 max-w-xl text-xs leading-5 text-slate-400">Start with opportunities and partners. Add a source check or drafting example if time allows. Each question runs against the current data.</p></div>
+							<a href="/dashboard/data" onclick={() => isOpen = false} class="inline-flex items-center gap-2 rounded-xl border border-blue-400/20 bg-blue-400/10 px-3 py-2 text-xs font-medium text-blue-200 transition hover:bg-blue-400/20"><Icon name="database" iconClass="h-4 w-4" /> Explore data & sources <Icon name="arrow_forward" iconClass="h-3 w-3" /></a>
+						</div>
+						<div class="grid gap-3 md:grid-cols-2">
+							{#each evaluationDemoQuestions as demo, i}
+								<button type="button" onclick={() => handleQuestionClick(demo.question)} class="group rounded-xl border border-white/[0.07] bg-black/20 p-4 text-left transition hover:border-blue-400/30 hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+									<div class="mb-3 flex items-center justify-between gap-2"><span class="rounded-lg bg-blue-400/10 p-2 text-blue-300"><Icon name={demo.icon} iconClass="h-4 w-4" /></span><span class="text-[10px] {i < 3 ? 'text-blue-300' : 'text-slate-500'}">{demo.label}</span></div>
+									<h5 class="mb-2 text-sm font-medium text-slate-100 group-hover:text-blue-200">{demo.title}</h5>
+									<p class="text-xs leading-5 text-slate-400">{demo.question}</p>
+								</button>
+							{/each}
+						</div>
+					</section>
+					<h4 class="mt-2 text-sm font-medium text-slate-400">More advanced scenarios</h4>
 					<div class="space-y-4">
 						<button type="button" onclick={() => handleQuestionClick("Compare the EIC Accelerator and ERC Advanced Grant regarding success rates and average funding amounts over the last 3 years. Based on this data, which one is more suitable for a high-risk deep-tech startup looking to scale?")} class="group w-full text-left bg-white/[0.03] p-5 rounded-2xl border border-white/5 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] cursor-pointer">
 							<div class="flex gap-4">
