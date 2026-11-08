@@ -292,8 +292,8 @@
 							: 'border border-transparent'} rounded-xl transition-all duration-200 hover:shadow-lg"
 					>
 						<div class="min-w-0 flex-1 pr-2">
-							<div class="relative flex items-center justify-between">
-								<div class="flex-1">
+							<div class="relative flex min-w-0 items-center justify-between pr-6">
+								<div class="min-w-0 flex-1">
 									<EditableTitle
 										bind:this={editableTitles[index]}
 										value={conversation.name || 'Untitled'}

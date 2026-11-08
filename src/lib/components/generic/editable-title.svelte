@@ -127,7 +127,7 @@
 	}
 </script>
 
-<div class="block {containerClass}">
+<div class="block min-w-0 {containerClass}">
 	{#if isEditing}
 		<div class="w-full">
 			<input
@@ -168,12 +168,11 @@
 	{:else}
 		<div
 			class="group relative {compactMode
-				? 'flex w-full items-center justify-between'
+				? 'flex min-w-0 w-full items-center justify-between'
 				: 'inline-flex items-center'}"
 		>
 			<h1 class="{titleClass} {compactMode ? 'min-w-0 flex-1' : ''}" title={value || placeholder}>
-				<span class="group-hover:hidden">{value || placeholder}</span>
-				<span class="group-hover:block hidden">{(value || placeholder).length > 25 ? (value || placeholder).slice(0, 25) + '...' : (value || placeholder)}</span>
+				{value || placeholder}
 			</h1>
 		</div>
 	{/if}
