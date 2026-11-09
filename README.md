@@ -162,3 +162,5 @@ The authenticated **Data & sources** page (`/dashboard/data`) shows live local
 project/graph totals and a programme-filtered document inventory. The capabilities
 popup now includes an **Evaluation walkthrough** question section. See
 [the dashboard guide](docs/DATA_OVERVIEW.md) for counts, source status and configuration.
+
+GitHub CI is intentionally disabled: no GitHub Actions workflows are configured. Run `npm run check` and `npm run build:prod` locally when validating changes.
