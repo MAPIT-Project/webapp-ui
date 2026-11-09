@@ -66,3 +66,15 @@ BUILD_OUTPUT_DIR=.releases/preview npm run build:prod
 Load the configured runtime environment when starting a preview. `.releases/` is
 excluded from Git. Keep a recoverable copy of the previous deployed build when
 publishing, then restart the existing PM2 service.
+
+## Public reference quality policy
+
+Normal reference retrieval requires a verified publication origin. Unresolved
+records are retained in reversible quarantine; pending legal reviews remain
+separate. The inventory shows both for transparency, and archived source notes
+explain the quarantine reason. Source verification is separate from edition
+applicability. On 9 November the inventory changed to 156 active verified entries,
+69 archived entries and six pending reviews, without deleting text or embeddings.
+
+See the backend's `docs/document-lifecycle.md` for the SQL migration, maintenance
+commands, backups, guarded restoration and validation.

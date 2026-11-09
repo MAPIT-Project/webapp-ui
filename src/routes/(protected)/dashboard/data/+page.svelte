@@ -304,7 +304,7 @@
 							Document library
 						</h2>
 						<p class="mt-1 text-xs text-slate-500">
-							Browse the names, editions and sources used across EU programmes.
+							Reference searches use publications with verified origins. Archived and pending records remain visible for review.
 						</p>
 					</div>
 					<div class="flex gap-3 text-xs text-slate-400">
@@ -347,7 +347,7 @@
 							><option value="current">Current & pending</option><option value="active"
 								>Active records</option
 							><option value="pending_review">Pending review</option><option value="archived"
-								>Archived editions</option
+								>Archived & quarantined</option
 							><option value="all">All records</option></select
 						></label
 					>

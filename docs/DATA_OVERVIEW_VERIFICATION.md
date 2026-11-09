@@ -20,3 +20,12 @@ which is excluded from Git. The deployment manifest records their exact paths.
 Private configuration backups were saved before aligning frontend/backend JWT
 signing configuration. No keys, cookies or private document text were added to
 source control or the dashboard response.
+
+## 9 November source lifecycle update
+
+The production build passed after updating the library explanation and archived
+filter label. Live HTTPS browser checks confirmed 156 searchable records, 69
+archived records, six pending reviews, verified-origin badges in active results,
+and a visible quarantine reason on a legacy guide. The disposable account was
+removed. Backend lifecycle tests and live retrieval checks are recorded in
+`MAP-IT_SA/docs/document-lifecycle.md`.
